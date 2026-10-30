@@ -1,7 +1,11 @@
 using System.Collections.Generic;
 
 /// Lista dos inimigos vivos. A torre consulta aqui em vez de usar Find.
-/// O proprio Enemy se registra em OnEnable e sai em OnDisable (funciona com pooling).
+/// O proprio Enemy se registra em OnEnable e sai ao morrer, chegar na base ou
+/// ser desativado (funciona com pooling).
+///
+/// A lista e a mesma durante o jogo todo: nao modificar enquanto se percorre All.
+/// Quem causa dano (projetil) faz isso fora do loop da torre, entao nao ha problema.
 public static class EnemyRegistry
 {
     static readonly List<Enemy> vivos = new List<Enemy>();
