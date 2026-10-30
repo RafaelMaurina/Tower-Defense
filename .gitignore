@@ -112,3 +112,7 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# Niveis gerados pelo MontarNiveis (cada um gera ao abrir o projeto)
+/[Aa]ssets/_Project/Prefabs/Niveis/Nivel_*
+/[Aa]ssets/_Project/Scenes/Nivel_*

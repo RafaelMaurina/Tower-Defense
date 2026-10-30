@@ -27,6 +27,9 @@ git lfs pull
 Versão **6000.6.2f1**. Abrir em versão diferente faz o Unity reimportar os assets e
 sujar o diff para o resto do time. Confira no Unity Hub antes de abrir.
 
+Os níveis não vêm no clone: na primeira vez que o projeto abre, o Unity gera os
+três sozinho (o menu **Defesa da Colheita → Gerar niveis** faz o mesmo à mão).
+
 ## Arte
 
 Densidade de pixel, configuração de importação e paleta estão em [ARTE.md](ARTE.md).

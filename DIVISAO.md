@@ -37,7 +37,7 @@ Trabalha em `Assets/_Project/Scripts/Enemies`, `Towers` e `Projectiles`.
 - [ ] Projeteis com **mira preditiva** (o pato existe para quebrar isso)
 - [ ] Torres que acertam so terrestres vs. as que acertam aereos
 - [ ] Tufao: invoca o pastor alemao corpo a corpo
-- [ ] Ordem de desenho: inimigos e torres usam `100 + round((8 - y) * 10)` (ver `ARTE.md`)
+- [ ] Ordem de desenho: inimigos e torres usam `100 + round((17 - y) * 10)` (ver `ARTE.md`)
 - [ ] Pooling de projeteis e inimigos (item de performance da nota)
 
 ## Joao: jogo e interface (2,5 + 0,5 + 0,5)
