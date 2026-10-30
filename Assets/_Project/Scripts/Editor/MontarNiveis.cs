@@ -22,8 +22,9 @@ public static class MontarNiveis
     const string CENAS    = "Assets/_Project/Scenes";
     const string TEMPLATE = "Assets/Settings/Scenes/URP2DSceneTemplate.unity";
 
-    // 15 x 8 casas de 64px: cabe inteiro na referencia 960x540 da camera.
-    const int W = 15, H = 8;
+    // 30 x 17 casas de 64px: camera 1:1 em 1920x1080 (cada pixel da arte = 1 pixel da tela).
+    const int W = 30, H = 17;
+    const int REF_X = 1920, REF_Y = 1080;
 
     // Ordem de desenho: chao 0, coisas deitadas no chao 1, objetos em pe 100+.
     const int ORDEM_CHAO = 0, ORDEM_DECALQUE = 1;
@@ -34,6 +35,7 @@ public static class MontarNiveis
         public Vector2Int[][] caminhos;
         public Vector2Int[] canteiros, plantacao, cogumelos;
         public Vector2Int poco;
+        public RectInt celeiro;   // area reservada para o celeiro, encostada no fim do caminho
     }
 
     static Vector2Int[] P(params int[] xy)
@@ -45,33 +47,37 @@ public static class MontarNiveis
 
     // Casa (x, y) com y = 0 embaixo. O primeiro ponto de cada caminho fica em
     // x = -1, fora da tela: e de la que os inimigos entram.
-    // O poco ocupa 2x2 casas; a posicao dada e a casa de baixo a esquerda.
+    // O poco ocupa 3x3 casas; a posicao dada e a casa de baixo a esquerda.
+    // As linhas y = 0 e y = 16 sao da cerca.
     static readonly Nivel[] NIVEIS =
     {
-        // Primavera: um caminho em Z, facil de ler. 6 canteiros.
+        // Primavera: zigue-zague com 6 curvas. 10 canteiros.
         new Nivel { id = 1, nome = "Primavera", estacao = 1, cultura = "tile_cenoura",
-            caminhos  = new[] { P(-1,5, 6,5, 6,2, 14,2) },
-            canteiros = P(2,6, 4,4, 5,2, 7,4, 10,3, 11,1),
-            plantacao = P(12,4, 13,4, 12,5, 13,5),
-            poco = new Vector2Int(1, 1),
-            cogumelos = P(9,6, 3,2, 8,1) },
+            caminhos  = new[] { P(-1,12, 8,12, 8,5, 16,5, 16,11, 23,11, 23,5, 25,5) },
+            celeiro   = new RectInt(26, 4, 4, 4),
+            canteiros = P(4,13, 7,10, 10,6, 12,4, 14,6, 17,9, 19,12, 20,10, 22,7, 24,4),
+            plantacao = P(2,3, 3,3, 4,3, 2,4, 3,4, 4,4, 2,5, 3,5, 4,5),
+            poco = new Vector2Int(11, 8),
+            cogumelos = P(2,8, 18,2, 12,14, 28,13) },
 
-        // Verao: serpentina com curvas fechadas. 8 canteiros.
+        // Verao: serpentina longa. 12 canteiros.
         new Nivel { id = 2, nome = "Verao", estacao = 2, cultura = "tile_trigo",
-            caminhos  = new[] { P(-1,2, 3,2, 3,5, 7,5, 7,2, 11,2, 11,5, 14,5) },
-            canteiros = P(2,3, 4,4, 5,6, 6,3, 8,4, 9,1, 10,4, 12,4),
-            plantacao = P(12,1, 13,1, 12,2, 13,2),
-            poco = new Vector2Int(0, 4),
-            cogumelos = P(5,1, 9,6) },
+            caminhos  = new[] { P(-1,3, 5,3, 5,13, 11,13, 11,4, 17,4, 17,13, 23,13, 23,8, 25,8) },
+            celeiro   = new RectInt(26, 7, 4, 4),
+            canteiros = P(3,4, 6,7, 6,11, 8,14, 10,10, 12,8, 14,5, 16,10, 18,7, 20,14, 22,10, 24,7),
+            plantacao = P(19,1, 20,1, 21,1, 19,2, 20,2, 21,2, 19,3, 20,3, 21,3),
+            poco = new Vector2Int(13, 9),
+            cogumelos = P(2,9, 8,1, 27,14, 14,15) },
 
-        // Outono: duas entradas que se juntam logo no comeco. 8 canteiros.
+        // Outono: duas entradas que se juntam em (7,8). 12 canteiros.
         new Nivel { id = 3, nome = "Outono", estacao = 3, cultura = "tile_abobora",
-            caminhos  = new[] { P(-1,6, 3,6, 3,4, 10,4, 10,2, 14,2),
-                                P(-1,1, 3,1, 3,4, 10,4, 10,2, 14,2) },
-            canteiros = P(2,2, 2,5, 4,2, 5,5, 7,3, 8,5, 11,3, 12,1),
-            plantacao = P(0,3, 1,3, 0,4, 1,4),
-            poco = new Vector2Int(12, 5),
-            cogumelos = P(6,1, 7,6) },
+            caminhos  = new[] { P(-1,13, 7,13, 7,8, 15,8, 15,4, 22,4, 22,9, 25,9),
+                                P(-1,3, 7,3, 7,8, 15,8, 15,4, 22,4, 22,9, 25,9) },
+            celeiro   = new RectInt(26, 8, 4, 4),
+            canteiros = P(5,12, 5,4, 8,11, 6,7, 10,9, 12,7, 14,5, 16,6, 18,5, 20,3, 21,7, 24,10),
+            plantacao = P(1,6, 2,6, 3,6, 1,7, 2,7, 3,7, 1,8, 2,8, 3,8),
+            poco = new Vector2Int(10, 11),
+            cogumelos = P(3,14, 18,12, 27,2, 12,2) },
     };
 
     [MenuItem("Defesa da Colheita/Gerar niveis")]
@@ -157,13 +163,13 @@ public static class MontarNiveis
             var cam = go.GetComponent<Camera>();
             if (cam == null) continue;
             cam.orthographic = true;
-            cam.orthographicSize = 270f / 64f;                    // 540px de altura / 64 PPU / 2
+            cam.orthographicSize = REF_Y / 2f / 64f;              // 1080px de altura / 64 PPU / 2
             cam.transform.position = new Vector3(W / 2f, H / 2f, -10f);
             var ppc = cam.GetComponent<PixelPerfectCamera>();
             if (ppc == null) ppc = cam.gameObject.AddComponent<PixelPerfectCamera>();
             ppc.assetsPPU = 64;
-            ppc.refResolutionX = 960;
-            ppc.refResolutionY = 540;
+            ppc.refResolutionX = REF_X;
+            ppc.refResolutionY = REF_Y;
         }
 
         EditorSceneManager.SaveScene(cena, cenaPath);
@@ -272,34 +278,34 @@ public static class MontarNiveis
         foreach (var c in nv.plantacao)
             Sprite_(grupo, "Tiles/" + nv.cultura, Centro(c), ORDEM_DECALQUE);
 
-        // props de pivo no pe apoiam na base da casa; o poco (2x2) centra entre as duas casas
-        Sprite_(grupo, "Props/prop_poco_2x", new Vector3(nv.poco.x + 1f, nv.poco.y, 0f), -1);
+        // props de pivo no pe apoiam na base da casa; o poco (3x3) centra na casa do meio
+        Sprite_(grupo, "Props/prop_poco_3x", new Vector3(nv.poco.x + 1.5f, nv.poco.y, 0f), -1);
         foreach (var c in nv.cogumelos)
             Sprite_(grupo, "Props/prop_cogumelos", new Vector3(c.x + 0.5f, c.y + 0.2f, 0f), -1);
 
-        // cerca em cima e embaixo; pecas _2x de 64px = uma casa cada
+        // cerca em cima e embaixo; pecas _3x de 96px = uma casa e meia cada
         var cerca = new GameObject("Cerca").transform;
         cerca.SetParent(grupo);
-        Vector3 baseMundo = Centro(nv.caminhos[0][nv.caminhos[0].Length - 1]);
         foreach (float y in new[] { 0.05f, H - 0.95f })
-            for (int i = 0; i < W; i++)
-            {
-                var pos = new Vector3(0.5f + i, y, 0f);
-                if (Vector2.Distance(pos, baseMundo) < 1.6f) continue;   // deixa espaco para o celeiro
-                Sprite_(cerca, "Cerca/cerca_lado_" + (i % 3 + 1) + "_2x", pos, -1);
-            }
+            for (int i = 0; i < W * 2 / 3; i++)
+                Sprite_(cerca, "Cerca/cerca_lado_" + (i % 3 + 1) + "_3x", new Vector3(0.75f + i * 1.5f, y, 0f), -1);
     }
 
     static void CriarBase(Nivel nv, Transform pai)
     {
-        // Arte do celeiro ainda nao existe. O gatilho ja fica no lugar certo:
-        // e ele que vai detectar o inimigo chegando.
+        // O gatilho fica no fim do caminho: e ele que detecta o inimigo chegando.
         var go = new GameObject("Base");
         go.transform.SetParent(pai);
         go.transform.position = Centro(nv.caminhos[0][nv.caminhos[0].Length - 1]);
         var col = go.AddComponent<BoxCollider2D>();
         col.isTrigger = true;
         col.size = Vector2.one;
+
+        // Arte do celeiro ainda nao existe: este objeto marca a area reservada.
+        // Pivo no pe e no meio, como os outros props; e so colocar o SpriteRenderer.
+        var celeiro = new GameObject("Celeiro");
+        celeiro.transform.SetParent(pai);
+        celeiro.transform.position = new Vector3(nv.celeiro.x + nv.celeiro.width / 2f, nv.celeiro.y, 0f);
     }
 
     // --------------------------------------------------------- utilitarios

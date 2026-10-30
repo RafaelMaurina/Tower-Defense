@@ -18,7 +18,7 @@
 Tema: defesa de uma fazenda, pixel art cozy visto de cima. Arte propria do trio (nada de
 assets de terceiros com copyright).
 
-- **3 niveis** (Primavera, Verao, Outono), 15 x 8 casas de 64 px, ja gerados em `Assets/_Project/Scenes` e `Prefabs/Niveis`.
+- **3 niveis** (Primavera, Verao, Outono), 30 x 17 casas de 64 px (camera 1:1 em 1920x1080), ja gerados em `Assets/_Project/Scenes` e `Prefabs/Niveis`.
 - **5 torres**, cada uma com **3 niveis de upgrade**: Espantalho, Metralhadora de Uvas, Canhao de Abobora, Colmeia, Tufao (casinha que invoca um pastor alemao corpo a corpo; destrava ao vencer no Dificil).
 - **7 inimigos**: corvo, guaxinim, javali, gafanhoto (salta), raposa, morcego (voa), pato (ziguezague, quebra a mira preditiva).
 - Apenas 2 torres atingem inimigos aereos.
@@ -78,7 +78,7 @@ Responsabilidades nas fronteiras:
 - **Fabio** cria `Enemy`, `Tower`, `Projectile`, `EnemyRegistry` e os `ScriptableObject` de inimigo e torre.
 - **Joao** cria `GameManager`, `WaveSpawner` (le `WaveData`, instancia `Enemy`), construcao nos canteiros, HUD, menu, ranking.
 - **Joao** liga o clique do canteiro a `Tower` instanciada por `TowerData` (preco vem do `TowerData`).
-- Ordem de desenho de inimigos e torres: `sortingOrder = 100 + round((8 - y) * 10)` (ver `ARTE.md`).
+- Ordem de desenho de inimigos e torres: `sortingOrder = 100 + round((17 - y) * 10)` (ver `ARTE.md`).
 
 Estrutura de pastas (cada um mexe na sua):
 ```

@@ -34,9 +34,12 @@ Project Settings > Preset Manager para a pasta `Assets/_Project/Art/`.
 
 ## Camera
 
-Ortografica, `orthographicSize = 270 / 64 = 4.21875`, que da 960x540 de arte.
-Para travar a nitidez, adicione o componente **Pixel Perfect Camera** na Main
-Camera com Assets PPU 64 e Reference Resolution 960x540.
+Ortografica, `orthographicSize = 540 / 64 = 8.4375`, que da 1920x1080 de arte:
+cada pixel da arte vira 1 pixel da tela e cabem 30 x 17 casas. Para travar a
+nitidez, a Main Camera tem o componente **Pixel Perfect Camera** com Assets PPU 64
+e Reference Resolution 1920x1080 (os niveis ja saem assim do gerador).
+
+As demos (`DemoSprites`, `MontarMapa`) usam a mesma camera.
 
 ## Estacoes
 
@@ -67,7 +70,7 @@ exigir arte nova.
 
 - `Defesa da Colheita > Montar demo de sprites`: tiles, props e cerca isolados,
   dentro de um objeto `DEMO Sprites`
-- `Defesa da Colheita > Montar pedaco de mapa`: mapa 15x9 com Tilemap de
+- `Defesa da Colheita > Montar pedaco de mapa`: mapa 30x17 com Tilemap de
   verdade, estrada atravessando, cerca e canteiros, dentro de `DEMO Mapa`
 
 Para trocar a estacao do mapa, mude a constante `ESTACAO` no topo de
@@ -75,15 +78,27 @@ Para trocar a estacao do mapa, mude a constante `ESTACAO` no topo de
 
 Apagar o objeto raiz desfaz qualquer uma das duas demos.
 
+## Inimigos
+
+Desenhados numa tela de **21x21** (um terco do tile) e ampliados 3x com Scale3x,
+o mesmo grao do poco e da cerca. O original pequeno fica em `ArtSource/Inimigos`
+e o ampliado, com tela de 64x64 e pivo no pe, em `Art/Sprites/Inimigos`.
+Contorno de 1px na grade pequena, cor `#201821`. Dois quadros por bicho:
+`inimigo_<nome>_1.png` e `inimigo_<nome>_2.png`.
+
 ## Niveis
 
-`Defesa da Colheita > Gerar niveis` cria os tres niveis prontos (sem inimigos):
+`Defesa da Colheita > Gerar niveis` cria os tres niveis prontos (sem inimigos),
+com 30 x 17 casas cada:
 
 | Nivel | Estacao | Caminho | Canteiros | Plantacao |
 |---|---|---|---|---|
-| 1 | Primavera | 1 caminho em Z, 18 casas | 6 | cenoura |
-| 2 | Verao | serpentina, 24 casas | 8 | trigo |
-| 3 | Outono | 2 entradas que se juntam cedo, 19 e 20 casas | 8 | abobora |
+| 1 | Primavera | zigue-zague, 45 casas | 10 | cenoura 3x3 |
+| 2 | Verao | serpentina, 59 casas | 12 | trigo 3x3 |
+| 3 | Outono | 2 entradas que se juntam em (7,8), 52 casas | 12 | abobora 3x3 |
+
+Cada nivel tem uma area de 4 x 4 casas reservada para o celeiro, encostada no
+fim do caminho, e um objeto `Celeiro` vazio marcando onde o sprite entra.
 
 Cada nivel vira um **prefab** em `Assets/_Project/Prefabs/Niveis` (o que a cena
 de jogo vai instanciar) e uma **cena** em `Assets/_Project/Scenes` (para abrir,
@@ -105,7 +120,7 @@ virada para ela, inclusive nos cantos. Isso funciona em curva, o que os tiles
 |---|---|
 | Chao (Tilemap) | 0 |
 | Coisas deitadas no chao (canteiro, plantacao) | 1 |
-| Coisas em pe (poco, cerca, cogumelo; inimigos e torres depois) | `100 + round((8 - y) * 10)` |
+| Coisas em pe (poco, cerca, cogumelo; inimigos e torres depois) | `100 + round((17 - y) * 10)` |
 
 A formula faz quem esta mais embaixo na tela desenhar por cima. **Inimigos e
 torres precisam usar a mesma formula**, senao atravessam a cerca ou somem atras
@@ -120,12 +135,14 @@ do poco.
   encosta na pista se funde com ela. Apagar esse fundo no Piskel (deixar
   transparente em volta do canteiro) resolve; a comparacao ja foi feita e
   fica bem melhor.
-- **Poco e cerca**: os niveis usam `prop_poco_2x.png` e `cerca_lado_N_2x.png`,
-  que sao os originais ampliados 2x por algoritmo (EPX). O poco ocupa 2x2 casas
-  e cada peca de cerca, 1 casa. E provisorio: o contorno ficou com 2px, mais
-  grosso que o resto da arte. Redesenhar no Piskel numa tela do dobro do
-  tamanho (poco 128x128, cerca 64x64), usando esses arquivos como base. Os
+- **Poco e cerca**: os niveis usam `prop_poco_3x.png` e `cerca_lado_N_3x.png`,
+  que sao os originais ampliados 3x por algoritmo (Scale3x). O poco ocupa 3x3
+  casas e cada peca de cerca, 1,5 casa. E provisorio: o contorno ficou com 3px,
+  mais grosso que o resto da arte. Redesenhar no Piskel numa tela do triplo do
+  tamanho (poco 192x192, cerca 96x96), usando esses arquivos como base. Os
   originais nao foram alterados; portoes e cerca vertical continuam 1x.
+- **Mapa vazio**: com 30 x 17 casas sobra muito gramado. Faltam arvores,
+  arbustos, pedras e flores para preencher.
 - **Canto interno**: onde a estrada faz curva, a casa de grama na diagonal do
   lado de FORA da curva nao encosta em estrada nenhuma e fica sem borda, e
   aparece um degrauzinho no canto. Conferido no Unity: sao 2 a 4 pixels, so
