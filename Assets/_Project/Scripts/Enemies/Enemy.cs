@@ -13,6 +13,7 @@ public class Enemy : MonoBehaviour, IDamageable
     /// Distancia percorrida no caminho. Empurrao diminui, salto soma.
     public float Distance { get; set; }
 
+    public float Health => health;
     public bool Flying => data.flying;
     public bool IsAlive { get; private set; }
     public Transform Transform => transform;
@@ -44,6 +45,11 @@ public class Enemy : MonoBehaviour, IDamageable
 
         if (Distance >= path.Length) ReachBase();
     }
+
+    /// Onde o inimigo estara depois de 'seconds', se continuar reto pelo caminho.
+    /// E o que o projetil usa para mirar a frente. Nao considera desvios
+    /// (ziguezague do pato), e por isso o pato escapa da mira.
+    public Vector3 PredictPosition(float seconds) => path.PointAt(Distance + data.speed * seconds);
 
     public void TakeDamage(float amount)
     {
