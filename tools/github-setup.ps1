@@ -1,10 +1,16 @@
-# Configura o GitHub do projeto: rotulos, milestones, issues, quadro kanban e protecao do main.
+# Configura o GitHub do projeto: rotulos, milestones, issues, branches, quadro kanban e protecao do main.
 # Requer: gh (GitHub CLI) logado com os escopos repo e project:
 #   gh auth login -s project
 # Rodar uma vez, na raiz do projeto:  powershell -File tools/github-setup.ps1
 $ErrorActionPreference = "Stop"
 $repo = "RafaelMaurina/Tower-Defense"
 $dono = "RafaelMaurina"
+
+# usuarios do GitHub de cada um
+$rafael = "RafaelMaurina"
+$fabio  = "fabioov"
+$joao   = "Joao-Althaus"
+$todos  = "$rafael,$fabio,$joao"
 
 # ---- rotulos
 $rotulos = @{
@@ -21,13 +27,13 @@ foreach ($m in $marcos) {
   gh api "repos/$repo/milestones" -f title="$($m[0])" -f due_on="$($m[1])T23:59:59Z" 2>$null | Out-Null
 }
 
-# ---- issues: titulo | rotulo | marco | responsavel
+# ---- issues: titulo | rotulo | marco | responsavel (opcional; sem ele, vai para o dono da area)
 $M1="M1 - Nivel 1 jogavel"; $M2="M2 - Conteudo completo"; $M3="M3 - Integrado e testado"; $E="Entrega"; $B="Bonus - A Prova Final"
 $issues = @(
   # infra e contratos
-  @("Fechar contratos entre combate e jogo (interfaces, ScriptableObjects vazios)", "infra", $M1),
-  @("Proteger o main e ligar o CODEOWNERS", "infra", $M1),
-  @("Compartilhar o repositorio com rafaelrieder", "infra", $M3),
+  @("Fechar contratos entre combate e jogo (interfaces, ScriptableObjects vazios)", "infra", $M1, "$fabio,$joao"),
+  @("Proteger o main e ligar o CODEOWNERS", "infra", $M1, $rafael),
+  @("Compartilhar o repositorio com rafaelrieder", "infra", $M3, $rafael),
   # Fabio: combate
   @("Enemy: andar pelo WaypointPath por distancia, vida e recompensa", "combate", $M1),
   @("EnemyRegistry: lista de inimigos vivos para as torres consultarem", "combate", $M1),
@@ -73,19 +79,27 @@ $issues = @(
   @("SFX: vitoria e derrota; musica de menu e de fase", "arte-audio", $M3),
   @("Mixagem: volume de musica e efeitos separados", "arte-audio", $M3),
   # entrega
-  @("Build Windows testada em outra maquina", "infra", $M3),
-  @("README com link do executavel e do video", "infra", $E),
-  @("Gravar e editar o video de demonstracao", "infra", $E),
-  @("Ensaiar a apresentacao (10 min + 5 min de perguntas)", "infra", $E),
+  @("Build Windows testada em outra maquina", "infra", $M3, $todos),
+  @("README com link do executavel e do video", "infra", $E, $rafael),
+  @("Gravar e editar o video de demonstracao", "infra", $E, "$joao,$rafael"),
+  @("Ensaiar a apresentacao (10 min + 5 min de perguntas)", "infra", $E, $todos),
   # bonus
-  @("Bonus: cena do campus a noite", "bonus", $B),
-  @("Bonus: inimigos AFD e AFN (AFN se divide no primeiro dano)", "bonus", $B),
-  @("Bonus: boss em 3 fases (Chomsky)", "bonus", $B)
+  @("Bonus: cena do campus a noite", "bonus", $B, "$joao,$rafael"),
+  @("Bonus: inimigos AFD e AFN (AFN se divide no primeiro dano)", "bonus", $B, $fabio),
+  @("Bonus: boss em 3 fases (Chomsky)", "bonus", $B, $fabio)
 )
+$donoDaArea = @{ "arte-audio" = $rafael; "combate" = $fabio; "jogo-ui" = $joao }
 $urls = @()
 foreach ($i in $issues) {
-  $u = gh issue create --repo $repo --title $i[0] --label $i[1] --milestone $i[2] --body "Ver PLANEJAMENTO.md (contratos e regras) e DIVISAO.md."
+  $resp = if ($i.Count -gt 3) { $i[3] } else { $donoDaArea[$i[1]] }
+  $u = gh issue create --repo $repo --title $i[0] --label $i[1] --milestone $i[2] --assignee $resp --body "Ver PLANEJAMENTO.md (contratos e regras) e DIVISAO.md."
   $urls += $u
+}
+
+# ---- uma branch por pessoa, saindo do main
+$sha = gh api "repos/$repo/git/ref/heads/main" --jq .object.sha
+foreach ($b in @("rafael/arte-audio", "fabio/combate", "joao/jogo-ui")) {
+  gh api "repos/$repo/git/refs" -f ref="refs/heads/$b" -f sha=$sha 2>$null | Out-Null
 }
 
 # ---- quadro kanban (aba Projetos)

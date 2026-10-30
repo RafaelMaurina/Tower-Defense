@@ -1,9 +1,8 @@
 # Planejamento geral: Defesa da Colheita
 
-> **Para quem for passar este arquivo ao seu Claude:** ele e autocontido. Leia tudo antes
-> de propor ou escrever codigo. Siga os **contratos** da secao 4 e as **regras** da secao 7.
-> Nao invente outra arquitetura sem avisar o grupo. Trabalho avaliado: o codigo precisa
-> ser simples o bastante para o autor explicar na banca.
+> Leia tudo antes de comecar a codar. Siga os **contratos** da secao 4 e as **regras** da
+> secao 7. Nao invente outra arquitetura sem avisar o grupo. O codigo precisa ser simples
+> o bastante para o autor explicar na banca.
 
 ## 1. Contexto
 
@@ -117,7 +116,7 @@ Cada tarefa e uma **issue** com dono, rotulo de area (`arte-audio`, `combate`, `
 
 ## 7. Regras de trabalho
 
-- **Branch por tarefa**, nome `pessoa/assunto` (ex.: `fabio/torre-base`). Nunca commitar direto no `main`.
+- Cada um tem sua branch: `rafael/arte-audio`, `fabio/combate`, `joao/jogo-ui`. Tarefa maior pode ganhar branch propria, nome `pessoa/assunto` (ex.: `fabio/torre-base`). Nunca commitar direto no `main`.
 - O `main` e protegido: so entra por **Pull Request**, e o **Rafael** aprova e faz o merge (arquivo `.github/CODEOWNERS`).
 - PR pequeno, ligado a issue (`Closes #N`), com a mensagem dizendo o que mudou e como testar.
 - **Cena e prefab compartilhados**: avisar no grupo antes de editar. Montar objetos como prefab proprio e so arrastar para a cena.

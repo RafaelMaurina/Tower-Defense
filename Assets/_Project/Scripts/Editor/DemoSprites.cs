@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEditor;
 
 /// Monta uma demonstracao dos sprites na cena ATUAL, dentro de um objeto
-/// unico chamado "DEMO Sprites" — basta apagar esse objeto para desfazer.
+/// unico chamado "DEMO Sprites". Basta apagar esse objeto para desfazer.
 public static class DemoSprites
 {
     const float PPU = 64f;
