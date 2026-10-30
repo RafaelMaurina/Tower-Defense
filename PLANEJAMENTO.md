@@ -126,7 +126,6 @@ Cada tarefa e uma **issue** com dono, rotulo de area (`arte-audio`, `combate`, `
 - Nunca usar Scale do Transform para ajustar tamanho de sprite.
 - Dados de balanceamento em `ScriptableObject`, nao no codigo.
 - Sem assets de terceiros com copyright.
-- Commits sem a linha `Co-Authored-By` (trabalho avaliado).
 - Cada um precisa conseguir **explicar o proprio codigo** na banca: prefira simples e comentado onde nao e obvio.
 
 ## 8. Fora do escopo
