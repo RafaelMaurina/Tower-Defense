@@ -81,10 +81,13 @@ Apagar o objeto raiz desfaz qualquer uma das duas demos.
 ## Inimigos
 
 Desenhados numa tela de **21x21** (um terco do tile) e ampliados 3x com Scale3x,
-o mesmo grao do poco e da cerca. O original pequeno fica em `ArtSource/Inimigos`
-e o ampliado, com tela de 64x64 e pivo no pe, em `Art/Sprites/Inimigos`.
-Contorno de 1px na grade pequena, cor `#201821`. Dois quadros por bicho:
-`inimigo_<nome>_1.png` e `inimigo_<nome>_2.png`.
+o mesmo grao do poco e da cerca. O original fica em `ArtSource/Inimigos` como
+`.piskel`, com a animacao inteira, e o ampliado, com tela de 64x64 e pivo no pe,
+em `Art/Sprites/Inimigos`.
+
+No Piskel o desenho fica **sem contorno**. O contorno preto (`#201821`) de 1px e
+aplicado depois de ampliar, para ficar fino na tela. Quatro quadros por bicho:
+`inimigo_<nome>_1.png` ate `inimigo_<nome>_4.png`.
 
 ## Niveis
 
