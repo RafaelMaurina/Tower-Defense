@@ -108,6 +108,12 @@ de jogo vai instanciar) e uma **cena** em `Assets/_Project/Scenes` (para abrir,
 dar Play e testar sozinho). Se ja existirem, o menu nao mexe neles; para gerar
 de novo use `Gerar niveis (apagar e refazer)`, que pede confirmacao.
 
+Esses prefabs e cenas **nao vao para o git**: sao milhares de linhas geradas. Ao
+abrir o projeto, `GerarNiveisAoAbrir` cria os que estiverem faltando. Por isso:
+mudanca de nivel e feita nos dados do `MontarNiveis.cs`, nunca editando o prefab
+ou a cena a mao, e nenhum outro asset deve apontar direto para eles. Para usar
+um nivel no jogo, carregue pelo nome (`Nivel_1_Primavera`).
+
 Os dados dos niveis ficam no topo de `MontarNiveis.cs`, em coordenadas de casa
 (x, y com y = 0 embaixo). O caminho e uma lista de pontos de virada; o primeiro
 fica em x = -1, fora da tela, que e de onde os inimigos entram.

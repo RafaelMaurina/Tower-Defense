@@ -18,7 +18,7 @@
 Tema: defesa de uma fazenda, pixel art cozy visto de cima. Arte propria do trio (nada de
 assets de terceiros com copyright).
 
-- **3 niveis** (Primavera, Verao, Outono), 30 x 17 casas de 64 px (camera 1:1 em 1920x1080), ja gerados em `Assets/_Project/Scenes` e `Prefabs/Niveis`.
+- **3 niveis** (Primavera, Verao, Outono), 30 x 17 casas de 64 px (camera 1:1 em 1920x1080), gerados em `Assets/_Project/Scenes` e `Prefabs/Niveis` ao abrir o projeto (nao vao para o git; ver `ARTE.md`).
 - **5 torres**, cada uma com **3 niveis de upgrade**: Espantalho, Metralhadora de Uvas, Canhao de Abobora, Colmeia, Tufao (casinha que invoca um pastor alemao corpo a corpo; destrava ao vencer no Dificil).
 - **7 inimigos**: corvo, guaxinim, javali, gafanhoto (salta), raposa, morcego (voa), pato (ziguezague, quebra a mira preditiva).
 - Apenas 2 torres atingem inimigos aereos.
@@ -85,7 +85,7 @@ Estrutura de pastas (cada um mexe na sua):
 Assets/_Project/
   Art/            Rafael
   Audio/          Rafael
-  Prefabs/Niveis/ gerado (nao editar a mao)
+  Prefabs/Niveis/ gerado ao abrir, fora do git (nao editar a mao; carregar pelo nome)
   Prefabs/Enemies, Towers, Projectiles/   Fabio
   Scripts/Enemies, Towers, Projectiles/   Fabio
   Scripts/Game, UI, Waves/                Joao

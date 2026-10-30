@@ -83,6 +83,18 @@ public static class MontarNiveis
     [MenuItem("Defesa da Colheita/Gerar niveis")]
     public static void Gerar() => GerarTodos(false);
 
+    /// Algum prefab ou cena de nivel ainda nao existe neste computador?
+    public static bool FaltaAlgum()
+    {
+        foreach (var nv in NIVEIS)
+        {
+            string nome = "Nivel_" + nv.id + "_" + nv.nome;
+            if (AssetDatabase.LoadAssetAtPath<Object>(PREFABS + "/" + nome + ".prefab") == null) return true;
+            if (AssetDatabase.LoadAssetAtPath<Object>(CENAS + "/" + nome + ".unity") == null) return true;
+        }
+        return false;
+    }
+
     [MenuItem("Defesa da Colheita/Gerar niveis (apagar e refazer)")]
     public static void Refazer()
     {
