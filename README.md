@@ -1,7 +1,7 @@
 # Defesa da Colheita
 
-Tower defense 2D em pixel art. Trabalho prático de CCC300 — Computação Gráfica e
-Realidade Virtual, Prof. Dr. Rafael Rieder, UPF.
+Tower defense 2D em pixel art. Trabalho prático de CCC300 (Computação Gráfica e
+Realidade Virtual), Prof. Dr. Rafael Rieder, UPF.
 
 ## Como clonar
 
@@ -10,7 +10,7 @@ efeitos sonoros depois. Instale o LFS **antes do primeiro clone**.
 
 ```bash
 git lfs install
-git clone https://github.com/RafaelMaurina/My-project.git
+git clone https://github.com/RafaelMaurina/Tower-Defense.git
 ```
 
 Sem isso, os arquivos chegam como ponteiros de texto de 131 bytes em vez das
@@ -25,7 +25,7 @@ git lfs pull
 ## Abrir no Unity
 
 Versão **6000.6.2f1**. Abrir em versão diferente faz o Unity reimportar os assets e
-sujar o diff para o resto do time — confira no Unity Hub antes de abrir.
+sujar o diff para o resto do time. Confira no Unity Hub antes de abrir.
 
 ## Arte
 
@@ -44,6 +44,6 @@ Ele cria um objeto `DEMO Sprites`; apagar o objeto desfaz.
 
 ## Equipe
 
-- Rafael — [@RafaelMaurina](https://github.com/RafaelMaurina)
-- _a definir_
-- _a definir_
+- Rafael ([@RafaelMaurina](https://github.com/RafaelMaurina)): arte e audio
+- Fabio ([@fabioov](https://github.com/fabioov)): combate
+- Joao ([@Joao-Althaus](https://github.com/Joao-Althaus)): jogo e interface

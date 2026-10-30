@@ -1,4 +1,4 @@
-# Arte — configuracao de importacao
+# Arte: configuracao de importacao
 
 Fica na raiz do projeto, fora de `Assets/`, para o Unity nao importar este arquivo.
 
@@ -11,7 +11,7 @@ objeto ficou do tamanho errado, redesenhe no tamanho certo.
 
 Tamanho da tela de desenho segue o tamanho real do objeto:
 tile 64x64, cerca 32x32, e assim por diante. Telas diferentes nao sao problema
-desde que a espessura do traco seja a mesma — ja conferido neste conjunto.
+desde que a espessura do traco seja a mesma, e isso ja foi conferido neste conjunto.
 
 ## Configuracao gravada nos .meta
 
@@ -47,10 +47,10 @@ Cada grama e uma estacao, e a cor e o que identifica:
 | `grama_1` | `#5ac224` `#348808` `#99eb6f` | Primavera |
 | `grama_2` | `#06702c` `#00a03a` `#56e289` | Verao |
 | `grama_3` | `#92b121` `#5b7302` `#d4f269` | Outono |
-| — | — | Inverno (a fazer) |
+| - | - | Inverno (a fazer) |
 
 Cada estacao tem o conjunto completo: base, quatro bordas, quatro cantos, e as
-versoes `_alpha` — grama que so termina, sem a borda de terra desenhada, para
+versoes `_alpha`: grama que so termina, sem a borda de terra desenhada, para
 sobrepor a outra camada.
 
 **A estrada acompanha a estacao.** `estrada_grama_1` combina com `grama_1`, e
@@ -65,9 +65,9 @@ exigir arte nova.
 
 ## Demos
 
-- `Defesa da Colheita > Montar demo de sprites` — tiles, props e cerca isolados,
+- `Defesa da Colheita > Montar demo de sprites`: tiles, props e cerca isolados,
   dentro de um objeto `DEMO Sprites`
-- `Defesa da Colheita > Montar pedaco de mapa` — mapa 15x9 com Tilemap de
+- `Defesa da Colheita > Montar pedaco de mapa`: mapa 15x9 com Tilemap de
   verdade, estrada atravessando, cerca e canteiros, dentro de `DEMO Mapa`
 
 Para trocar a estacao do mapa, mude a constante `ESTACAO` no topo de
