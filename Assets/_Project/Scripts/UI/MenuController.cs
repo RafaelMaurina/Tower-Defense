@@ -14,8 +14,6 @@ public class MenuController : MonoBehaviour
     [Header("Sprites dos botões")]
     [SerializeField] Sprite playNormalSprite;
     [SerializeField] Sprite playSelectedSprite;
-    [SerializeField] Sprite difficultyNormalSprite;
-    [SerializeField] Sprite difficultySelectedSprite;
     [Header("Indicadores de dificuldade")]
     [SerializeField] Sprite difficultyEasyBadge;
     [SerializeField] Sprite difficultyEasyBadgeSelected;
@@ -39,12 +37,10 @@ public class MenuController : MonoBehaviour
     [SerializeField] AudioClip clickSound;
     [SerializeField] string firstLevel = "Nivel_1_Primavera";
 
-    Image difficultyBadge;
     Transform menuRoot;
     GameObject mainMenuContent;
     GameObject difficultyMenu;
     GameDifficulty difficulty = GameDifficulty.Easy;
-    bool loadLevelAfterDifficultySelection;
 
     void Start()
     {
@@ -75,20 +71,14 @@ public class MenuController : MonoBehaviour
         AddImage(mainMenuContent.transform, "Letreiro Defesa da Colheita", logoSprite, new Vector2(.28f, .72f), new Vector2(.72f, .99f), Color.white, true);
 
         CreateSpriteButton(mainMenuContent.transform, "Jogar", playNormalSprite, playSelectedSprite,
-            new Vector2(.30f, .59f), new Vector2(.70f, .70f), StartGame);
-        CreateSpriteButton(mainMenuContent.transform, "Dificuldade", difficultyNormalSprite, difficultySelectedSprite,
-            new Vector2(.30f, .46f), new Vector2(.70f, .57f), OpenDifficultyMenu);
-        difficultyBadge = AddImage(mainMenuContent.transform, "Indicador de dificuldade", difficultyEasyBadge,
-            new Vector2(.42f, .39f), new Vector2(.58f, .46f), Color.white, true);
-        difficultyBadge.raycastTarget = false;
-        UpdateDifficultyBadge();
+            new Vector2(.30f, .53f), new Vector2(.70f, .65f), StartGame);
 
         CreateSpriteButton(mainMenuContent.transform, "Ranking", rankingNormalSprite, rankingSelectedSprite,
-            new Vector2(.30f, .25f), new Vector2(.70f, .35f), ShowRanking);
+            new Vector2(.30f, .36f), new Vector2(.70f, .48f), ShowRanking);
         CreateSpriteButton(mainMenuContent.transform, "Informações", infoNormalSprite, infoSelectedSprite,
-            new Vector2(.30f, .13f), new Vector2(.70f, .23f), ShowInfo);
+            new Vector2(.30f, .19f), new Vector2(.70f, .31f), ShowInfo);
         CreateSpriteButton(mainMenuContent.transform, "Sair", exitNormalSprite, exitSelectedSprite,
-            new Vector2(.30f, .01f), new Vector2(.70f, .11f), ExitGame);
+            new Vector2(.30f, .02f), new Vector2(.70f, .14f), ExitGame);
         // O fundo é filho direto do Canvas e deve ficar atrás do conteúdo principal.
         mainMenuContent.transform.SetAsLastSibling();
     }
@@ -114,7 +104,7 @@ public class MenuController : MonoBehaviour
     void StartGame()
     {
         // Jogar sempre exige confirmar uma dificuldade antes de carregar a fase.
-        OpenDifficultyMenu(true);
+        OpenDifficultyMenu();
     }
 
     IEnumerator LoadGameAfterClick()
@@ -128,7 +118,16 @@ public class MenuController : MonoBehaviour
     IEnumerator ExitAfterClick()
     {
         yield return new WaitForSecondsRealtime(0.12f);
+        QuitApplication();
+    }
+
+    static void QuitApplication()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
         Application.Quit();
+#endif
     }
 
     Image CreateSpriteButton(Transform root, string name, Sprite normal, Sprite selected,
@@ -208,47 +207,25 @@ public class MenuController : MonoBehaviour
         return panelObject;
     }
 
-    void OpenDifficultyMenu() => OpenDifficultyMenu(false);
-
-    void OpenDifficultyMenu(bool startAfterSelection)
+    void OpenDifficultyMenu()
     {
         if (difficultyMenu != null) return;
-        loadLevelAfterDifficultySelection = startAfterSelection;
         difficultyMenu = CreateSubmenuPanel("Dificuldade", CloseDifficultyMenu);
         CreateSpriteButton(difficultyMenu.transform, "Fácil", difficultyEasyBadge, difficultyEasyBadgeSelected,
-            new Vector2(.28f, .68f), new Vector2(.72f, .80f), () => SelectDifficulty(GameDifficulty.Easy));
-        AddDifficultyCaption(difficultyMenu.transform, "Manhã", .63f, .67f);
+            new Vector2(.35f, .65f), new Vector2(.65f, .77f), () => SelectDifficulty(GameDifficulty.Easy));
         CreateSpriteButton(difficultyMenu.transform, "Normal", difficultyNormalBadge, difficultyNormalBadgeSelected,
-            new Vector2(.28f, .47f), new Vector2(.72f, .59f), () => SelectDifficulty(GameDifficulty.Normal));
-        AddDifficultyCaption(difficultyMenu.transform, "Pôr do sol", .42f, .46f);
+            new Vector2(.35f, .43f), new Vector2(.65f, .55f), () => SelectDifficulty(GameDifficulty.Normal));
         CreateSpriteButton(difficultyMenu.transform, "Difícil", difficultyHardBadge, difficultyHardBadgeSelected,
-            new Vector2(.28f, .26f), new Vector2(.72f, .38f), () => SelectDifficulty(GameDifficulty.Hard));
-        AddDifficultyCaption(difficultyMenu.transform, "Noite", .21f, .25f);
-    }
-
-    static void AddDifficultyCaption(Transform parent, string caption, float minY, float maxY)
-    {
-        var text = MakeText(parent, caption, new Vector2(.30f, minY), new Vector2(.70f, maxY), 22,
-            new Color32(255, 239, 195, 255));
-        text.fontStyle = FontStyle.Bold;
-        text.raycastTarget = false;
-        var outline = text.gameObject.AddComponent<Outline>();
-        outline.effectColor = new Color32(68, 35, 19, 255);
-        outline.effectDistance = new Vector2(2f, -2f);
+            new Vector2(.35f, .21f), new Vector2(.65f, .33f), () => SelectDifficulty(GameDifficulty.Hard));
     }
 
     void SelectDifficulty(GameDifficulty selectedDifficulty)
     {
         difficulty = selectedDifficulty;
-        UpdateDifficultyBadge();
         GameManager.SetDifficulty(difficulty);
-        bool shouldStartGame = loadLevelAfterDifficultySelection;
         CloseDifficultyMenu();
-        if (shouldStartGame)
-        {
-            if (GameManager.Instance != null) GameManager.Instance.ResetGame();
-            StartCoroutine(LoadGameAfterClick());
-        }
+        if (GameManager.Instance != null) GameManager.Instance.ResetGame();
+        StartCoroutine(LoadGameAfterClick());
     }
 
     void CloseDifficultyMenu()
@@ -257,25 +234,6 @@ public class MenuController : MonoBehaviour
         Destroy(difficultyMenu);
         difficultyMenu = null;
         if (mainMenuContent != null) mainMenuContent.SetActive(true);
-    }
-
-    void UpdateDifficultyBadge()
-    {
-        if (difficultyBadge == null) return;
-        if (difficulty == GameDifficulty.Easy)
-        {
-            difficultyBadge.sprite = difficultyEasyBadge;
-        }
-        else if (difficulty == GameDifficulty.Normal)
-        {
-            difficultyBadge.sprite = difficultyNormalBadge;
-        }
-        else
-        {
-            difficultyBadge.sprite = difficultyHardBadge;
-        }
-        difficultyBadge.rectTransform.localScale = Vector3.one;
-        difficultyBadge.enabled = difficultyBadge.sprite != null;
     }
 
     void ShowInfo() => InfoPanel.Show(
@@ -326,6 +284,20 @@ public class MenuButtonVisualState : MonoBehaviour, IPointerEnterHandler, IPoint
         image = targetImage;
         normalSprite = normal;
         highlightedSprite = highlighted;
+    }
+
+    void OnEnable()
+    {
+        pointerInside = false;
+        pointerDown = false;
+        RefreshSprite();
+    }
+
+    void OnDisable()
+    {
+        pointerInside = false;
+        pointerDown = false;
+        RefreshSprite();
     }
 
     public void OnPointerEnter(PointerEventData eventData)

@@ -244,14 +244,12 @@ MonoBehaviour:
   logoSprite: {fileID: 21300000, guid: f9a80acec819af842a9a3084d7ee8d22, type: 3}
   playNormalSprite: {fileID: 21300000, guid: 14aec6b47ccfba64a9b24648db591d4f, type: 3}
   playSelectedSprite: {fileID: 21300000, guid: 3ca44559f2a8ee04895fa379ffe2721b, type: 3}
-  difficultyNormalSprite: {fileID: 21300000, guid: f8ad09a5bc1028c4c8be20991c6895e4, type: 3}
-  difficultySelectedSprite: {fileID: 21300000, guid: 2b4cf898e47eaca47ac6a6714ed81736, type: 3}
-  difficultyEasyBadge: {fileID: 21300000, guid: 47eb1b8c3a4f07b468a5d576e5d72cc0, type: 3}
-  difficultyEasyBadgeSelected: {fileID: 21300000, guid: 6f9df8e4e24fde940adad29c73b43cc6, type: 3}
-  difficultyNormalBadge: {fileID: 21300000, guid: 305eceb82c9749547974bcec63322f5c, type: 3}
-  difficultyNormalBadgeSelected: {fileID: 21300000, guid: 7cde1273569bf76459d0ece4eb759941, type: 3}
-  difficultyHardBadge: {fileID: 21300000, guid: 881e1cb85451fa249a09153007392277, type: 3}
-  difficultyHardBadgeSelected: {fileID: 21300000, guid: d65039471afc5504682897c4cab5070d, type: 3}
+  difficultyEasyBadge: {fileID: 21300000, guid: 50825e06348029149840114f071233ca, type: 3}
+  difficultyEasyBadgeSelected: {fileID: 21300000, guid: fc98ea4f8b1b3164a817cd19fc1cc391, type: 3}
+  difficultyNormalBadge: {fileID: 21300000, guid: c1ed103020ced054497722f74ec95751, type: 3}
+  difficultyNormalBadgeSelected: {fileID: 21300000, guid: 21b28d21a5776354fb8f098d638d09e4, type: 3}
+  difficultyHardBadge: {fileID: 21300000, guid: 654b4cede69138241aec9909d5d47bb8, type: 3}
+  difficultyHardBadgeSelected: {fileID: 21300000, guid: 8c67b0b60a917f44b87fa15b565c0ab6, type: 3}
   submenuPanelSprite: {fileID: 21300000, guid: 9aed5bd27725a8d46a1f466698eb2873, type: 3}
   backButtonSprite: {fileID: 21300000, guid: 05d9ac35d0f29a34a873eb85aa600a67, type: 3}
   backButtonSelectedSprite: {fileID: 21300000, guid: c1b99ee3d05305f4888af7904b3ce35a, type: 3}
