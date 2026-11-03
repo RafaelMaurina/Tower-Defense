@@ -88,7 +88,7 @@ public class Projectile : MonoBehaviour
                 Enemy e = todos[i];
                 if (!e.IsAlive) continue;
                 if (e.Flying && !hitsFlying) continue;
-                if (Vector3.Distance(center, e.Transform.position) <= splashRadius) atingidos.Add(e);
+                if (Vector3.Distance(center, e.Center) <= splashRadius) atingidos.Add(e);
             }
             for (int i = 0; i < atingidos.Count; i++) atingidos[i].TakeDamage(damage);
         }
