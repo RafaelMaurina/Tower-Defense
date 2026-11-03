@@ -39,6 +39,7 @@ public class Enemy : MonoBehaviour, IDamageable
         IsAlive = true;
         animTime = 0f;
         transform.position = path.PointAt(0f);
+        UpdateOrder();
         Animate();
     }
 
@@ -48,10 +49,17 @@ public class Enemy : MonoBehaviour, IDamageable
 
         Distance += data.speed * Time.deltaTime;
         transform.position = path.PointAt(Distance);
+        UpdateOrder();
         animTime += Time.deltaTime;
         Animate();
 
         if (Distance >= path.Length) ReachBase();
+    }
+
+    // O inimigo anda, entao a ordem de desenho acompanha a altura a cada quadro (ver DrawOrder).
+    void UpdateOrder()
+    {
+        if (sr != null) sr.sortingOrder = DrawOrder.ForY(transform.position.y);
     }
 
     // Troca o quadro pelo tempo. Sem quadros (ex.: placeholder), mantem o sprite do prefab.

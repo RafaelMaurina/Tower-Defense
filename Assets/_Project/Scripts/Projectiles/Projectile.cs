@@ -24,6 +24,12 @@ public class Projectile : MonoBehaviour
     float traveled;
     float remaining;     // distancia que ainda pode voar antes de sumir
 
+    void Awake()
+    {
+        var sr = GetComponent<SpriteRenderer>();
+        if (sr != null) sr.sortingOrder = DrawOrder.Projectile;
+    }
+
     /// Ponto de mira calculado pela torre. Passa um pouco do ponto, para quem
     /// chegar la na hora ainda ser acertado e quem nao chegar ser errado.
     public void Init(Vector3 aimPoint, float damage, bool hitsFlying)
