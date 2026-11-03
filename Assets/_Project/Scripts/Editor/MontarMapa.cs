@@ -14,7 +14,7 @@ public static class MontarMapa
     // Grama 1 = primavera, 2 = verao, 3 = outono. Trocar aqui muda a estacao inteira.
     const int ESTACAO = 1;
 
-    const int X0 = -7, X1 = 7, Y0 = -4, Y1 = 4;   // 15 x 9 casas
+    const int X0 = -15, X1 = 14, Y0 = -8, Y1 = 8;   // 30 x 17 casas, a tela inteira
     const int ESTRADA_BAIXO = -1, ESTRADA_TOPO = 1;
 
     [MenuItem("Defesa da Colheita/Montar pedaco de mapa")]
@@ -95,18 +95,24 @@ public static class MontarMapa
         cerca.transform.SetParent(props.transform);
         string[] pecas = { "Cerca/cerca_lado_1", "Cerca/cerca_lado_2", "Cerca/cerca_lado_3" };
         int i = 0;
-        for (float x = -6f; x <= 6f; x += 0.5f, i++)
+        for (float x = X0 + 1f; x <= X1; x += 0.5f, i++)
         {
             bool portao = Mathf.Abs(x - 1.5f) < 0.01f || Mathf.Abs(x - 2f) < 0.01f;
-            Prop(cerca, portao ? "Cerca/portao_1" : pecas[i % pecas.Length], x, 3.5f);
+            Prop(cerca, portao ? "Cerca/portao_1" : pecas[i % pecas.Length], x, Y1 - 0.5f);
         }
 
+        // Mesma camera dos niveis: 1:1 em 1920x1080, centrada no mapa
         var cam = Camera.main;
         if (cam != null)
         {
             cam.orthographic = true;
-            cam.orthographicSize = 270f / 64f;
-            cam.transform.position = new Vector3(0f, 0f, -10f);
+            cam.orthographicSize = 540f / 64f;
+            cam.transform.position = new Vector3((X0 + X1 + 1) / 2f, (Y0 + Y1 + 1) / 2f, -10f);
+            var ppc = cam.GetComponent<UnityEngine.Rendering.Universal.PixelPerfectCamera>();
+            if (ppc == null) ppc = cam.gameObject.AddComponent<UnityEngine.Rendering.Universal.PixelPerfectCamera>();
+            ppc.assetsPPU = 64;
+            ppc.refResolutionX = 1920;
+            ppc.refResolutionY = 1080;
         }
 
         Selection.activeGameObject = raiz;
@@ -149,7 +155,8 @@ public static class MontarMapa
         go.transform.position = new Vector3(x, y, 0f);
         var sr = go.AddComponent<SpriteRenderer>();
         sr.sprite = sprite;
-        // quem esta mais embaixo na tela desenha na frente
-        sr.sortingOrder = 10 + Mathf.RoundToInt(-y * 10f);
+        // quem esta mais embaixo na tela desenha na frente; medido a partir do topo
+        // do mapa para nunca ficar negativo (negativo some atras do chao)
+        sr.sortingOrder = 10 + Mathf.RoundToInt((Y1 + 1 - y) * 10f);
     }
 }

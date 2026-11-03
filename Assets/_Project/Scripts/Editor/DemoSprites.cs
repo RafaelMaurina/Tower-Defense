@@ -35,14 +35,19 @@ public static class DemoSprites
         {
             Debug.Log("Camera antes: orthographic=" + cam.orthographic + " size=" + cam.orthographicSize);
             cam.orthographic = true;
-            cam.orthographicSize = 270f / PPU;   // 540px de altura de arte a 64 PPU
+            cam.orthographicSize = 540f / PPU;   // 1080px de altura de arte a 64 PPU, igual aos niveis
             cam.transform.position = new Vector3(0f, 0f, -10f);
+            var ppc = cam.GetComponent<UnityEngine.Rendering.Universal.PixelPerfectCamera>();
+            if (ppc == null) ppc = cam.gameObject.AddComponent<UnityEngine.Rendering.Universal.PixelPerfectCamera>();
+            ppc.assetsPPU = 64;
+            ppc.refResolutionX = 1920;
+            ppc.refResolutionY = 1080;
         }
 
         Selection.activeGameObject = raiz;
         SceneView.FrameLastActiveSceneView();
-        Debug.Log("Demo montada. Camera ortografica size " + (270f / PPU)
-                  + " = 960x540 de arte a 64 PPU. Apague o objeto \"" + RAIZ + "\" para desfazer.");
+        Debug.Log("Demo montada. Camera ortografica size " + (540f / PPU)
+                  + " = 1920x1080 de arte a 64 PPU. Apague o objeto \"" + RAIZ + "\" para desfazer.");
     }
 
     static void Linha(GameObject raiz, string titulo, float passo, Vector3 inicio, params string[] nomes)
