@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6572414d6562e4ba5863f40486d88891, type: 3}
+  m_Name: Tower_MetralhadoraUvas
+  m_EditorClassIdentifier: Assembly-CSharp::TowerData
+  displayName: Metralhadora de Uvas
+  levels:
+  - cost: 80
+    damage: 3
+    range: 2.5
+    fireRate: 4
+    sprite: {fileID: 0}
+  - cost: 60
+    damage: 4
+    range: 2.8
+    fireRate: 5
+    sprite: {fileID: 0}
+  - cost: 90
+    damage: 6
+    range: 3.2
+    fireRate: 6
+    sprite: {fileID: 0}
+  hitsFlying: 1
+  projectile: {fileID: 5401999607868768475, guid: dbfb7d5deeac74902adf5241c0ab8d0b, type: 3}
