@@ -8,7 +8,9 @@ public class Enemy : MonoBehaviour, IDamageable
     public EnemyData data;
 
     WaypointPath path;
+    SpriteRenderer sr;
     float health;
+    float animTime;
 
     /// Distancia percorrida no caminho. Empurrao diminui, salto soma.
     public float Distance { get; set; }
@@ -23,6 +25,8 @@ public class Enemy : MonoBehaviour, IDamageable
     /// GameManager escuta para tirar vida da base.
     public static event Action<Enemy> OnReachedBase;
 
+    void Awake() => sr = GetComponent<SpriteRenderer>();
+
     void OnEnable() => EnemyRegistry.Register(this);
     void OnDisable() => EnemyRegistry.Unregister(this);
 
@@ -33,7 +37,9 @@ public class Enemy : MonoBehaviour, IDamageable
         Distance = 0f;
         health = data.health;
         IsAlive = true;
+        animTime = 0f;
         transform.position = path.PointAt(0f);
+        Animate();
     }
 
     void Update()
@@ -42,8 +48,20 @@ public class Enemy : MonoBehaviour, IDamageable
 
         Distance += data.speed * Time.deltaTime;
         transform.position = path.PointAt(Distance);
+        animTime += Time.deltaTime;
+        Animate();
 
         if (Distance >= path.Length) ReachBase();
+    }
+
+    // Troca o quadro pelo tempo. Sem quadros (ex.: placeholder), mantem o sprite do prefab.
+    // Os sprites olham para a direita e os caminhos so vao para a direita ou na vertical;
+    // se um caminho passar a ir para a esquerda, espelhar aqui (sr.flipX).
+    void Animate()
+    {
+        if (sr == null || data.frames == null || data.frames.Length == 0) return;
+        int i = (int)(animTime * data.framesPerSecond) % data.frames.Length;
+        sr.sprite = data.frames[i];
     }
 
     /// Onde o inimigo estara depois de 'seconds', se continuar reto pelo caminho.

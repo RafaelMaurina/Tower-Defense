@@ -10,5 +10,6 @@ public class EnemyData : ScriptableObject
     public int reward = 5;          // dinheiro ao morrer
     public int baseDamage = 1;      // vida que tira da base ao chegar
     public bool flying;             // so torres que atingem aereos podem mira-lo
-    public Sprite sprite;
+    public Sprite[] frames;                 // quadros da animacao de andar, em ordem
+    public float framesPerSecond = 6f;
 }
