@@ -64,10 +64,14 @@ public class Enemy : MonoBehaviour, IDamageable
         sr.sprite = data.frames[i];
     }
 
-    /// Onde o inimigo estara depois de 'seconds', se continuar reto pelo caminho.
+    /// Centro do corpo. O pivo do sprite fica no pe; projetil mira e acerta aqui.
+    public Vector3 Center => transform.position + (Vector3)data.centerOffset;
+
+    /// Onde o CENTRO do inimigo estara depois de 'seconds', se continuar reto pelo caminho.
     /// E o que o projetil usa para mirar a frente. Nao considera desvios
     /// (ziguezague do pato), e por isso o pato escapa da mira.
-    public Vector3 PredictPosition(float seconds) => path.PointAt(Distance + data.speed * seconds);
+    public Vector3 PredictPosition(float seconds) =>
+        path.PointAt(Distance + data.speed * seconds) + (Vector3)data.centerOffset;
 
     public void TakeDamage(float amount)
     {
