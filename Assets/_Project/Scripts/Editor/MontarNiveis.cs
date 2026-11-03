@@ -140,7 +140,29 @@ public static class MontarNiveis
         }
         if (anterior.IsValid()) SceneManager.SetActiveScene(anterior);
         AssetDatabase.SaveAssets();
+        AtualizarBuild();
         Debug.Log(feitos + " nivel(is) gerado(s). Cenas em " + CENAS + ", prefabs em " + PREFABS + ".");
+    }
+
+    /// As cenas dos niveis sao geradas em cada computador, entao o GUID muda de
+    /// um PC para outro. Aqui o Build Settings e refeito pelo caminho: Menu
+    /// primeiro e depois os tres niveis.
+    public static void AtualizarBuild()
+    {
+        var lista = new List<EditorBuildSettingsScene>();
+        string menu = CENAS + "/Menu.unity";
+        if (AssetDatabase.LoadAssetAtPath<Object>(menu) != null) lista.Add(new EditorBuildSettingsScene(menu, true));
+        foreach (var nv in NIVEIS)
+        {
+            string cena = CENAS + "/Nivel_" + nv.id + "_" + nv.nome + ".unity";
+            if (AssetDatabase.LoadAssetAtPath<Object>(cena) != null) lista.Add(new EditorBuildSettingsScene(cena, true));
+        }
+
+        var atual = EditorBuildSettings.scenes;
+        bool igual = atual.Length == lista.Count;
+        for (int i = 0; igual && i < atual.Length; i++)
+            igual = atual[i].path == lista[i].path && atual[i].guid == lista[i].guid && atual[i].enabled;
+        if (!igual) EditorBuildSettings.scenes = lista.ToArray();
     }
 
     static void Montar(Nivel nv, string nome, string prefabPath, string cenaPath)
@@ -183,6 +205,10 @@ public static class MontarNiveis
             ppc.refResolutionX = REF_X;
             ppc.refResolutionY = REF_Y;
         }
+
+        // Para dar Play direto no nivel sem passar pelo menu. Vindo do menu, o
+        // GameManager de la ja existe e este se apaga sozinho no Awake.
+        new GameObject("GameManager").AddComponent<GameManager>();
 
         EditorSceneManager.SaveScene(cena, cenaPath);
         EditorSceneManager.CloseScene(cena, true);

@@ -1,0 +1,1601 @@
+fileFormatVersion: 2
+guid: f9a80acec819af842a9a3084d7ee8d22
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 2384525658820481719
+    second: logo_letreiro_0
+  - first:
+      213: -6994656244996721043
+    second: logo_letreiro_1
+  - first:
+      213: -3896559309066808921
+    second: logo_letreiro_2
+  - first:
+      213: -4677773215187289909
+    second: logo_letreiro_3
+  - first:
+      213: 1248867350137578824
+    second: logo_letreiro_4
+  - first:
+      213: -4113864410928091055
+    second: logo_letreiro_5
+  - first:
+      213: -5304634755865414639
+    second: logo_letreiro_6
+  - first:
+      213: 4344593825173741290
+    second: logo_letreiro_7
+  - first:
+      213: 2709095288038951117
+    second: logo_letreiro_8
+  - first:
+      213: 3852400438694943421
+    second: logo_letreiro_9
+  - first:
+      213: -2296333193660651517
+    second: logo_letreiro_10
+  - first:
+      213: -3445794947732709888
+    second: logo_letreiro_11
+  - first:
+      213: -466890731103241345
+    second: logo_letreiro_12
+  - first:
+      213: 185202479641745655
+    second: logo_letreiro_13
+  - first:
+      213: -5446876513406319927
+    second: logo_letreiro_14
+  - first:
+      213: -7131707194898328556
+    second: logo_letreiro_15
+  - first:
+      213: -6378087097925999453
+    second: logo_letreiro_16
+  - first:
+      213: 5194267439540024774
+    second: logo_letreiro_17
+  - first:
+      213: 6026416268620737535
+    second: logo_letreiro_18
+  - first:
+      213: 4962989332354341138
+    second: logo_letreiro_19
+  - first:
+      213: 5363714927831603018
+    second: logo_letreiro_20
+  - first:
+      213: 3724242415329945433
+    second: logo_letreiro_21
+  - first:
+      213: -8400450129822361467
+    second: logo_letreiro_22
+  - first:
+      213: -7654412169042540986
+    second: logo_letreiro_23
+  - first:
+      213: -1130750794447808192
+    second: logo_letreiro_24
+  - first:
+      213: -3646071323842272361
+    second: logo_letreiro_25
+  - first:
+      213: 3733897689050051462
+    second: logo_letreiro_26
+  - first:
+      213: -4598500064411343943
+    second: logo_letreiro_27
+  - first:
+      213: 1663302413915849972
+    second: logo_letreiro_28
+  - first:
+      213: -1735445169495361636
+    second: logo_letreiro_29
+  - first:
+      213: 2099500499511229972
+    second: logo_letreiro_30
+  - first:
+      213: -3791490483786792988
+    second: logo_letreiro_31
+  - first:
+      213: -610708878255032454
+    second: logo_letreiro_32
+  - first:
+      213: -1455412176047851974
+    second: logo_letreiro_33
+  - first:
+      213: 2114887562562944767
+    second: logo_letreiro_34
+  - first:
+      213: 9180234795248321507
+    second: logo_letreiro_35
+  - first:
+      213: 6720234947474389388
+    second: logo_letreiro_36
+  - first:
+      213: -589948133801842725
+    second: logo_letreiro_37
+  - first:
+      213: -2878934333417246905
+    second: logo_letreiro_38
+  - first:
+      213: -4081228242765044723
+    second: logo_letreiro_39
+  - first:
+      213: 2732838272444824146
+    second: logo_letreiro_40
+  - first:
+      213: -3500601196305431632
+    second: logo_letreiro_41
+  - first:
+      213: -6485204203150944842
+    second: logo_letreiro_42
+  - first:
+      213: -151813600665319606
+    second: logo_letreiro_43
+  - first:
+      213: 2284820051453977954
+    second: logo_letreiro_44
+  - first:
+      213: 157369291149224598
+    second: logo_letreiro_45
+  - first:
+      213: -731287669637782466
+    second: logo_letreiro_46
+  - first:
+      213: -3077596842318454515
+    second: logo_letreiro_47
+  - first:
+      213: -2308329995342019988
+    second: logo_letreiro_48
+  - first:
+      213: -8500643570696816987
+    second: logo_letreiro_49
+  - first:
+      213: -1109011258928434904
+    second: logo_letreiro_50
+  - first:
+      213: 5816207490260046385
+    second: logo_letreiro_51
+  - first:
+      213: 3296129059511406550
+    second: logo_letreiro_52
+  - first:
+      213: -5777777840688631356
+    second: logo_letreiro_53
+  - first:
+      213: -114565241021167453
+    second: logo_letreiro_54
+  - first:
+      213: 7676793118046923693
+    second: logo_letreiro_55
+  - first:
+      213: -8104497407360128516
+    second: logo_letreiro_56
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: logo_letreiro_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1024
+        height: 502
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b29cc3f379871120800000000000000
+      internalID: 2384525658820481719
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_1
+      rect:
+        serializedVersion: 2
+        x: 175
+        y: 435
+        width: 79
+        height: 62
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d66b007543dfdee90800000000000000
+      internalID: -6994656244996721043
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_2
+      rect:
+        serializedVersion: 2
+        x: 333
+        y: 469
+        width: 50
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a1d4d804f3ace9c0800000000000000
+      internalID: -3896559309066808921
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_3
+      rect:
+        serializedVersion: 2
+        x: 407
+        y: 493
+        width: 13
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bc8bce07b06351fb0800000000000000
+      internalID: -4677773215187289909
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_4
+      rect:
+        serializedVersion: 2
+        x: 459
+        y: 493
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 845a888fc3ed45110800000000000000
+      internalID: 1248867350137578824
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_5
+      rect:
+        serializedVersion: 2
+        x: 464
+        y: 493
+        width: 27
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 150728c4d1e98e6c0800000000000000
+      internalID: -4113864410928091055
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_6
+      rect:
+        serializedVersion: 2
+        x: 555
+        y: 469
+        width: 44
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 11473717bc62266b0800000000000000
+      internalID: -5304634755865414639
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_7
+      rect:
+        serializedVersion: 2
+        x: 650
+        y: 462
+        width: 32
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aee16dab0191b4c30800000000000000
+      internalID: 4344593825173741290
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_8
+      rect:
+        serializedVersion: 2
+        x: 785
+        y: 463
+        width: 44
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dc80f32afc3a89520800000000000000
+      internalID: 2709095288038951117
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_9
+      rect:
+        serializedVersion: 2
+        x: 840
+        y: 488
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dba98f0c9c9767530800000000000000
+      internalID: 3852400438694943421
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_10
+      rect:
+        serializedVersion: 2
+        x: 877
+        y: 483
+        width: 6
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3082be97029c120e0800000000000000
+      internalID: -2296333193660651517
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_11
+      rect:
+        serializedVersion: 2
+        x: 933
+        y: 492
+        width: 9
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00e5e8b60c31e20d0800000000000000
+      internalID: -3445794947732709888
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_12
+      rect:
+        serializedVersion: 2
+        x: 159
+        y: 474
+        width: 13
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f7b3baf8a554589f0800000000000000
+      internalID: -466890731103241345
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_13
+      rect:
+        serializedVersion: 2
+        x: 381
+        y: 472
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7f8519a8ca8f19200800000000000000
+      internalID: 185202479641745655
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_14
+      rect:
+        serializedVersion: 2
+        x: 614
+        y: 472
+        width: 11
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9c28ffa7baec864b0800000000000000
+      internalID: -5446876513406319927
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_15
+      rect:
+        serializedVersion: 2
+        x: 632
+        y: 463
+        width: 11
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 414dcf57716170d90800000000000000
+      internalID: -7131707194898328556
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_16
+      rect:
+        serializedVersion: 2
+        x: 693
+        y: 464
+        width: 17
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3a46e95b39b7c77a0800000000000000
+      internalID: -6378087097925999453
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_17
+      rect:
+        serializedVersion: 2
+        x: 730
+        y: 467
+        width: 13
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6c5392247beb51840800000000000000
+      internalID: 5194267439540024774
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_18
+      rect:
+        serializedVersion: 2
+        x: 771
+        y: 463
+        width: 12
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ffb26cfbaa122a350800000000000000
+      internalID: 6026416268620737535
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_19
+      rect:
+        serializedVersion: 2
+        x: 781
+        y: 472
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2199803b08410e440800000000000000
+      internalID: 4962989332354341138
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_20
+      rect:
+        serializedVersion: 2
+        x: 948
+        y: 477
+        width: 9
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a47dcd50f4ebf6a40800000000000000
+      internalID: 5363714927831603018
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_21
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 466
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9572f2faeba2fa330800000000000000
+      internalID: 3724242415329945433
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_22
+      rect:
+        serializedVersion: 2
+        x: 260
+        y: 444
+        width: 18
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 588dd8a4d1b9b6b80800000000000000
+      internalID: -8400450129822361467
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_23
+      rect:
+        serializedVersion: 2
+        x: 278
+        y: 454
+        width: 13
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 646cac3efa016c590800000000000000
+      internalID: -7654412169042540986
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_24
+      rect:
+        serializedVersion: 2
+        x: 712
+        y: 461
+        width: 8
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0499277b424ce40f0800000000000000
+      internalID: -1130750794447808192
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_25
+      rect:
+        serializedVersion: 2
+        x: 720
+        y: 469
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 793a4acd27d866dc0800000000000000
+      internalID: -3646071323842272361
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_26
+      rect:
+        serializedVersion: 2
+        x: 1004
+        y: 467
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 683fa774a2871d330800000000000000
+      internalID: 3733897689050051462
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_27
+      rect:
+        serializedVersion: 2
+        x: 1019
+        y: 431
+        width: 5
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b3a6292e88de20c0800000000000000
+      internalID: -4598500064411343943
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_28
+      rect:
+        serializedVersion: 2
+        x: 101
+        y: 31
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4f4018f9bbc351710800000000000000
+      internalID: 1663302413915849972
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_29
+      rect:
+        serializedVersion: 2
+        x: 194
+        y: 19
+        width: 35
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c97bf0920d57ae7e0800000000000000
+      internalID: -1735445169495361636
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_30
+      rect:
+        serializedVersion: 2
+        x: 364
+        y: 31
+        width: 8
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 41e3f17a49ce22d10800000000000000
+      internalID: 2099500499511229972
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_31
+      rect:
+        serializedVersion: 2
+        x: 381
+        y: 35
+        width: 21
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4ef3d904e7be16bc0800000000000000
+      internalID: -3791490483786792988
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_32
+      rect:
+        serializedVersion: 2
+        x: 403
+        y: 39
+        width: 15
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a777e6ac2835687f0800000000000000
+      internalID: -610708878255032454
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_33
+      rect:
+        serializedVersion: 2
+        x: 571
+        y: 30
+        width: 6
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a36b3e446565dcbe0800000000000000
+      internalID: -1455412176047851974
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_34
+      rect:
+        serializedVersion: 2
+        x: 586
+        y: 27
+        width: 25
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ffeb4727807995d10800000000000000
+      internalID: 2114887562562944767
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_35
+      rect:
+        serializedVersion: 2
+        x: 616
+        y: 35
+        width: 9
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e3057548eeb66f70800000000000000
+      internalID: 9180234795248321507
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_36
+      rect:
+        serializedVersion: 2
+        x: 628
+        y: 38
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c8970635412134d50800000000000000
+      internalID: 6720234947474389388
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_37
+      rect:
+        serializedVersion: 2
+        x: 634
+        y: 36
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bd726d84c4510d7f0800000000000000
+      internalID: -589948133801842725
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_38
+      rect:
+        serializedVersion: 2
+        x: 664
+        y: 30
+        width: 6
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 74f2dfc1a78fb08d0800000000000000
+      internalID: -2878934333417246905
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_39
+      rect:
+        serializedVersion: 2
+        x: 687
+        y: 29
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d04a2b659809c57c0800000000000000
+      internalID: -4081228242765044723
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_40
+      rect:
+        serializedVersion: 2
+        x: 926
+        y: 38
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 25a7aa9fdedfce520800000000000000
+      internalID: 2732838272444824146
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_41
+      rect:
+        serializedVersion: 2
+        x: 943
+        y: 36
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b348e942cd5b6fc0800000000000000
+      internalID: -3500601196305431632
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_42
+      rect:
+        serializedVersion: 2
+        x: 555
+        y: 26
+        width: 15
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6b55157232deff5a0800000000000000
+      internalID: -6485204203150944842
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_43
+      rect:
+        serializedVersion: 2
+        x: 577
+        y: 12
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a474544a556a4edf0800000000000000
+      internalID: -151813600665319606
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_44
+      rect:
+        serializedVersion: 2
+        x: 614
+        y: 22
+        width: 11
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 265aa963bbf45bf10800000000000000
+      internalID: 2284820051453977954
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_45
+      rect:
+        serializedVersion: 2
+        x: 656
+        y: 29
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 69a218959861f2200800000000000000
+      internalID: 157369291149224598
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_46
+      rect:
+        serializedVersion: 2
+        x: 697
+        y: 21
+        width: 21
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e34ed9e2db1f9d5f0800000000000000
+      internalID: -731287669637782466
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_47
+      rect:
+        serializedVersion: 2
+        x: 987
+        y: 28
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d01aebb4afd2a45d0800000000000000
+      internalID: -3077596842318454515
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_48
+      rect:
+        serializedVersion: 2
+        x: 59
+        y: 17
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c62824b691a27ffd0800000000000000
+      internalID: -2308329995342019988
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_49
+      rect:
+        serializedVersion: 2
+        x: 115
+        y: 17
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5a67866f5b5a70a80800000000000000
+      internalID: -8500643570696816987
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_50
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 17
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 82179a3c2200c90f0800000000000000
+      internalID: -1109011258928434904
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_51
+      rect:
+        serializedVersion: 2
+        x: 301
+        y: 17
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1329ae495e157b050800000000000000
+      internalID: 5816207490260046385
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_52
+      rect:
+        serializedVersion: 2
+        x: 634
+        y: 16
+        width: 8
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6df050e7ae33ebd20800000000000000
+      internalID: 3296129059511406550
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_53
+      rect:
+        serializedVersion: 2
+        x: 715
+        y: 14
+        width: 11
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4c171a67aa531dfa0800000000000000
+      internalID: -5777777840688631356
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_54
+      rect:
+        serializedVersion: 2
+        x: 960
+        y: 10
+        width: 20
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3a88351358bf86ef0800000000000000
+      internalID: -114565241021167453
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_55
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 7
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: daba95fdaa2798a60800000000000000
+      internalID: 7676793118046923693
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: logo_letreiro_56
+      rect:
+        serializedVersion: 2
+        x: 329
+        y: 4
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cf9a9372c8a078f80800000000000000
+      internalID: -8104497407360128516
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      logo_letreiro_0: 2384525658820481719
+      logo_letreiro_1: -6994656244996721043
+      logo_letreiro_10: -2296333193660651517
+      logo_letreiro_11: -3445794947732709888
+      logo_letreiro_12: -466890731103241345
+      logo_letreiro_13: 185202479641745655
+      logo_letreiro_14: -5446876513406319927
+      logo_letreiro_15: -7131707194898328556
+      logo_letreiro_16: -6378087097925999453
+      logo_letreiro_17: 5194267439540024774
+      logo_letreiro_18: 6026416268620737535
+      logo_letreiro_19: 4962989332354341138
+      logo_letreiro_2: -3896559309066808921
+      logo_letreiro_20: 5363714927831603018
+      logo_letreiro_21: 3724242415329945433
+      logo_letreiro_22: -8400450129822361467
+      logo_letreiro_23: -7654412169042540986
+      logo_letreiro_24: -1130750794447808192
+      logo_letreiro_25: -3646071323842272361
+      logo_letreiro_26: 3733897689050051462
+      logo_letreiro_27: -4598500064411343943
+      logo_letreiro_28: 1663302413915849972
+      logo_letreiro_29: -1735445169495361636
+      logo_letreiro_3: -4677773215187289909
+      logo_letreiro_30: 2099500499511229972
+      logo_letreiro_31: -3791490483786792988
+      logo_letreiro_32: -610708878255032454
+      logo_letreiro_33: -1455412176047851974
+      logo_letreiro_34: 2114887562562944767
+      logo_letreiro_35: 9180234795248321507
+      logo_letreiro_36: 6720234947474389388
+      logo_letreiro_37: -589948133801842725
+      logo_letreiro_38: -2878934333417246905
+      logo_letreiro_39: -4081228242765044723
+      logo_letreiro_4: 1248867350137578824
+      logo_letreiro_40: 2732838272444824146
+      logo_letreiro_41: -3500601196305431632
+      logo_letreiro_42: -6485204203150944842
+      logo_letreiro_43: -151813600665319606
+      logo_letreiro_44: 2284820051453977954
+      logo_letreiro_45: 157369291149224598
+      logo_letreiro_46: -731287669637782466
+      logo_letreiro_47: -3077596842318454515
+      logo_letreiro_48: -2308329995342019988
+      logo_letreiro_49: -8500643570696816987
+      logo_letreiro_5: -4113864410928091055
+      logo_letreiro_50: -1109011258928434904
+      logo_letreiro_51: 5816207490260046385
+      logo_letreiro_52: 3296129059511406550
+      logo_letreiro_53: -5777777840688631356
+      logo_letreiro_54: -114565241021167453
+      logo_letreiro_55: 7676793118046923693
+      logo_letreiro_56: -8104497407360128516
+      logo_letreiro_6: -5304634755865414639
+      logo_letreiro_7: 4344593825173741290
+      logo_letreiro_8: 2709095288038951117
+      logo_letreiro_9: 3852400438694943421
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

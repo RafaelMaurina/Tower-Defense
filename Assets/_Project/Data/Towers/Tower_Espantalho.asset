@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6572414d6562e4ba5863f40486d88891, type: 3}
+  m_Name: Tower_Espantalho
+  m_EditorClassIdentifier: Assembly-CSharp::TowerData
+  displayName: Espantalho
+  levels:
+  - cost: 50
+    damage: 8
+    range: 2.5
+    fireRate: 1
+    sprite: {fileID: 0}
+  - cost: 40
+    damage: 14
+    range: 3
+    fireRate: 1.3
+    sprite: {fileID: 0}
+  - cost: 60
+    damage: 22
+    range: 3.5
+    fireRate: 1.6
+    sprite: {fileID: 0}
+  hitsFlying: 0
+  projectile: {fileID: 5956580456811665869, guid: 6997e250c9e2541d087aa835aeb4fe5c, type: 3}
