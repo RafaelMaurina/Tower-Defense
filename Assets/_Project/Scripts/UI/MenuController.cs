@@ -44,6 +44,7 @@ public class MenuController : MonoBehaviour
     GameObject mainMenuContent;
     GameObject difficultyMenu;
     GameDifficulty difficulty = GameDifficulty.Easy;
+    bool loadLevelAfterDifficultySelection;
 
     void Start()
     {
@@ -112,9 +113,8 @@ public class MenuController : MonoBehaviour
 
     void StartGame()
     {
-        GameManager.SetDifficulty(difficulty);
-        if (GameManager.Instance != null) GameManager.Instance.ResetGame();
-        StartCoroutine(LoadGameAfterClick());
+        // Jogar sempre exige confirmar uma dificuldade antes de carregar a fase.
+        OpenDifficultyMenu(true);
     }
 
     IEnumerator LoadGameAfterClick()
@@ -193,11 +193,11 @@ public class MenuController : MonoBehaviour
         if (backButtonSprite != null)
         {
             CreateSpriteButton(panelObject.transform, "Voltar", backButtonSprite, backButtonSelectedSprite,
-                new Vector2(.59f, .20f), new Vector2(.85f, .30f), backAction);
+                new Vector2(.67f, .055f), new Vector2(.88f, .15f), backAction);
         }
         else
         {
-            var backText = MakeText(panelObject.transform, "VOLTAR", new Vector2(.59f, .20f), new Vector2(.85f, .30f), 24,
+            var backText = MakeText(panelObject.transform, "VOLTAR", new Vector2(.67f, .055f), new Vector2(.88f, .15f), 24,
                 new Color32(255, 237, 190, 255));
             backText.raycastTarget = true;
             var backButton = backText.gameObject.AddComponent<Button>();
@@ -208,23 +208,47 @@ public class MenuController : MonoBehaviour
         return panelObject;
     }
 
-    void OpenDifficultyMenu()
+    void OpenDifficultyMenu() => OpenDifficultyMenu(false);
+
+    void OpenDifficultyMenu(bool startAfterSelection)
     {
         if (difficultyMenu != null) return;
+        loadLevelAfterDifficultySelection = startAfterSelection;
         difficultyMenu = CreateSubmenuPanel("Dificuldade", CloseDifficultyMenu);
         CreateSpriteButton(difficultyMenu.transform, "Fácil", difficultyEasyBadge, difficultyEasyBadgeSelected,
-            new Vector2(.28f, .64f), new Vector2(.72f, .80f), () => SelectDifficulty(GameDifficulty.Easy));
+            new Vector2(.28f, .68f), new Vector2(.72f, .80f), () => SelectDifficulty(GameDifficulty.Easy));
+        AddDifficultyCaption(difficultyMenu.transform, "Manhã", .63f, .67f);
         CreateSpriteButton(difficultyMenu.transform, "Normal", difficultyNormalBadge, difficultyNormalBadgeSelected,
-            new Vector2(.28f, .42f), new Vector2(.72f, .58f), () => SelectDifficulty(GameDifficulty.Normal));
+            new Vector2(.28f, .47f), new Vector2(.72f, .59f), () => SelectDifficulty(GameDifficulty.Normal));
+        AddDifficultyCaption(difficultyMenu.transform, "Pôr do sol", .42f, .46f);
         CreateSpriteButton(difficultyMenu.transform, "Difícil", difficultyHardBadge, difficultyHardBadgeSelected,
-            new Vector2(.28f, .20f), new Vector2(.72f, .36f), () => SelectDifficulty(GameDifficulty.Hard));
+            new Vector2(.28f, .26f), new Vector2(.72f, .38f), () => SelectDifficulty(GameDifficulty.Hard));
+        AddDifficultyCaption(difficultyMenu.transform, "Noite", .21f, .25f);
+    }
+
+    static void AddDifficultyCaption(Transform parent, string caption, float minY, float maxY)
+    {
+        var text = MakeText(parent, caption, new Vector2(.30f, minY), new Vector2(.70f, maxY), 22,
+            new Color32(255, 239, 195, 255));
+        text.fontStyle = FontStyle.Bold;
+        text.raycastTarget = false;
+        var outline = text.gameObject.AddComponent<Outline>();
+        outline.effectColor = new Color32(68, 35, 19, 255);
+        outline.effectDistance = new Vector2(2f, -2f);
     }
 
     void SelectDifficulty(GameDifficulty selectedDifficulty)
     {
         difficulty = selectedDifficulty;
         UpdateDifficultyBadge();
+        GameManager.SetDifficulty(difficulty);
+        bool shouldStartGame = loadLevelAfterDifficultySelection;
         CloseDifficultyMenu();
+        if (shouldStartGame)
+        {
+            if (GameManager.Instance != null) GameManager.Instance.ResetGame();
+            StartCoroutine(LoadGameAfterClick());
+        }
     }
 
     void CloseDifficultyMenu()
@@ -257,14 +281,14 @@ public class MenuController : MonoBehaviour
     void ShowInfo() => InfoPanel.Show(
         "Projeto desenvolvido como trabalho final da disciplina de Computação Gráfica.",
         "https://github.com/RafaelMaurina/Tower-Defense",
-        new[] { "Rafael (@RafaelMaurina) — Arte e áudio", "Fabio (@fabioov) — Combate", "João (@Joao-Althaus) — Jogo e interface" },
+        new[] { "Rafael (@RafaelMaurina), arte e áudio", "Fabio (@fabioov), combate", "João (@Joao-Althaus), jogo e interface" },
         "Informações");
 
     void ShowRanking()
     {
         var entries = LocalRanking.GetEntries();
         string message = "RANKING LOCAL";
-        for (int i = 0; i < entries.Count; i++) message += $"\n{i + 1}. {entries[i].score} pontos — {entries[i].difficulty} — {entries[i].date}";
+        for (int i = 0; i < entries.Count; i++) message += $"\n{i + 1}. {entries[i].score} pontos, {entries[i].difficulty}, {entries[i].date}";
         if (entries.Count == 0) message += "\nAinda não há partidas concluídas.";
         InfoPanel.Show(message, title: "Ranking");
     }
