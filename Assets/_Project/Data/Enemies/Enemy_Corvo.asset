@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4dd8e9a77973a43aa9ab44018426a540, type: 3}
+  m_Name: Enemy_Corvo
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  displayName: Corvo
+  health: 20
+  speed: 2.2
+  reward: 8
+  baseDamage: 1
+  flying: 0
+  centerOffset: {x: 0, y: 0.35}
+  frames:
+  - {fileID: 21300000, guid: 3d83ee83829d40239aa642ebb33af866, type: 3}
+  - {fileID: 21300000, guid: 7393cb8dc08448029c8d18ab33be8f3b, type: 3}
+  - {fileID: 21300000, guid: 6b16f9a84322445fbffc8158d20fe949, type: 3}
+  - {fileID: 21300000, guid: 0fb9fc9876f842018115ed6b58f34171, type: 3}
+  framesPerSecond: 8

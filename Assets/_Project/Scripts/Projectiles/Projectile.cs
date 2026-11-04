@@ -41,7 +41,7 @@ public class Projectile : MonoBehaviour
     /// Converge rapido porque o projetil e mais veloz que o inimigo.
     public static Vector3 AimPoint(Vector3 origin, Enemy target, float projectileSpeed)
     {
-        Vector3 aim = target.Transform.position;
+        Vector3 aim = target.Center;
         for (int i = 0; i < 5; i++)
         {
             float t = Vector3.Distance(origin, aim) / projectileSpeed;
@@ -88,7 +88,7 @@ public class Projectile : MonoBehaviour
                 Enemy e = todos[i];
                 if (!e.IsAlive) continue;
                 if (e.Flying && !hitsFlying) continue;
-                if (Vector3.Distance(center, e.Transform.position) <= splashRadius) atingidos.Add(e);
+                if (Vector3.Distance(center, e.Center) <= splashRadius) atingidos.Add(e);
             }
             for (int i = 0; i < atingidos.Count; i++) atingidos[i].TakeDamage(damage);
         }
@@ -103,7 +103,7 @@ public class Projectile : MonoBehaviour
             Enemy e = todos[i];
             if (!e.IsAlive) continue;
             if (e.Flying && !hitsFlying) continue;
-            if (Vector3.Distance(transform.position, e.Transform.position) <= hitRadius) return e;
+            if (Vector3.Distance(transform.position, e.Center) <= hitRadius) return e;
         }
         return null;
     }
