@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6572414d6562e4ba5863f40486d88891, type: 3}
+  m_Name: Tower_Tufao
+  m_EditorClassIdentifier: Assembly-CSharp::TowerData
+  displayName: Tufao
+  levels:
+  - cost: 90
+    damage: 5
+    range: 3
+    fireRate: 1.5
+    sprite: {fileID: 0}
+  - cost: 70
+    damage: 8
+    range: 3.3
+    fireRate: 1.5
+    sprite: {fileID: 0}
+  - cost: 110
+    damage: 12
+    range: 3.6
+    fireRate: 2
+    sprite: {fileID: 0}
+  hitsFlying: 0
+  projectile: {fileID: 0}
+  guardian: {fileID: 592597528476322065, guid: 92c5b0c434a0b45e99bc1703a6318fac, type: 3}

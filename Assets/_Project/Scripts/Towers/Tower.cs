@@ -12,6 +12,7 @@ public class Tower : MonoBehaviour
     public TargetMode mode = TargetMode.First;
 
     float cooldown;
+    readonly System.Collections.Generic.List<Guardian> guardians = new System.Collections.Generic.List<Guardian>();
 
     /// Nivel atual, de 0 a data.levels.Length - 1.
     public int Level { get; private set; }
@@ -26,11 +27,35 @@ public class Tower : MonoBehaviour
         cooldown = 0f;
         ApplySprite();
         UpdateOrder();
+        EnsureGuardians();
     }
 
     // A torre nao se mexe: basta calcular a ordem de desenho uma vez, com a posicao final
     // (Start cobre o prefab arrastado para a cena; Init cobre a torre criada em codigo).
-    void Start() => UpdateOrder();
+    void Start()
+    {
+        UpdateOrder();
+        EnsureGuardians();
+    }
+
+    // Torre que invoca (Tufao): mantem Level + 1 guardioes vivos, um a mais por nivel.
+    // Os guardioes leem dano, alcance e cadencia de Stats, entao o upgrade vale na hora.
+    void EnsureGuardians()
+    {
+        if (data == null || data.guardian == null) return;
+        while (guardians.Count < Level + 1)
+        {
+            Guardian g = Instantiate(data.guardian).GetComponent<Guardian>();
+            g.Init(this, guardians.Count);
+            guardians.Add(g);
+        }
+    }
+
+    void OnDestroy()
+    {
+        for (int i = 0; i < guardians.Count; i++)
+            if (guardians[i] != null) Destroy(guardians[i].gameObject);
+    }
 
     void UpdateOrder()
     {
@@ -44,11 +69,13 @@ public class Tower : MonoBehaviour
         if (!CanUpgrade) return false;
         Level++;
         ApplySprite();
+        EnsureGuardians();
         return true;
     }
 
     void Update()
     {
+        if (data.guardian != null) return;   // quem ataca sao os guardioes
         cooldown -= Time.deltaTime;
         if (cooldown > 0f) return;
 
@@ -59,7 +86,8 @@ public class Tower : MonoBehaviour
         cooldown = 1f / Stats.fireRate;
     }
 
-    Enemy FindTarget()
+    /// Alvo dentro do alcance segundo o modo (respeita hitsFlying). Os guardioes tambem usam.
+    public Enemy FindTarget()
     {
         Enemy best = null;
         float bestScore = float.MinValue;
