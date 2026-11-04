@@ -25,6 +25,17 @@ public class Tower : MonoBehaviour
         Level = 0;
         cooldown = 0f;
         ApplySprite();
+        UpdateOrder();
+    }
+
+    // A torre nao se mexe: basta calcular a ordem de desenho uma vez, com a posicao final
+    // (Start cobre o prefab arrastado para a cena; Init cobre a torre criada em codigo).
+    void Start() => UpdateOrder();
+
+    void UpdateOrder()
+    {
+        var sr = GetComponent<SpriteRenderer>();
+        if (sr != null) sr.sortingOrder = DrawOrder.ForY(transform.position.y);
     }
 
     /// Sobe um nivel. O dinheiro e cobrado por quem chama (Stats do proximo nivel tem o custo).
