@@ -19,5 +19,7 @@ public class TowerData : ScriptableObject
     public string displayName;
     public TowerLevel[] levels = new TowerLevel[3];
     public bool hitsFlying;         // so 2 das 5 torres atingem aereos
-    public GameObject projectile;   // prefab do projetil
+    public GameObject projectile;   // prefab do projetil (torres que atiram)
+    public GameObject guardian;     // prefab com Guardian (Tufao): se preenchido, a torre invoca
+                                    // guardioes (nivel + 1 caes) em vez de atirar
 }
