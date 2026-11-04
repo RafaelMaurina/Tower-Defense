@@ -86,7 +86,10 @@ public class Tower : MonoBehaviour
     void ApplySprite()
     {
         var sr = GetComponent<SpriteRenderer>();
-        if (sr != null && Stats.sprite != null) sr.sprite = Stats.sprite;
+        if (sr == null) return;
+        if (Stats.sprite != null) sr.sprite = Stats.sprite;
+        // mesma formula dos props (ARTE.md): quem esta mais embaixo desenha por cima
+        sr.sortingOrder = 100 + Mathf.RoundToInt((17f - transform.position.y) * 10f);
     }
 
     // Mostra o alcance na Scene view ao selecionar a torre.
