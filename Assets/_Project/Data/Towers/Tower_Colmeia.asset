@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6572414d6562e4ba5863f40486d88891, type: 3}
+  m_Name: Tower_Colmeia
+  m_EditorClassIdentifier: Assembly-CSharp::TowerData
+  displayName: Colmeia
+  levels:
+  - cost: 100
+    damage: 6
+    range: 3.5
+    fireRate: 2
+    sprite: {fileID: 0}
+  - cost: 80
+    damage: 9
+    range: 3.8
+    fireRate: 2.5
+    sprite: {fileID: 0}
+  - cost: 120
+    damage: 14
+    range: 4.2
+    fireRate: 3
+    sprite: {fileID: 0}
+  hitsFlying: 1
+  projectile: {fileID: 3703812420393577790, guid: bb4a82ee1e7904b2fba848f2ac478977, type: 3}
