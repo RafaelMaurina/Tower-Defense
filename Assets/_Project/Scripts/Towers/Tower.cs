@@ -116,7 +116,7 @@ public class Tower : MonoBehaviour
 
     void Fire(Enemy target)
     {
-        GameObject go = Instantiate(data.projectile, transform.position, Quaternion.identity);
+        GameObject go = Pool.Get(data.projectile, transform.position, Quaternion.identity);
         Projectile p = go.GetComponent<Projectile>();
         Vector3 aim = Projectile.AimPoint(transform.position, target, p.speed);
         p.Init(aim, Stats.damage, data.hitsFlying, this);
