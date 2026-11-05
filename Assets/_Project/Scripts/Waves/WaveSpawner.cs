@@ -74,7 +74,7 @@ public class WaveSpawner : MonoBehaviour
                         yield break;
                     }
 
-                    GameObject go = Instantiate(entry.enemyPrefab);
+                    GameObject go = Pool.Get(entry.enemyPrefab, Vector3.zero, Quaternion.identity);
                     Enemy enemy = go.GetComponent<Enemy>();
                     if (enemy == null)
                     {
@@ -86,7 +86,7 @@ public class WaveSpawner : MonoBehaviour
                         enemy.data = entry.enemy;
                         enemy.Init(path);
                         liveEnemies++;
-                        StartCoroutine(TrackEnemy(enemy));
+                        enemy.Finished += OnEnemyFinished;
                     }
 
                     if (entry.spawnInterval > 0f) yield return new WaitForSeconds(entry.spawnInterval);
@@ -102,11 +102,9 @@ public class WaveSpawner : MonoBehaviour
         if (GameManager.State == GameState.Playing) GameManager.Instance?.CompleteLevel();
     }
 
-    IEnumerator TrackEnemy(Enemy enemy)
-    {
-        while (enemy != null && enemy.IsAlive) yield return null;
-        liveEnemies = Mathf.Max(0, liveEnemies - 1);
-    }
+    // Evento do proprio inimigo, e nao varredura por IsAlive: com pooling o mesmo objeto pode
+    // renascer antes de uma varredura ver que ele morreu, e a onda nunca terminaria.
+    void OnEnemyFinished(Enemy enemy) => liveEnemies = Mathf.Max(0, liveEnemies - 1);
 
     WaypointPath SelectPath(int requested)
     {
