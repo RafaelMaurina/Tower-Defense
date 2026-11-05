@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4dd8e9a77973a43aa9ab44018426a540, type: 3}
+  m_Name: Enemy_Chomsky
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  displayName: Chomsky
+  health: 600
+  speed: 0.7
+  reward: 100
+  baseDamage: 999
+  flying: 0
+  centerOffset: {x: 0, y: 0.7}
+  jumpInterval: 0
+  jumpDistance: 0
+  jumpDuration: 0.3
+  zigzagAmplitude: 0
+  zigzagPeriod: 1.6
+  splitOnFirstDamage: 0
+  splitOffset: 0
+  phases:
+  - name: Regular (Tipo 3)
+    startsBelowHealth: 1
+    speed: 0.7
+    jumpInterval: 0
+    jumpDistance: 0
+    jumpDuration: 0.3
+    summonInterval: 4
+    summonEnemy: {fileID: 11400000, guid: 1ddb501067994703b5bfc17c52bb1834, type: 2}
+    summonPrefab: {fileID: 445989406553587258, guid: fe9da9436b2c446a9c76294d2be1ba45, type: 3}
+    shieldLayers: 0
+    shieldPerLayer: 0
+    healPerSecond: 0
+  - name: Livre de contexto (Tipo 2)
+    startsBelowHealth: 0.66
+    speed: 0.6
+    jumpInterval: 0
+    jumpDistance: 0
+    jumpDuration: 0.3
+    summonInterval: 5
+    summonEnemy: {fileID: 11400000, guid: 3f80f5f31a3f4e258c587cf205ad55a2, type: 2}
+    summonPrefab: {fileID: 411163459883138420, guid: f00f4c28ec6e4029ab34015b5552b097, type: 3}
+    shieldLayers: 3
+    shieldPerLayer: 40
+    healPerSecond: 0
+  - name: Irrestrita (Tipo 0)
+    startsBelowHealth: 0.33
+    speed: 0.6
+    jumpInterval: 2.5
+    jumpDistance: 2.5
+    jumpDuration: 0.4
+    summonInterval: 0
+    summonEnemy: {fileID: 0}
+    summonPrefab: {fileID: 0}
+    shieldLayers: 0
+    shieldPerLayer: 0
+    healPerSecond: 5
+  frames: []
+  framesPerSecond: 8

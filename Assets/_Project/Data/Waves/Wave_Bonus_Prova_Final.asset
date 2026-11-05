@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94420fcabfa14ca78e60f3b77d79da2f, type: 3}
+  m_Name: Wave_Bonus_Prova_Final
+  m_EditorClassIdentifier: Assembly-CSharp::WaveData
+  levelScene: Nivel_4_Campus
+  entries:
+  - enemy: {fileID: 11400000, guid: 1ddb501067994703b5bfc17c52bb1834, type: 2}
+    enemyPrefab: {fileID: 445989406553587258, guid: fe9da9436b2c446a9c76294d2be1ba45, type: 3}
+    count: 4
+    spawnInterval: 1.5
+    pathIndex: -1
+  - enemy: {fileID: 11400000, guid: 3f80f5f31a3f4e258c587cf205ad55a2, type: 2}
+    enemyPrefab: {fileID: 411163459883138420, guid: f00f4c28ec6e4029ab34015b5552b097, type: 3}
+    count: 4
+    spawnInterval: 1.5
+    pathIndex: -1
+  - enemy: {fileID: 11400000, guid: 195c439ac0cf4730b6275e234dc56476, type: 2}
+    enemyPrefab: {fileID: 175490127688983361, guid: 9952d9342cfc49d4bacf4765d41e05b8, type: 3}
+    count: 1
+    spawnInterval: 0
+    pathIndex: -1
+  pauseAfter: 4

@@ -17,8 +17,8 @@ public class WaveSpawner : MonoBehaviour
         if (paths == null || paths.Length == 0) paths = GetComponentsInChildren<WaypointPath>(true);
     }
 
-    void OnEnable() => Enemy.OnSplit += HandleSplit;
-    void OnDisable() => Enemy.OnSplit -= HandleSplit;
+    void OnEnable() => Enemy.OnSpawnedByEnemy += HandleSpawnedByEnemy;
+    void OnDisable() => Enemy.OnSpawnedByEnemy -= HandleSpawnedByEnemy;
 
     void Start()
     {
@@ -109,9 +109,9 @@ public class WaveSpawner : MonoBehaviour
     // renascer antes de uma varredura ver que ele morreu, e a onda nunca terminaria.
     void OnEnemyFinished(Enemy enemy) => liveEnemies = Mathf.Max(0, liveEnemies - 1);
 
-    // A copia do AFN tambem conta como inimigo vivo da onda (a onda so acaba quando ela sair) e
-    // como inimigo previsto, para o placar de derrotados continuar coerente.
-    void HandleSplit(Enemy original, Enemy copy)
+    // Copia do AFN e invocados do boss tambem contam como inimigo vivo da onda (a onda so acaba
+    // quando eles sairem) e como inimigo previsto, para o placar de derrotados continuar coerente.
+    void HandleSpawnedByEnemy(Enemy parent, Enemy copy)
     {
         liveEnemies++;
         copy.Finished += OnEnemyFinished;
