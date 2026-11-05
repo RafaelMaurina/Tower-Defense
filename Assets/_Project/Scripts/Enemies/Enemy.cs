@@ -14,6 +14,7 @@ public class Enemy : MonoBehaviour, IDamageable
     float zigzagTime;  // tempo desde o inicio, so para a fase do ziguezague
     float jumpTimer;   // tempo andando ate o proximo salto, ou tempo ja gasto no salto
     bool jumping;
+    bool split;        // ja se dividiu, ou e a copia de quem se dividiu: so divide uma vez
 
     /// Distancia percorrida no caminho. Empurrao diminui, salto soma.
     public float Distance { get; set; }
@@ -28,6 +29,8 @@ public class Enemy : MonoBehaviour, IDamageable
     public static event Action<Enemy> OnDied;
     /// GameManager escuta para tirar vida da base.
     public static event Action<Enemy> OnReachedBase;
+    /// Um inimigo AFN se dividiu: (original, copia). O WaveSpawner escuta para contar a copia.
+    public static event Action<Enemy, Enemy> OnSplit;
     /// Avisa quem gerou este inimigo (WaveSpawner) que ele saiu de jogo, por morte ou por chegar
     /// na base. Vale so para esta vida: e zerado ao devolver ao Pool, pois o objeto e reaproveitado.
     public event Action<Enemy> Finished;
@@ -47,6 +50,7 @@ public class Enemy : MonoBehaviour, IDamageable
         animTime = 0f;
         jumpTimer = 0f;
         jumping = false;
+        split = false;
         zigzagTime = 0f;
         transform.position = path.PointAt(0f);
         UpdateOrder();
@@ -131,7 +135,30 @@ public class Enemy : MonoBehaviour, IDamageable
         float actualDamage = Mathf.Min(health, amount);
         health -= actualDamage;
         if (health <= 0f) Die();
+        else SplitOnFirstDamage();
         return actualDamage;
+    }
+
+    // AFN: no primeiro dano que nao mata, nasce uma copia no caminho, com a mesma vida que o
+    // original tem agora. So divide uma vez (a copia ja nasce marcada), senao seria sem fim.
+    void SplitOnFirstDamage()
+    {
+        if (split || !data.splitOnFirstDamage) return;
+        split = true;
+
+        GameObject prefab = Pool.PrefabOf(gameObject);
+        GameObject go = prefab != null
+            ? Pool.Get(prefab, transform.position, transform.rotation)
+            : Instantiate(gameObject, transform.position, transform.rotation);   // nao veio do Pool (teste)
+        Enemy copy = go.GetComponent<Enemy>();
+        copy.data = data;
+        copy.Init(path);
+        copy.split = true;
+        copy.Distance = Mathf.Max(0f, Distance - data.splitOffset);
+        copy.health = health;
+        copy.transform.position = path.PointAt(copy.Distance);
+        copy.UpdateOrder();
+        OnSplit?.Invoke(this, copy);
     }
 
     void Die()

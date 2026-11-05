@@ -18,6 +18,9 @@ public class EnemyData : ScriptableObject
     [Header("Ziguezague (pato). zigzagAmplitude = 0 desliga")]
     public float zigzagAmplitude;   // desvio lateral maximo para cada lado do caminho, em unidades
     public float zigzagPeriod = 1.6f;   // segundos para ir e voltar (um ciclo completo)
+    [Header("Divisao (AFN). splitOnFirstDamage = false desliga")]
+    public bool splitOnFirstDamage;     // no primeiro dano que nao mata, nasce uma copia com a mesma vida
+    public float splitOffset;           // quanto a copia nasce atras do original, em unidades (0 = no mesmo ponto)
     public Sprite[] frames;                 // quadros da animacao de andar, em ordem
     public float framesPerSecond = 6f;
 
