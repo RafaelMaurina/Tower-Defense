@@ -66,6 +66,7 @@ public class GameBootstrap : MonoBehaviour
             case GameDifficulty.Hard:
                 light.color = new Color(.42f, .52f, .86f);
                 light.intensity = .62f;
+                gameObject.AddComponent<NightLights>();
                 break;
         }
     }
