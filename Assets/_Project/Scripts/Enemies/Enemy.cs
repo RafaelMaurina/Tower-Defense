@@ -11,6 +11,8 @@ public class Enemy : MonoBehaviour, IDamageable
     SpriteRenderer sr;
     float health;
     float animTime;
+    float jumpTimer;   // tempo andando ate o proximo salto, ou tempo ja gasto no salto
+    bool jumping;
 
     /// Distancia percorrida no caminho. Empurrao diminui, salto soma.
     public float Distance { get; set; }
@@ -39,6 +41,8 @@ public class Enemy : MonoBehaviour, IDamageable
         health = data.health;
         IsAlive = true;
         animTime = 0f;
+        jumpTimer = 0f;
+        jumping = false;
         transform.position = path.PointAt(0f);
         UpdateOrder();
         Animate();
@@ -48,13 +52,29 @@ public class Enemy : MonoBehaviour, IDamageable
     {
         if (!IsAlive) return;
 
-        Distance += data.speed * Time.deltaTime;
+        Distance += CurrentSpeed() * Time.deltaTime;
         transform.position = path.PointAt(Distance);
         UpdateOrder();
         animTime += Time.deltaTime;
         Animate();
 
         if (Distance >= path.Length) ReachBase();
+    }
+
+    // Velocidade deste quadro. Quem salta (gafanhoto) alterna andar e saltar; os demais so andam.
+    float CurrentSpeed()
+    {
+        if (data.jumpDistance <= 0f || data.jumpInterval <= 0f) return data.speed;
+
+        float duration = Mathf.Max(0.05f, data.jumpDuration);
+        jumpTimer += Time.deltaTime;
+        if (jumping)
+        {
+            if (jumpTimer >= duration) { jumping = false; jumpTimer = 0f; }
+            return data.jumpDistance / duration;
+        }
+        if (jumpTimer >= data.jumpInterval) { jumping = true; jumpTimer = 0f; }
+        return data.speed;
     }
 
     // O inimigo anda, entao a ordem de desenho acompanha a altura a cada quadro (ver DrawOrder).
@@ -77,10 +97,10 @@ public class Enemy : MonoBehaviour, IDamageable
     public Vector3 Center => transform.position + (Vector3)data.centerOffset;
 
     /// Onde o CENTRO do inimigo estara depois de 'seconds', se continuar reto pelo caminho.
-    /// E o que o projetil usa para mirar a frente. Nao considera desvios
-    /// (ziguezague do pato), e por isso o pato escapa da mira.
+    /// E o que o projetil usa para mirar a frente. Usa a velocidade media (com os saltos do
+    /// gafanhoto) e nao considera desvios (ziguezague do pato), e por isso o pato escapa da mira.
     public Vector3 PredictPosition(float seconds) =>
-        path.PointAt(Distance + data.speed * seconds) + (Vector3)data.centerOffset;
+        path.PointAt(Distance + data.AverageSpeed * seconds) + (Vector3)data.centerOffset;
 
     public void TakeDamage(float amount) => ApplyDamage(amount);
 
