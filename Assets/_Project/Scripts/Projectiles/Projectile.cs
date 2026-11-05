@@ -43,6 +43,7 @@ public class Projectile : MonoBehaviour
         this.owner = owner;
         direction = (aimPoint - transform.position).normalized;
         aimDistance = Vector3.Distance(transform.position, aimPoint);
+        traveled = 0f;   // o projetil e reaproveitado (Pool)
         remaining = aimDistance + 2f;
     }
 
@@ -78,7 +79,7 @@ public class Projectile : MonoBehaviour
         }
         else if (remaining <= 0f)
         {
-            Destroy(gameObject);      // errou
+            Pool.Release(gameObject);      // errou
         }
     }
 
@@ -102,7 +103,7 @@ public class Projectile : MonoBehaviour
             }
             for (int i = 0; i < atingidos.Count; i++) ApplyDamage(atingidos[i]);
         }
-        Destroy(gameObject);
+        Pool.Release(gameObject);
     }
 
     void ApplyDamage(Enemy enemy)

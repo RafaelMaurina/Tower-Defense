@@ -27,6 +27,9 @@ public class Enemy : MonoBehaviour, IDamageable
     public static event Action<Enemy> OnDied;
     /// GameManager escuta para tirar vida da base.
     public static event Action<Enemy> OnReachedBase;
+    /// Avisa quem gerou este inimigo (WaveSpawner) que ele saiu de jogo, por morte ou por chegar
+    /// na base. Vale so para esta vida: e zerado ao devolver ao Pool, pois o objeto e reaproveitado.
+    public event Action<Enemy> Finished;
 
     void Awake() => sr = GetComponent<SpriteRenderer>();
 
@@ -117,21 +120,30 @@ public class Enemy : MonoBehaviour, IDamageable
     void Die()
     {
         Finish();
-        OnDied?.Invoke(this);
+        try { OnDied?.Invoke(this); }
+        finally { Recycle(); }
     }
 
     void ReachBase()
     {
         Finish();
-        OnReachedBase?.Invoke(this);
+        try { OnReachedBase?.Invoke(this); }
+        finally { Recycle(); }
     }
 
     // Sai da lista antes de avisar o jogo, para a torre nunca mirar num inimigo morto.
-    // Destroy fica isolado aqui para trocar por pooling depois (issue #19).
     void Finish()
     {
         IsAlive = false;
         EnemyRegistry.Unregister(this);
-        Destroy(gameObject);
+    }
+
+    // Devolve ao Pool depois de avisar todo mundo (os ouvintes ainda leem data, posicao etc.).
+    // Init zera o resto quando o objeto for reaproveitado.
+    void Recycle()
+    {
+        Finished?.Invoke(this);
+        Finished = null;
+        Pool.Release(gameObject);
     }
 }
