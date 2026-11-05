@@ -11,6 +11,7 @@ public class Enemy : MonoBehaviour, IDamageable
     SpriteRenderer sr;
     float health;
     float animTime;
+    float zigzagTime;  // tempo desde o inicio, so para a fase do ziguezague
     float jumpTimer;   // tempo andando ate o proximo salto, ou tempo ja gasto no salto
     bool jumping;
 
@@ -43,6 +44,7 @@ public class Enemy : MonoBehaviour, IDamageable
         animTime = 0f;
         jumpTimer = 0f;
         jumping = false;
+        zigzagTime = 0f;
         transform.position = path.PointAt(0f);
         UpdateOrder();
         Animate();
@@ -53,7 +55,8 @@ public class Enemy : MonoBehaviour, IDamageable
         if (!IsAlive) return;
 
         Distance += CurrentSpeed() * Time.deltaTime;
-        transform.position = path.PointAt(Distance);
+        zigzagTime += Time.deltaTime;
+        transform.position = path.PointAt(Distance) + ZigzagOffset();
         UpdateOrder();
         animTime += Time.deltaTime;
         Animate();
@@ -77,6 +80,19 @@ public class Enemy : MonoBehaviour, IDamageable
         return data.speed;
     }
 
+    // Desvio lateral do pato: perpendicular ao trecho do caminho, indo e voltando em seno.
+    // Distance nao muda (o pato nao anda mais nem menos), so a posicao desenhada sai do caminho.
+    // Comeca em zero (seno de 0), entao nasce em cima do spawn.
+    Vector3 ZigzagOffset()
+    {
+        if (data.zigzagAmplitude <= 0f || data.zigzagPeriod <= 0f) return Vector3.zero;
+
+        Vector3 dir = path.PointAt(Distance + 0.1f) - path.PointAt(Distance);
+        if (dir.sqrMagnitude < 1e-6f) return Vector3.zero;   // parado no fim do caminho
+        Vector3 side = new Vector3(-dir.y, dir.x, 0f).normalized;
+        return side * (data.zigzagAmplitude * Mathf.Sin(zigzagTime * 2f * Mathf.PI / data.zigzagPeriod));
+    }
+
     // O inimigo anda, entao a ordem de desenho acompanha a altura a cada quadro (ver DrawOrder).
     void UpdateOrder()
     {
@@ -98,7 +114,8 @@ public class Enemy : MonoBehaviour, IDamageable
 
     /// Onde o CENTRO do inimigo estara depois de 'seconds', se continuar reto pelo caminho.
     /// E o que o projetil usa para mirar a frente. Usa a velocidade media (com os saltos do
-    /// gafanhoto) e nao considera desvios (ziguezague do pato), e por isso o pato escapa da mira.
+    /// gafanhoto) e de proposito NAO soma o ziguezague do pato (ZigzagOffset): a mira preditiva
+    /// supoe o inimigo no centro do caminho, e por isso o pato escapa dela.
     public Vector3 PredictPosition(float seconds) =>
         path.PointAt(Distance + data.AverageSpeed * seconds) + (Vector3)data.centerOffset;
 
