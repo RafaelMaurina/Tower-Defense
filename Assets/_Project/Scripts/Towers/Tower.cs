@@ -9,7 +9,7 @@ public enum TargetMode { First, Strongest, Closest }
 public class Tower : MonoBehaviour
 {
     public TowerData data;
-    public TargetMode mode = TargetMode.First;
+    public TargetMode mode = TargetMode.First; // First: maior distancia percorrida no caminho
 
     float cooldown;
     readonly System.Collections.Generic.List<Guardian> guardians = new System.Collections.Generic.List<Guardian>();
@@ -119,7 +119,7 @@ public class Tower : MonoBehaviour
         GameObject go = Instantiate(data.projectile, transform.position, Quaternion.identity);
         Projectile p = go.GetComponent<Projectile>();
         Vector3 aim = Projectile.AimPoint(transform.position, target, p.speed);
-        p.Init(aim, Stats.damage, data.hitsFlying);
+        p.Init(aim, Stats.damage, data.hitsFlying, this);
     }
 
     void ApplySprite()

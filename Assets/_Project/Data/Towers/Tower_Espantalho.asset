@@ -31,3 +31,4 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: d98f4481d9304d3d9302679026ec6e1f, type: 3}
   hitsFlying: 0
   projectile: {fileID: 5956580456811665869, guid: 6997e250c9e2541d087aa835aeb4fe5c, type: 3}
+  towerPrefab: {fileID: 7356716106556697185, guid: 0dd0d5526100f4b7f9864ec3e6516ec0, type: 3}

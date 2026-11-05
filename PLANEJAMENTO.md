@@ -52,7 +52,7 @@ public interface IDamageable {
 public class Enemy : MonoBehaviour, IDamageable {
     public EnemyData data;                 // ScriptableObject: vida, velocidade, recompensa, voa?
     public float Distance { get; set; }    // distancia percorrida no caminho
-    public bool Flying => data.flying;
+    public bool IsFlying => data.flying;   // bool, nao Unity Tag
     public static event System.Action<Enemy> OnDied;      // GameManager soma dinheiro
     public static event System.Action<Enemy> OnReachedBase; // GameManager tira vida
 }
@@ -73,6 +73,24 @@ public static class GameManager {
     public static event System.Action<GameState> OnStateChanged;
 }
 ```
+
+### Decisoes fechadas para a integracao
+
+- **Saldo:** nunca pode ficar negativo. Compra e upgrade so ocorrem quando ha saldo suficiente; os valores dos niveis ficam nos `TowerData` e serao balanceados com testes de jogo.
+- **Venda:** devolve 80% do total investido na torre, somando custo inicial e todos os upgrades comprados. O reembolso nao pode gerar saldo negativo.
+- **Aereos:** `EnemyData.flying` e `TowerData.hitsFlying` sao booleanos; `TowerData.towerPrefab` referencia o prefab que o HUD oferece para construir. A torre e o projetil so podem acertar um inimigo aereo quando ambos permitem; nao usar Unity Tags para esta regra.
+- **HUD e ameacas:** o HUD sinaliza quando a rodada inclui inimigos aereos e identifica quais torres conseguem atingi-los; a selecao tambem desativa compras e upgrades sem saldo suficiente.
+- **Posicao do inimigo:** o transform percorre o caminho pelo pivo nos pes; `EnemyData.centerOffset` indica o centro visual do corpo, usado para mira e colisao de projetil. A ordem de desenho por altura esta descrita no PR #62, ainda aberto.
+- **Alvo padrao:** `First` significa o inimigo mais avancado no caminho, comparando `Enemy.Distance` entre os que estao no alcance e podem ser atingidos.
+- **Ondas:** cada asset `WaveData` identifica a cena do nivel em `levelScene`; o spawner usa apenas os assets associados a cena atual.
+- **Pontuacao final:** tres componentes normalizados entre 0 e 1, com o mesmo peso:
+  - proporcao de inimigos derrotados = derrotados / total de inimigos agendados nos niveis jogados. Em caso de derrota, o total inclui todos os inimigos agendados no nivel atual;
+  - proporcao de vida restante = vida final / vida inicial;
+  - proporcao de dinheiro preservado = saldo final / total de dinheiro recebido (saldo inicial, recompensas e reembolsos de venda).
+  - `pontuacao = arredondar(1000 * (proporcaoInimigos + proporcaoVida + proporcaoDinheiro) / 3)`. Cada proporcao e limitada ao intervalo [0, 1].
+- **Resultado:** vitoria e derrota mostram pontuacao, rodada alcancada e a torre que causou mais dano. A tela oferece voltar ao menu e jogar novamente; jogar novamente reinicia o mesmo nivel e dificuldade.
+- **Referencia de design:** usar Bloons TD 6 como referencia para economia, selecao de alvos e estatisticas de desempenho, adaptando os sistemas ao jogo e aos dados do projeto.
+
 
 Responsabilidades nas fronteiras:
 - **Fabio** cria `Enemy`, `Tower`, `Projectile`, `EnemyRegistry` e os `ScriptableObject` de inimigo e torre.

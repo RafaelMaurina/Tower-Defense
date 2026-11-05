@@ -32,3 +32,4 @@ MonoBehaviour:
   hitsFlying: 0
   projectile: {fileID: 0}
   guardian: {fileID: 592597528476322065, guid: 92c5b0c434a0b45e99bc1703a6318fac, type: 3}
+  towerPrefab: {fileID: 834612378718956865, guid: 85ab446d70f244775b76d1f8a2060264, type: 3}

@@ -8,6 +8,10 @@ public class RankingEntry
     public string difficulty;
     public int score;
     public string date;
+    public int round;
+    public string topDamageTower;
+    public float topDamage;
+    public bool won;
 }
 [Serializable]
 class RankingSaveData { public List<RankingEntry> entries = new List<RankingEntry>(); }
@@ -17,10 +21,19 @@ public static class LocalRanking
 {
     const string Key = "DefesaDaColheita.Ranking.v1";
     const int Limit = 10;
-    public static void Record(GameDifficulty difficulty, int remainingLife, int money)
+    public static void Record(GameResult result)
     {
         var data = LoadData();
-        data.entries.Add(new RankingEntry { difficulty = difficulty.ToString(), score = Mathf.Max(0, remainingLife) * 100 + Mathf.Max(0, money), date = DateTime.Now.ToString("yyyy-MM-dd") });
+        data.entries.Add(new RankingEntry
+        {
+            difficulty = result.difficulty.ToString(),
+            score = result.score,
+            date = DateTime.Now.ToString("yyyy-MM-dd"),
+            round = result.round,
+            topDamageTower = result.topDamageTower,
+            topDamage = result.topDamage,
+            won = result.won
+        });
         data.entries.Sort((a, b) => b.score.CompareTo(a.score));
         if (data.entries.Count > Limit) data.entries.RemoveRange(Limit, data.entries.Count - Limit);
         PlayerPrefs.SetString(Key, JsonUtility.ToJson(data));

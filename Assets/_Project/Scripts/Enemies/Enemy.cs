@@ -16,7 +16,8 @@ public class Enemy : MonoBehaviour, IDamageable
     public float Distance { get; set; }
 
     public float Health => health;
-    public bool Flying => data.flying;
+    public bool IsFlying => data != null && data.flying;
+    public bool Flying => IsFlying;
     public bool IsAlive { get; private set; }
     public Transform Transform => transform;
 
@@ -81,12 +82,16 @@ public class Enemy : MonoBehaviour, IDamageable
     public Vector3 PredictPosition(float seconds) =>
         path.PointAt(Distance + data.speed * seconds) + (Vector3)data.centerOffset;
 
-    public void TakeDamage(float amount)
-    {
-        if (!IsAlive) return;
+    public void TakeDamage(float amount) => ApplyDamage(amount);
 
-        health -= amount;
+    /// Aplica dano e retorna apenas a vida realmente removida (sem contar excesso).
+    public float ApplyDamage(float amount)
+    {
+        if (!IsAlive || amount <= 0f) return 0f;
+        float actualDamage = Mathf.Min(health, amount);
+        health -= actualDamage;
         if (health <= 0f) Die();
+        return actualDamage;
     }
 
     void Die()

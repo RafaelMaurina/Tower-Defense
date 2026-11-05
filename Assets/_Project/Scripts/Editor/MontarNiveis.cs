@@ -22,9 +22,9 @@ public static class MontarNiveis
     const string CENAS    = "Assets/_Project/Scenes";
     const string TEMPLATE = "Assets/Settings/Scenes/URP2DSceneTemplate.unity";
 
-    // 30 x 17 casas de 64px: camera 1:1 em 1920x1080 (cada pixel da arte = 1 pixel da tela).
+    // Janela visivel de 24 x 13,5 casas em 1536x864: o campo fica proximo sem revelar bordas externas.
     const int W = 30, H = 17;
-    const int REF_X = 1920, REF_Y = 1080;
+    const int REF_X = 1536, REF_Y = 864;
 
     // Ordem de desenho: chao 0, coisas deitadas no chao 1, objetos em pe 100+.
     const int ORDEM_CHAO = 0, ORDEM_DECALQUE = 1;
@@ -165,6 +165,28 @@ public static class MontarNiveis
         if (!igual) EditorBuildSettings.scenes = lista.ToArray();
     }
 
+    /// Atualiza dados dos prefabs locais gerados sem apagar a geometria dos niveis.
+    public static void AtualizarCatalogos()
+    {
+        var towers = CarregarAssets<TowerData>("Assets/_Project/Data/Towers");
+        var waves = CarregarAssets<WaveData>("Assets/_Project/Data/Waves");
+        foreach (var nv in NIVEIS)
+        {
+            string path = PREFABS + "/Nivel_" + nv.id + "_" + nv.nome + ".prefab";
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(path) == null) continue;
+            GameObject root = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                var bootstrap = root.GetComponentInChildren<GameBootstrap>(true);
+                if (bootstrap == null || !bootstrap.NeedsCatalogUpdate(towers, waves)) continue;
+                bootstrap.Configure(towers, waves);
+                PrefabUtility.SaveAsPrefabAsset(root, path);
+                Debug.Log("Catalogo de torres e ondas atualizado em " + path);
+            }
+            finally { PrefabUtility.UnloadPrefabContents(root); }
+        }
+    }
+
     static void Montar(Nivel nv, string nome, string prefabPath, string cenaPath)
     {
         // A cena do template ja traz camera e Global Light 2D. Sem luz 2D, os
@@ -189,6 +211,10 @@ public static class MontarNiveis
         CriarCanteiros(nv, raiz.transform);
         CriarDecoracao(nv, raiz.transform);
         CriarBase(nv, raiz.transform);
+        var bootstrap = raiz.AddComponent<GameBootstrap>();
+        bootstrap.Configure(
+            CarregarAssets<TowerData>("Assets/_Project/Data/Towers"),
+            CarregarAssets<WaveData>("Assets/_Project/Data/Waves"));
 
         PrefabUtility.SaveAsPrefabAssetAndConnect(raiz, prefabPath, InteractionMode.AutomatedAction);
 
@@ -197,7 +223,7 @@ public static class MontarNiveis
             var cam = go.GetComponent<Camera>();
             if (cam == null) continue;
             cam.orthographic = true;
-            cam.orthographicSize = REF_Y / 2f / 64f;              // 1080px de altura / 64 PPU / 2
+            cam.orthographicSize = REF_Y / 2f / 64f;              // 864px de altura / 64 PPU / 2
             cam.transform.position = new Vector3(W / 2f, H / 2f, -10f);
             var ppc = cam.GetComponent<PixelPerfectCamera>();
             if (ppc == null) ppc = cam.gameObject.AddComponent<PixelPerfectCamera>();
@@ -305,6 +331,7 @@ public static class MontarNiveis
             go.name = "Canteiro_" + (i + 1).ToString("00");
             // colisor para o clique de construir, que vem depois
             go.AddComponent<BoxCollider2D>().isTrigger = true;
+            go.AddComponent<BuildPlot>();
         }
     }
 
@@ -348,6 +375,19 @@ public static class MontarNiveis
 
     // --------------------------------------------------------- utilitarios
 
+    static T[] CarregarAssets<T>(string pasta) where T : UnityEngine.Object
+    {
+        if (!AssetDatabase.IsValidFolder(pasta)) return new T[0];
+        string[] guids = AssetDatabase.FindAssets("t:" + typeof(T).Name, new[] { pasta });
+        var assets = new List<T>(guids.Length);
+        foreach (string guid in guids)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            T asset = AssetDatabase.LoadAssetAtPath<T>(path);
+            if (asset != null) assets.Add(asset);
+        }
+        return assets.ToArray();
+    }
     static Vector3 Centro(Vector2Int c) => new Vector3(c.x + 0.5f, c.y + 0.5f, 0f);
 
     /// ordem &lt; 0 = objeto em pe, ordenado pela altura na tela.

@@ -351,7 +351,7 @@ public class InfoPanel : MonoBehaviour
 
     public static void Show(string message, string repositoryUrl = null, string[] creditLines = null, string title = "Informações")
     {
-        var canvas = Object.FindFirstObjectByType<Canvas>(); if (canvas == null) return;
+        var canvas = Object.FindAnyObjectByType<Canvas>(); if (canvas == null) return;
         if (mainMenuContent != null) mainMenuContent.SetActive(false);
         var go = new GameObject("Submenu " + title, typeof(RectTransform), typeof(Image)); go.transform.SetParent(canvas.transform, false);
         var rect = go.GetComponent<RectTransform>(); rect.anchorMin = new Vector2(.11f, .035f); rect.anchorMax = new Vector2(.89f, .965f);
