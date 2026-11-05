@@ -45,7 +45,9 @@ public class Guardian : MonoBehaviour
         if (target != null && cooldown <= 0f &&
             Vector3.Distance(transform.position, target.Transform.position) <= biteRange)
         {
-            target.TakeDamage(tower.Stats.damage);
+            float damage = target.ApplyDamage(tower.Stats.damage);
+            if (damage > 0f && GameManager.Instance != null)
+                GameManager.Instance.RegisterTowerDamage(tower, damage);
             cooldown = 1f / tower.Stats.fireRate;
         }
     }

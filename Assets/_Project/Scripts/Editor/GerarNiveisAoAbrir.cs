@@ -17,7 +17,12 @@ static class GerarNiveisAoAbrir
             return;
         }
         if (EditorApplication.isPlayingOrWillChangePlaymode) return;
-        if (!MontarNiveis.FaltaAlgum()) { MontarNiveis.AtualizarBuild(); return; }
+        if (!MontarNiveis.FaltaAlgum())
+        {
+            MontarNiveis.AtualizarCatalogos();
+            MontarNiveis.AtualizarBuild();
+            return;
+        }
 
         UnityEngine.Debug.Log("Niveis nao encontrados neste computador. Gerando...");
         MontarNiveis.Gerar();

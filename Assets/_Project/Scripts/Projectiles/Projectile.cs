@@ -20,6 +20,7 @@ public class Projectile : MonoBehaviour
     Vector3 aimPoint;
     float damage;
     bool hitsFlying;
+    Tower owner;
     float aimDistance;   // distancia do disparo ate o ponto de mira
     float traveled;
     float remaining;     // distancia que ainda pode voar antes de sumir
@@ -32,11 +33,14 @@ public class Projectile : MonoBehaviour
 
     /// Ponto de mira calculado pela torre. Passa um pouco do ponto, para quem
     /// chegar la na hora ainda ser acertado e quem nao chegar ser errado.
-    public void Init(Vector3 aimPoint, float damage, bool hitsFlying)
+    public void Init(Vector3 aimPoint, float damage, bool hitsFlying) => Init(aimPoint, damage, hitsFlying, null);
+
+    public void Init(Vector3 aimPoint, float damage, bool hitsFlying, Tower owner)
     {
         this.aimPoint = aimPoint;
         this.damage = damage;
         this.hitsFlying = hitsFlying;
+        this.owner = owner;
         direction = (aimPoint - transform.position).normalized;
         aimDistance = Vector3.Distance(transform.position, aimPoint);
         remaining = aimDistance + 2f;
@@ -83,7 +87,7 @@ public class Projectile : MonoBehaviour
     {
         if (splashRadius <= 0f)
         {
-            hit.TakeDamage(damage);
+            ApplyDamage(hit);
         }
         else
         {
@@ -96,9 +100,16 @@ public class Projectile : MonoBehaviour
                 if (e.Flying && !hitsFlying) continue;
                 if (Vector3.Distance(center, e.Center) <= splashRadius) atingidos.Add(e);
             }
-            for (int i = 0; i < atingidos.Count; i++) atingidos[i].TakeDamage(damage);
+            for (int i = 0; i < atingidos.Count; i++) ApplyDamage(atingidos[i]);
         }
         Destroy(gameObject);
+    }
+
+    void ApplyDamage(Enemy enemy)
+    {
+        float actualDamage = enemy.ApplyDamage(damage);
+        if (actualDamage > 0f && owner != null && GameManager.Instance != null)
+            GameManager.Instance.RegisterTowerDamage(owner, actualDamage);
     }
 
     Enemy FindHit()

@@ -22,4 +22,5 @@ public class TowerData : ScriptableObject
     public GameObject projectile;   // prefab do projetil (torres que atiram)
     public GameObject guardian;     // prefab com Guardian (Tufao): se preenchido, a torre invoca
                                     // guardioes (nivel + 1 caes) em vez de atirar
+    public GameObject towerPrefab;  // prefab usado ao construir no canteiro
 }

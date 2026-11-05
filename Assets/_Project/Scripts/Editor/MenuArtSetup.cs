@@ -15,7 +15,7 @@ public static class MenuArtSetup
         ConfigureImporters();
         AssetDatabase.Refresh();
         EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
-        var controller = Object.FindFirstObjectByType<MenuController>();
+        var controller = Object.FindAnyObjectByType<MenuController>();
         if (controller == null)
         {
             Debug.LogError("MenuController não encontrado na cena Menu.");
