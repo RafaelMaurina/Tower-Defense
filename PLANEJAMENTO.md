@@ -80,7 +80,7 @@ public static class GameManager {
 - **Venda:** devolve 80% do total investido na torre, somando custo inicial e todos os upgrades comprados. O reembolso nao pode gerar saldo negativo.
 - **Aereos:** `EnemyData.flying` e `TowerData.hitsFlying` sao booleanos; `TowerData.towerPrefab` referencia o prefab que o HUD oferece para construir. A torre e o projetil so podem acertar um inimigo aereo quando ambos permitem; nao usar Unity Tags para esta regra.
 - **HUD e ameacas:** o HUD sinaliza quando a rodada inclui inimigos aereos e identifica quais torres conseguem atingi-los; a selecao tambem desativa compras e upgrades sem saldo suficiente.
-- **Posicao do inimigo:** o transform percorre o caminho pelo pivo nos pes; `EnemyData.centerOffset` indica o centro visual do corpo, usado para mira e colisao de projetil. A ordem de desenho por altura esta descrita no PR #62, ainda aberto.
+- **Posicao do inimigo:** o transform percorre o caminho pelo pivo nos pes; `EnemyData.centerOffset` indica o centro visual do corpo, usado para mira e colisao de projetil. A ordem de desenho por altura segue `ARTE.md`.
 - **Alvo padrao:** `First` significa o inimigo mais avancado no caminho, comparando `Enemy.Distance` entre os que estao no alcance e podem ser atingidos.
 - **Ondas:** cada asset `WaveData` identifica a cena do nivel em `levelScene`; o spawner usa apenas os assets associados a cena atual.
 - **Pontuacao final:** tres componentes normalizados entre 0 e 1, com o mesmo peso:

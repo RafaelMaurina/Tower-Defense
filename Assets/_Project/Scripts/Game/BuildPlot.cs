@@ -78,7 +78,7 @@ public class BuildPlot : MonoBehaviour
 
     public bool Sell()
     {
-        if (placed == null || GameManager.Instance == null) return false;
+        if (placed == null || GameManager.Instance == null || GameManager.State != GameState.Playing) return false;
         GameManager.Instance.AddMoney(GetSellRefund());
         Destroy(placed.gameObject);
         placed = null;

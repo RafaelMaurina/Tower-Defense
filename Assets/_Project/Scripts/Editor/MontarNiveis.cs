@@ -22,9 +22,9 @@ public static class MontarNiveis
     const string CENAS    = "Assets/_Project/Scenes";
     const string TEMPLATE = "Assets/Settings/Scenes/URP2DSceneTemplate.unity";
 
-    // Janela visivel de 24 x 13,5 casas em 1536x864: o campo fica proximo sem revelar bordas externas.
+    // 30 x 17 casas de 64px: camera 1:1 em 1920x1080.
     const int W = 30, H = 17;
-    const int REF_X = 1536, REF_Y = 864;
+    const int REF_X = 1920, REF_Y = 1080;
 
     // Ordem de desenho: chao 0, coisas deitadas no chao 1, objetos em pe 100+.
     const int ORDEM_CHAO = 0, ORDEM_DECALQUE = 1;
@@ -223,7 +223,7 @@ public static class MontarNiveis
             var cam = go.GetComponent<Camera>();
             if (cam == null) continue;
             cam.orthographic = true;
-            cam.orthographicSize = REF_Y / 2f / 64f;              // 864px de altura / 64 PPU / 2
+            cam.orthographicSize = REF_Y / 2f / 64f;              // 1080px de altura / 64 PPU / 2
             cam.transform.position = new Vector3(W / 2f, H / 2f, -10f);
             var ppc = cam.GetComponent<PixelPerfectCamera>();
             if (ppc == null) ppc = cam.gameObject.AddComponent<PixelPerfectCamera>();
