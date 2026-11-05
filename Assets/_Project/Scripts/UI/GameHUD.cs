@@ -254,7 +254,7 @@ public class GameHUD : MonoBehaviour
         catalogView = Rect(panelImage.transform,"Lista de torres",new Vector2(.12f,.16f),new Vector2(.88f,.70f)).gameObject;
         var viewport = Rect(catalogView.transform,"Area visivel",Vector2.zero,Vector2.one);
         var viewportImage = viewport.gameObject.AddComponent<Image>();
-        viewportImage.color = new Color(1,1,1,.001f);
+        viewportImage.color = Color.white;   // Mask usa o alfa do grafico; com .001 o Unity arredonda para 0 e esconde a lista (showMaskGraphic=false ja o deixa invisivel)
         viewport.gameObject.AddComponent<Mask>().showMaskGraphic = false;
         var content = Rect(viewport,"Conteudo",new Vector2(0,1),new Vector2(1,1));
         content.pivot = new Vector2(.5f,1);
