@@ -15,6 +15,9 @@ public class Enemy : MonoBehaviour, IDamageable
     float jumpTimer;   // tempo andando ate o proximo salto, ou tempo ja gasto no salto
     bool jumping;
     bool split;        // ja se dividiu, ou e a copia de quem se dividiu: so divide uma vez
+    Boss boss;         // so no boss (Chomsky): fases, escudo, invocacao
+    // Movimento deste momento: vem de data e o boss troca a cada fase (SetMovement).
+    float speed, jumpInterval, jumpDistance, jumpDuration;
 
     /// Distancia percorrida no caminho. Empurrao diminui, salto soma.
     public float Distance { get; set; }
@@ -29,13 +32,18 @@ public class Enemy : MonoBehaviour, IDamageable
     public static event Action<Enemy> OnDied;
     /// GameManager escuta para tirar vida da base.
     public static event Action<Enemy> OnReachedBase;
-    /// Um inimigo AFN se dividiu: (original, copia). O WaveSpawner escuta para contar a copia.
-    public static event Action<Enemy, Enemy> OnSplit;
+    /// Um inimigo criou outro em jogo (copia do AFN, invocado do boss): (pai, filho).
+    /// O WaveSpawner escuta para contar o filho na onda.
+    public static event Action<Enemy, Enemy> OnSpawnedByEnemy;
     /// Avisa quem gerou este inimigo (WaveSpawner) que ele saiu de jogo, por morte ou por chegar
     /// na base. Vale so para esta vida: e zerado ao devolver ao Pool, pois o objeto e reaproveitado.
     public event Action<Enemy> Finished;
 
-    void Awake() => sr = GetComponent<SpriteRenderer>();
+    void Awake()
+    {
+        sr = GetComponent<SpriteRenderer>();
+        boss = GetComponent<Boss>();
+    }
 
     void OnEnable() => EnemyRegistry.Register(this);
     void OnDisable() => EnemyRegistry.Unregister(this);
@@ -48,10 +56,10 @@ public class Enemy : MonoBehaviour, IDamageable
         health = data.health;
         IsAlive = true;
         animTime = 0f;
-        jumpTimer = 0f;
-        jumping = false;
         split = false;
         zigzagTime = 0f;
+        SetMovement(data.speed, data.jumpInterval, data.jumpDistance, data.jumpDuration);
+        if (boss != null) boss.Begin();
         transform.position = path.PointAt(0f);
         UpdateOrder();
         Animate();
@@ -74,17 +82,28 @@ public class Enemy : MonoBehaviour, IDamageable
     // Velocidade deste quadro. Quem salta (gafanhoto) alterna andar e saltar; os demais so andam.
     float CurrentSpeed()
     {
-        if (data.jumpDistance <= 0f || data.jumpInterval <= 0f) return data.speed;
+        if (jumpDistance <= 0f || jumpInterval <= 0f) return speed;
 
-        float duration = Mathf.Max(0.05f, data.jumpDuration);
+        float duration = Mathf.Max(0.05f, jumpDuration);
         jumpTimer += Time.deltaTime;
         if (jumping)
         {
             if (jumpTimer >= duration) { jumping = false; jumpTimer = 0f; }
-            return data.jumpDistance / duration;
+            return jumpDistance / duration;
         }
-        if (jumpTimer >= data.jumpInterval) { jumping = true; jumpTimer = 0f; }
-        return data.speed;
+        if (jumpTimer >= jumpInterval) { jumping = true; jumpTimer = 0f; }
+        return speed;
+    }
+
+    /// Troca o movimento (o boss muda a cada fase) e recomeca o ciclo de salto.
+    public void SetMovement(float newSpeed, float newJumpInterval, float newJumpDistance, float newJumpDuration)
+    {
+        speed = newSpeed;
+        jumpInterval = newJumpInterval;
+        jumpDistance = newJumpDistance;
+        jumpDuration = newJumpDuration;
+        jumpTimer = 0f;
+        jumping = false;
     }
 
     // Desvio lateral do pato: perpendicular ao trecho do caminho, indo e voltando em seno.
@@ -124,7 +143,8 @@ public class Enemy : MonoBehaviour, IDamageable
     /// gafanhoto) e de proposito NAO soma o ziguezague do pato (ZigzagOffset): a mira preditiva
     /// supoe o inimigo no centro do caminho, e por isso o pato escapa dela.
     public Vector3 PredictPosition(float seconds) =>
-        path.PointAt(Distance + data.AverageSpeed * seconds) + (Vector3)data.centerOffset;
+        path.PointAt(Distance + EnemyData.AverageSpeedOf(speed, jumpInterval, jumpDistance, jumpDuration) * seconds)
+        + (Vector3)data.centerOffset;
 
     public void TakeDamage(float amount) => ApplyDamage(amount);
 
@@ -132,11 +152,20 @@ public class Enemy : MonoBehaviour, IDamageable
     public float ApplyDamage(float amount)
     {
         if (!IsAlive || amount <= 0f) return 0f;
-        float actualDamage = Mathf.Min(health, amount);
+        // O escudo do boss absorve antes da vida. O que ele absorveu conta como dano causado.
+        float toHealth = boss != null ? boss.AbsorbDamage(amount) : amount;
+        float actualDamage = Mathf.Min(health, toHealth);
         health -= actualDamage;
+        float dealt = (amount - toHealth) + actualDamage;
         if (health <= 0f) Die();
         else SplitOnFirstDamage();
-        return actualDamage;
+        return dealt;
+    }
+
+    /// Recupera vida, sem passar da maxima. Usado pela fase 3 do boss.
+    public void Heal(float amount)
+    {
+        if (IsAlive) health = Mathf.Min(data.health, health + amount);
     }
 
     // AFN: no primeiro dano que nao mata, nasce uma copia no caminho, com a mesma vida que o
@@ -146,19 +175,33 @@ public class Enemy : MonoBehaviour, IDamageable
         if (split || !data.splitOnFirstDamage) return;
         split = true;
 
-        GameObject prefab = Pool.PrefabOf(gameObject);
-        GameObject go = prefab != null
-            ? Pool.Get(prefab, transform.position, transform.rotation)
-            : Instantiate(gameObject, transform.position, transform.rotation);   // nao veio do Pool (teste)
-        Enemy copy = go.GetComponent<Enemy>();
-        copy.data = data;
-        copy.Init(path);
+        Enemy copy = CreateChild(Pool.PrefabOf(gameObject), data, Mathf.Max(0f, Distance - data.splitOffset));
         copy.split = true;
-        copy.Distance = Mathf.Max(0f, Distance - data.splitOffset);
         copy.health = health;
-        copy.transform.position = path.PointAt(copy.Distance);
-        copy.UpdateOrder();
-        OnSplit?.Invoke(this, copy);
+        OnSpawnedByEnemy?.Invoke(this, copy);
+    }
+
+    /// Cria um inimigo no mesmo caminho, a 'distance' do inicio (invocado do boss).
+    public Enemy Spawn(GameObject prefab, EnemyData childData, float distance)
+    {
+        Enemy child = CreateChild(prefab, childData, distance);
+        OnSpawnedByEnemy?.Invoke(this, child);
+        return child;
+    }
+
+    // Prefab nulo = nao veio do Pool (teste): clona este proprio objeto.
+    Enemy CreateChild(GameObject prefab, EnemyData childData, float distance)
+    {
+        GameObject go = prefab != null
+            ? Pool.Get(prefab, transform.position, Quaternion.identity)
+            : Instantiate(gameObject, transform.position, Quaternion.identity);
+        Enemy child = go.GetComponent<Enemy>();
+        child.data = childData;
+        child.Init(path);
+        child.Distance = distance;
+        child.transform.position = path.PointAt(distance);
+        child.UpdateOrder();
+        return child;
     }
 
     void Die()
