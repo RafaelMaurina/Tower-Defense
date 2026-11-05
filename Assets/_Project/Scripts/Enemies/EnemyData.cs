@@ -15,6 +15,9 @@ public class EnemyData : ScriptableObject
     public float jumpInterval;      // segundos andando entre um salto e outro
     public float jumpDistance;      // quanto o salto avanca no caminho, em unidades
     public float jumpDuration = 0.3f;   // segundos que o salto leva (avanca jumpDistance nesse tempo)
+    [Header("Ziguezague (pato). zigzagAmplitude = 0 desliga")]
+    public float zigzagAmplitude;   // desvio lateral maximo para cada lado do caminho, em unidades
+    public float zigzagPeriod = 1.6f;   // segundos para ir e voltar (um ciclo completo)
     public Sprite[] frames;                 // quadros da animacao de andar, em ordem
     public float framesPerSecond = 6f;
 
