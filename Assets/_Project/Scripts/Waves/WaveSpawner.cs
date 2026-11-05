@@ -17,6 +17,9 @@ public class WaveSpawner : MonoBehaviour
         if (paths == null || paths.Length == 0) paths = GetComponentsInChildren<WaypointPath>(true);
     }
 
+    void OnEnable() => Enemy.OnSplit += HandleSplit;
+    void OnDisable() => Enemy.OnSplit -= HandleSplit;
+
     void Start()
     {
         if (startOnPlay) Begin();
@@ -105,6 +108,15 @@ public class WaveSpawner : MonoBehaviour
     // Evento do proprio inimigo, e nao varredura por IsAlive: com pooling o mesmo objeto pode
     // renascer antes de uma varredura ver que ele morreu, e a onda nunca terminaria.
     void OnEnemyFinished(Enemy enemy) => liveEnemies = Mathf.Max(0, liveEnemies - 1);
+
+    // A copia do AFN tambem conta como inimigo vivo da onda (a onda so acaba quando ela sair) e
+    // como inimigo previsto, para o placar de derrotados continuar coerente.
+    void HandleSplit(Enemy original, Enemy copy)
+    {
+        liveEnemies++;
+        copy.Finished += OnEnemyFinished;
+        GameManager.Instance?.RegisterPlannedEnemies(1);
+    }
 
     WaypointPath SelectPath(int requested)
     {

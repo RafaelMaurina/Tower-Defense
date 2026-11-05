@@ -37,6 +37,10 @@ public static class Pool
         return novo;
     }
 
+    /// Prefab de onde esta instancia saiu, ou null se nao veio de Get (ex.: instanciada direto num teste).
+    public static GameObject PrefabOf(GameObject go) =>
+        go != null && origem.TryGetValue(go, out GameObject prefab) ? prefab : null;
+
     public static void Release(GameObject go)
     {
         if (go == null) return;
