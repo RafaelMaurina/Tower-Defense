@@ -253,9 +253,12 @@ public class GameHUD : MonoBehaviour
         stats.gameObject.SetActive(false);
         catalogView = Rect(panelImage.transform,"Lista de torres",new Vector2(.12f,.16f),new Vector2(.88f,.70f)).gameObject;
         var viewport = Rect(catalogView.transform,"Area visivel",Vector2.zero,Vector2.one);
+        // RectMask2D corta pelo retangulo. O Mask com imagem quase transparente escondia
+        // a lista inteira: alpha 0,001 vira 0 em 8 bits e a mascara nao desenha nada.
+        viewport.gameObject.AddComponent<RectMask2D>();
+        // imagem transparente so para a rolagem do mouse funcionar no espaco vazio
         var viewportImage = viewport.gameObject.AddComponent<Image>();
-        viewportImage.color = new Color(1,1,1,.001f);
-        viewport.gameObject.AddComponent<Mask>().showMaskGraphic = false;
+        viewportImage.color = Color.clear;
         var content = Rect(viewport,"Conteudo",new Vector2(0,1),new Vector2(1,1));
         content.pivot = new Vector2(.5f,1);
         var scroll = catalogView.AddComponent<ScrollRect>();
