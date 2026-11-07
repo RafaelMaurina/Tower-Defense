@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4dd8e9a77973a43aa9ab44018426a540, type: 3}
-  m_Name: Enemy_Pato
+  m_Name: Enemy_Rato
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
   displayName: Pato
   health: 22
@@ -24,5 +24,6 @@ MonoBehaviour:
   jumpDuration: 0.3
   zigzagAmplitude: 0.8
   zigzagPeriod: 1.6
-  frames: []
+  frames:
+  - {fileID: 21300000, guid: f117f4b285df40398d20f60a3181466c, type: 3}
   framesPerSecond: 8

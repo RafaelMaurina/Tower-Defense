@@ -366,11 +366,11 @@ public static class MontarNiveis
         col.isTrigger = true;
         col.size = Vector2.one;
 
-        // Arte do celeiro ainda nao existe: este objeto marca a area reservada.
-        // Pivo no pe e no meio, como os outros props; e so colocar o SpriteRenderer.
-        var celeiro = new GameObject("Celeiro");
-        celeiro.transform.SetParent(pai);
-        celeiro.transform.position = new Vector3(nv.celeiro.x + nv.celeiro.width / 2f, nv.celeiro.y, 0f);
+        // Desenhado em 64x64 com PPU 16: ocupa as 4 x 4 casas reservadas.
+        // O nome "Celeiro" e usado pelas luzes da noite (NightLights).
+        var celeiro = Sprite_(pai, "Props/prop_celeiro",
+            new Vector3(nv.celeiro.x + nv.celeiro.width / 2f, nv.celeiro.y, 0f), -1);
+        celeiro.name = "Celeiro";
     }
 
     // --------------------------------------------------------- utilitarios
