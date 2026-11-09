@@ -16,14 +16,17 @@ public class BuildPlot : MonoBehaviour
 
     void Update()
     {
-        if (Mouse.current == null || !Mouse.current.leftButton.wasPressedThisFrame) return;
-        if (GameManager.State != GameState.Playing) return;
-        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
-
+        if (Mouse.current == null) return;
         Camera gameCamera = Camera.main;
         if (gameCamera == null) return;
         Vector2 worldPoint = gameCamera.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-        if (!GetComponent<Collider2D>().OverlapPoint(worldPoint)) return;
+        bool overUi = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+        bool overPlot = GetComponent<Collider2D>().OverlapPoint(worldPoint);
+        if (placed != null && overPlot && !overUi && !GameHUD.IsOverlayOpen && GameManager.State == GameState.Playing)
+            GameHUD.ShowHoverRange(this);
+        else GameHUD.HideHoverRange(this);
+        if (!Mouse.current.leftButton.wasPressedThisFrame || !overPlot || overUi || GameHUD.IsOverlayOpen ||
+            GameManager.State != GameState.Playing) return;
 
         if (placed != null) GameHUD.ShowTowerActions(this);
         else GameHUD.ShowTowerChoices(this, availableTowers);
