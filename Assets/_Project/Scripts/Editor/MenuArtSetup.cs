@@ -32,7 +32,7 @@ public static class MenuArtSetup
         Assign(serialized, "difficultyNormalBadge", "dificuldade_normal 2.png");
         Assign(serialized, "difficultyNormalBadgeSelected", "dificuldade_normal_selecionado 2.png");
         Assign(serialized, "difficultyHardBadge", "dificuldade_dificil 2.png");
-        Assign(serialized, "difficultyHardBadgeSelected", "dificuldade_dificil_selecionado 2.png");
+        Assign(serialized, "difficultyHardBadgeSelected", "dificuldade_dificil_selecionado.png");
         Assign(serialized, "submenuPanelSprite", "submenu_molde.png");
         Assign(serialized, "backButtonSprite", "botao_voltar.png");
         Assign(serialized, "backButtonSelectedSprite", "botao_voltar_selecionado.png");
