@@ -56,20 +56,20 @@ public static class MontarNiveis
             caminhos  = new[] { P(-1,12, 8,12, 8,5, 16,5, 16,11, 23,11, 23,5, 25,5) },
             celeiro   = new RectInt(26, 4, 4, 4),
             canteiros = P(4,13, 7,10, 10,6, 12,4, 14,6, 17,9, 19,12, 20,10, 22,7, 24,4),
-            plantacao = P(2,3, 3,3, 4,3, 2,4, 3,4, 4,4, 2,5, 3,5, 4,5),
+            plantacao = P(2,2, 4,2, 2,4, 4,4),
             poco = new Vector2Int(11, 8),
             cogumelos = P(2,8, 18,2, 12,14, 28,13),
-            milho     = P(27,1, 28,1) },
+            milho     = P(26,1, 28,1) },
 
         // Verao: serpentina longa. 12 canteiros.
         new Nivel { id = 2, nome = "Verao", estacao = 2, cultura = "tile_trigo",
             caminhos  = new[] { P(-1,3, 5,3, 5,13, 11,13, 11,4, 17,4, 17,13, 23,13, 23,8, 25,8) },
             celeiro   = new RectInt(26, 7, 4, 4),
             canteiros = P(3,4, 6,7, 6,11, 8,14, 10,10, 12,8, 14,5, 16,10, 18,7, 20,14, 22,10, 24,7),
-            plantacao = P(19,1, 20,1, 21,1, 19,2, 20,2, 21,2, 19,3, 20,3, 21,3),
+            plantacao = P(19,1, 21,1, 19,3, 21,3),
             poco = new Vector2Int(13, 9),
             cogumelos = P(2,9, 8,1, 27,14, 14,15),
-            milho     = P(27,2, 28,2) },
+            milho     = P(26,2, 28,2) },
 
         // Outono: duas entradas que se juntam em (7,8). 12 canteiros.
         new Nivel { id = 3, nome = "Outono", estacao = 3, cultura = "tile_abobora",
@@ -77,10 +77,10 @@ public static class MontarNiveis
                                 P(-1,3, 7,3, 7,8, 15,8, 15,4, 22,4, 22,9, 25,9) },
             celeiro   = new RectInt(26, 8, 4, 4),
             canteiros = P(5,12, 5,4, 8,11, 6,7, 10,9, 12,7, 14,5, 16,6, 18,5, 20,3, 21,7, 24,10),
-            plantacao = P(1,6, 2,6, 3,6, 1,7, 2,7, 3,7, 1,8, 2,8, 3,8),
+            plantacao = P(1,5, 3,5, 1,7, 3,7),
             poco = new Vector2Int(10, 11),
             cogumelos = P(3,14, 18,12, 27,2, 12,2),
-            milho     = P(27,14, 28,14) },
+            milho     = P(23,1, 25,1) },
     };
 
     [MenuItem("Defesa da Colheita/Gerar niveis")]
@@ -334,7 +334,8 @@ public static class MontarNiveis
             go.name = "Canteiro_" + (i + 1).ToString("00");
             // colisor para o clique de construir, que vem depois
             go.AddComponent<BoxCollider2D>().isTrigger = true;
-            go.AddComponent<BuildPlot>();
+            go.AddComponent<BuildPlot>().builtSprite =
+                AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Tiles/canteiro_terra.png");
         }
     }
 
@@ -343,8 +344,9 @@ public static class MontarNiveis
         var grupo = new GameObject("Decoracao").transform;
         grupo.SetParent(pai);
 
+        // plantacao em blocos de 2x2 casas: cada tile entra ampliado 2x (PPU 32), a posicao e a casa de baixo a esquerda
         foreach (var c in nv.plantacao)
-            Sprite_(grupo, "Tiles/" + nv.cultura, Centro(c), ORDEM_DECALQUE);
+            Sprite_(grupo, "Tiles/" + nv.cultura, new Vector3(c.x + 1f, c.y + 1f, 0f), ORDEM_DECALQUE);
 
         // props de pivo no pe apoiam na base da casa; o poco (3x3) centra na casa do meio
         Sprite_(grupo, "Props/prop_poco_3x", new Vector3(nv.poco.x + 1.5f, nv.poco.y, 0f), -1);
@@ -372,10 +374,11 @@ public static class MontarNiveis
         col.isTrigger = true;
         col.size = Vector2.one;
 
-        // Desenhado em 64x64 com PPU 16: ocupa as 4 x 4 casas reservadas.
+        // Desenhado em 64x64 com PPU 12,8 (5x): uns 4,5 casas de largura, encostando no fim do
+        // caminho para os inimigos "entrarem" no celeiro.
         // O nome "Celeiro" e usado pelas luzes da noite (NightLights).
         var celeiro = Sprite_(pai, "Props/prop_celeiro",
-            new Vector3(nv.celeiro.x + nv.celeiro.width / 2f, nv.celeiro.y, 0f), -1);
+            new Vector3(nv.celeiro.x + 1.75f, nv.celeiro.y, 0f), -1);
         celeiro.name = "Celeiro";
     }
 
