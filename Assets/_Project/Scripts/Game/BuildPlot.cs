@@ -8,6 +8,9 @@ public class BuildPlot : MonoBehaviour
 {
     [SerializeField] TowerData[] availableTowers;
     Tower placed;
+    /// Canteiro so de terra, para ficar embaixo da torre construida. O gerador dos niveis preenche.
+    public Sprite builtSprite;
+    Sprite emptySprite;
 
     public Tower Placed => placed;
     public TowerData[] AvailableTowers => availableTowers;
@@ -44,7 +47,8 @@ public class BuildPlot : MonoBehaviour
         int cost = Mathf.Max(0, data.levels[0].cost);
         if (!GameManager.Instance.Spend(cost)) return false;
 
-        GameObject towerObject = Instantiate(data.towerPrefab, transform.position, Quaternion.identity);
+        // o pe da torre apoia perto da base do canteiro, e nao no centro, para a terra ficar embaixo dela
+        GameObject towerObject = Instantiate(data.towerPrefab, transform.position + new Vector3(0f, -0.35f, 0f), Quaternion.identity);
         placed = towerObject.GetComponent<Tower>();
         if (placed == null)
         {
@@ -54,8 +58,11 @@ public class BuildPlot : MonoBehaviour
         }
 
         placed.Init(data);
-        // o carrinho de mao do canteiro some enquanto ha torre em cima
-        GetComponent<SpriteRenderer>().enabled = false;
+        // com torre em cima, o carrinho de mao da lugar ao canteiro so de terra
+        var sr = GetComponent<SpriteRenderer>();
+        if (emptySprite == null) emptySprite = sr.sprite;
+        if (builtSprite != null) sr.sprite = builtSprite;
+        else sr.enabled = false;
         return true;
     }
 
@@ -87,7 +94,9 @@ public class BuildPlot : MonoBehaviour
         GameManager.Instance.AddMoney(GetSellRefund());
         Destroy(placed.gameObject);
         placed = null;
-        GetComponent<SpriteRenderer>().enabled = true;
+        var sr = GetComponent<SpriteRenderer>();
+        if (emptySprite != null) sr.sprite = emptySprite;
+        sr.enabled = true;
         return true;
     }
 }
