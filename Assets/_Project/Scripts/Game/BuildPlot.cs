@@ -54,6 +54,8 @@ public class BuildPlot : MonoBehaviour
         }
 
         placed.Init(data);
+        // o carrinho de mao do canteiro some enquanto ha torre em cima
+        GetComponent<SpriteRenderer>().enabled = false;
         return true;
     }
 
@@ -85,6 +87,7 @@ public class BuildPlot : MonoBehaviour
         GameManager.Instance.AddMoney(GetSellRefund());
         Destroy(placed.gameObject);
         placed = null;
+        GetComponent<SpriteRenderer>().enabled = true;
         return true;
     }
 }

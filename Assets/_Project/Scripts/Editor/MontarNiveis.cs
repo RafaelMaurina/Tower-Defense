@@ -330,7 +330,7 @@ public static class MontarNiveis
         grupo.SetParent(pai);
         for (int i = 0; i < nv.canteiros.Length; i++)
         {
-            var go = Sprite_(grupo, "Tiles/tile_canteiro", Centro(nv.canteiros[i]), ORDEM_DECALQUE);
+            var go = Sprite_(grupo, "Tiles/canteiro_torre", Centro(nv.canteiros[i]), ORDEM_DECALQUE);
             go.name = "Canteiro_" + (i + 1).ToString("00");
             // colisor para o clique de construir, que vem depois
             go.AddComponent<BoxCollider2D>().isTrigger = true;
