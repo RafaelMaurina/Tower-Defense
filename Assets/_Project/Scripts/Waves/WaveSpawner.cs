@@ -6,11 +6,15 @@ public class WaveSpawner : MonoBehaviour
 {
     [SerializeField] WaveData[] waves;
     [SerializeField] WaypointPath[] paths;
-    [SerializeField] bool startOnPlay = true;
     int liveEnemies;
-    bool running;
+    bool waveActive;
+    bool startRequested;
+    bool autoStart;
     public int CurrentWave { get; private set; }
     public int TotalWaves => waves == null ? 0 : waves.Length;
+    public bool IsWaveActive => waveActive;
+    public bool AutoStart => autoStart;
+    public bool CanStartNextWave => !waveActive && CurrentWave < TotalWaves && GameManager.State == GameState.Playing;
 
     void Awake()
     {
@@ -20,21 +24,21 @@ public class WaveSpawner : MonoBehaviour
     void OnEnable() => Enemy.OnSpawnedByEnemy += HandleSpawnedByEnemy;
     void OnDisable() => Enemy.OnSpawnedByEnemy -= HandleSpawnedByEnemy;
 
-    void Start()
-    {
-        if (startOnPlay) Begin();
-    }
+    void Start() { if (waves != null && waves.Length > 0) StartCoroutine(Run()); }
 
     public void Configure(WaveData[] waveData) => waves = waveData;
 
-    public void Begin()
+    public void Begin() => StartNextWave();
+
+    public void StartNextWave()
     {
-        if (!running && waves != null && waves.Length > 0) StartCoroutine(Run());
+        if (CanStartNextWave) startRequested = true;
     }
+
+    public void SetAutoStart(bool enabled) => autoStart = enabled;
 
     IEnumerator Run()
     {
-        running = true;
         // Em Play direto no nivel, GameManager.Start pode rodar depois deste Start.
         while (GameManager.State == GameState.Menu) yield return null;
         int totalEnemies = 0;
@@ -45,7 +49,26 @@ public class WaveSpawner : MonoBehaviour
 
         for (int w = 0; w < waves.Length; w++)
         {
+            while (!startRequested && !autoStart)
+            {
+                if (GameManager.State != GameState.Playing && GameManager.State != GameState.Paused) yield break;
+                yield return null;
+            }
+            if (w > 0 && autoStart && !startRequested && waves[w - 1] != null)
+            {
+                float delay = waves[w - 1].pauseAfter;
+                while (delay > 0f && autoStart && !startRequested)
+                { delay -= Time.deltaTime; yield return null; }
+            }
+            while (!startRequested && !autoStart)
+            {
+                if (GameManager.State != GameState.Playing && GameManager.State != GameState.Paused) yield break;
+                yield return null;
+            }
+            while (GameManager.State == GameState.Paused || Time.timeScale == 0f) yield return null;
             if (GameManager.State != GameState.Playing) yield break;
+            startRequested = false;
+            waveActive = true;
             CurrentWave = w + 1;
             WaveData wave = waves[w];
             bool hasFlyingEnemies = false;
@@ -69,6 +92,7 @@ public class WaveSpawner : MonoBehaviour
 
                 for (int i = 0; i < Mathf.Max(0, entry.count); i++)
                 {
+                    while (GameManager.State == GameState.Paused || Time.timeScale == 0f) yield return null;
                     if (GameManager.State != GameState.Playing) yield break;
                     WaypointPath path = SelectPath(entry.pathIndex);
                     if (path == null)
@@ -96,12 +120,13 @@ public class WaveSpawner : MonoBehaviour
                 }
             }
 
-            while (liveEnemies > 0 && GameManager.State == GameState.Playing) yield return null;
+            while (liveEnemies > 0 && (GameManager.State == GameState.Playing || GameManager.State == GameState.Paused)) yield return null;
+            while (GameManager.State == GameState.Paused || Time.timeScale == 0f) yield return null;
             if (GameManager.State != GameState.Playing) yield break;
-            if (w < waves.Length - 1 && wave.pauseAfter > 0f) yield return new WaitForSeconds(wave.pauseAfter);
+            waveActive = false;
         }
 
-        running = false;
+        while (GameManager.State == GameState.Paused || Time.timeScale == 0f) yield return null;
         if (GameManager.State == GameState.Playing) GameManager.Instance?.CompleteLevel();
     }
 

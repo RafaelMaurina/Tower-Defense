@@ -31,6 +31,8 @@ public class GameManager : MonoBehaviour
     public static int StateRound => Instance != null ? Instance.round : 0;
     public static GameState State => Instance != null ? Instance.state : GameState.Menu;
     public static GameDifficulty Difficulty { get; private set; } = GameDifficulty.Easy;
+    public static float GameSpeed => Instance != null ? Instance.gameSpeed : 1f;
+    public static bool IsBuildPaused => Instance != null && Instance.buildPaused;
     public static event Action<GameState> OnStateChanged;
     public static event Action<int> OnMoneyChanged;
     public static event Action<int> OnBaseLifeChanged;
@@ -52,6 +54,9 @@ public class GameManager : MonoBehaviour
     string topDamageTower = "Nenhuma";
     float topDamage;
     readonly Dictionary<Tower, float> damageByTower = new Dictionary<Tower, float>();
+    float gameSpeed = 1f;
+    bool decisionPaused;
+    bool buildPaused;
 
     void Awake()
     {
@@ -96,8 +101,10 @@ public class GameManager : MonoBehaviour
     public void ResetGame()
     {
         ResetRunData();
-        Time.timeScale = 1f;
+        decisionPaused = false;
+        buildPaused = false;
         SetState(GameState.Playing);
+        ApplyTimeScale();
         OnMoneyChanged?.Invoke(money);
         OnBaseLifeChanged?.Invoke(baseLife);
     }
@@ -106,8 +113,10 @@ public class GameManager : MonoBehaviour
     {
         string scene = string.IsNullOrEmpty(activeLevelScene) ? SceneManager.GetActiveScene().name : activeLevelScene;
         ResetRunData();
-        Time.timeScale = 1f;
+        decisionPaused = false;
+        buildPaused = false;
         SetState(GameState.Playing);
+        ApplyTimeScale();
         SceneManager.LoadScene(scene);
     }
 
@@ -135,9 +144,36 @@ public class GameManager : MonoBehaviour
     public void SetState(GameState value)
     {
         if (state == value) return;
+        if (value == GameState.Menu || value == GameState.Victory || value == GameState.Defeat)
+            buildPaused = false;
         state = value;
-        Time.timeScale = value == GameState.Paused ? 0f : 1f;
+        ApplyTimeScale();
         OnStateChanged?.Invoke(value);
+    }
+
+    public void SetGameSpeed(float speed)
+    {
+        if (speed != 1f && speed != 1.5f && speed != 2f) return;
+        gameSpeed = speed;
+        ApplyTimeScale();
+    }
+
+    public void SetDecisionPause(bool paused)
+    {
+        decisionPaused = paused;
+        ApplyTimeScale();
+    }
+
+    public void SetBuildPause(bool paused)
+    {
+        buildPaused = paused;
+        ApplyTimeScale();
+    }
+
+    void ApplyTimeScale()
+    {
+        Time.timeScale = state == GameState.Paused || decisionPaused || buildPaused ? 0f
+            : state == GameState.Playing ? gameSpeed : 1f;
     }
 
     public bool Spend(int amount)

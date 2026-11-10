@@ -16,6 +16,7 @@ public class Enemy : MonoBehaviour, IDamageable
     bool jumping;
     bool split;        // ja se dividiu, ou e a copia de quem se dividiu: so divide uma vez
     Boss boss;         // so no boss (Chomsky): fases, escudo, invocacao
+    EnemyHealthBar healthBar;
     // Movimento deste momento: vem de data e o boss troca a cada fase (SetMovement).
     float speed, jumpInterval, jumpDistance, jumpDuration;
 
@@ -63,6 +64,9 @@ public class Enemy : MonoBehaviour, IDamageable
         transform.position = path.PointAt(0f);
         UpdateOrder();
         Animate();
+        if (healthBar == null) healthBar = GetComponent<EnemyHealthBar>();
+        if (healthBar == null) healthBar = gameObject.AddComponent<EnemyHealthBar>();
+        healthBar.Initialize(this);
     }
 
     void Update()
@@ -156,6 +160,7 @@ public class Enemy : MonoBehaviour, IDamageable
         float toHealth = boss != null ? boss.AbsorbDamage(amount) : amount;
         float actualDamage = Mathf.Min(health, toHealth);
         health -= actualDamage;
+        healthBar?.Refresh();
         float dealt = (amount - toHealth) + actualDamage;
         if (health <= 0f) Die();
         else SplitOnFirstDamage();
@@ -165,7 +170,11 @@ public class Enemy : MonoBehaviour, IDamageable
     /// Recupera vida, sem passar da maxima. Usado pela fase 3 do boss.
     public void Heal(float amount)
     {
-        if (IsAlive) health = Mathf.Min(data.health, health + amount);
+        if (IsAlive)
+        {
+            health = Mathf.Min(data.health, health + amount);
+            healthBar?.Refresh();
+        }
     }
 
     // AFN: no primeiro dano que nao mata, nasce uma copia no caminho, com a mesma vida que o
@@ -178,6 +187,7 @@ public class Enemy : MonoBehaviour, IDamageable
         Enemy copy = CreateChild(Pool.PrefabOf(gameObject), data, Mathf.Max(0f, Distance - data.splitOffset));
         copy.split = true;
         copy.health = health;
+        copy.healthBar?.Refresh();
         OnSpawnedByEnemy?.Invoke(this, copy);
     }
 
