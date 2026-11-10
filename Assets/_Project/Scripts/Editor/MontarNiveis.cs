@@ -47,7 +47,7 @@ public static class MontarNiveis
 
     // Casa (x, y) com y = 0 embaixo. O primeiro ponto de cada caminho fica em
     // x = -1, fora da tela: e de la que os inimigos entram.
-    // O poco ocupa 3x3 casas; a posicao dada e a casa de baixo a esquerda.
+    // O poco ocupa 2x2 casas; a posicao dada e a casa de baixo a esquerda.
     // As linhas y = 0 e y = 16 sao da cerca.
     static readonly Nivel[] NIVEIS =
     {
@@ -55,7 +55,7 @@ public static class MontarNiveis
         new Nivel { id = 1, nome = "Primavera", estacao = 1, cultura = "tile_cenoura",
             caminhos  = new[] { P(-1,12, 8,12, 8,5, 16,5, 16,11, 23,11, 23,5, 25,5) },
             celeiro   = new RectInt(26, 4, 4, 4),
-            canteiros = P(4,13, 7,10, 10,6, 12,4, 14,6, 17,9, 19,12, 20,10, 22,7, 24,4),
+            canteiros = P(4,13, 7,10, 10,6, 12,4, 14,6, 17,9, 19,12, 20,10, 22,7, 24,2),
             plantacao = P(2,2, 4,2, 2,4, 4,4),
             poco = new Vector2Int(11, 8),
             cogumelos = P(2,8, 18,2, 12,14, 28,13),
@@ -65,7 +65,7 @@ public static class MontarNiveis
         new Nivel { id = 2, nome = "Verao", estacao = 2, cultura = "tile_trigo",
             caminhos  = new[] { P(-1,3, 5,3, 5,13, 11,13, 11,4, 17,4, 17,13, 23,13, 23,8, 25,8) },
             celeiro   = new RectInt(26, 7, 4, 4),
-            canteiros = P(3,4, 6,7, 6,11, 8,14, 10,10, 12,8, 14,5, 16,10, 18,7, 20,14, 22,10, 24,7),
+            canteiros = P(3,4, 6,7, 6,11, 8,14, 10,10, 12,8, 14,5, 16,10, 18,7, 20,14, 22,10, 24,5),
             plantacao = P(19,1, 21,1, 19,3, 21,3),
             poco = new Vector2Int(13, 9),
             cogumelos = P(2,9, 8,1, 27,14, 14,15),
@@ -76,7 +76,7 @@ public static class MontarNiveis
             caminhos  = new[] { P(-1,13, 7,13, 7,8, 15,8, 15,4, 22,4, 22,9, 25,9),
                                 P(-1,3, 7,3, 7,8, 15,8, 15,4, 22,4, 22,9, 25,9) },
             celeiro   = new RectInt(26, 8, 4, 4),
-            canteiros = P(5,12, 5,4, 8,11, 6,7, 10,9, 12,7, 14,5, 16,6, 18,5, 20,3, 21,7, 24,10),
+            canteiros = P(5,12, 5,4, 8,11, 6,7, 10,9, 12,7, 14,5, 16,6, 18,5, 20,3, 21,7, 23,11),
             plantacao = P(1,5, 3,5, 1,7, 3,7),
             poco = new Vector2Int(10, 11),
             cogumelos = P(3,14, 18,12, 27,2, 12,2),
@@ -348,8 +348,8 @@ public static class MontarNiveis
         foreach (var c in nv.plantacao)
             Sprite_(grupo, "Tiles/" + nv.cultura, new Vector3(c.x + 1f, c.y + 1f, 0f), ORDEM_DECALQUE);
 
-        // props de pivo no pe apoiam na base da casa; o poco (3x3) centra na casa do meio
-        Sprite_(grupo, "Props/prop_poco_3x", new Vector3(nv.poco.x + 1.5f, nv.poco.y, 0f), -1);
+        // props de pivo no pe apoiam na base da casa; o poco (2x2, PPU 32) centra entre as duas casas
+        Sprite_(grupo, "Props/prop_poco", new Vector3(nv.poco.x + 1f, nv.poco.y, 0f), -1);
         foreach (var c in nv.cogumelos)
             Sprite_(grupo, "Props/prop_cogumelos", new Vector3(c.x + 0.5f, c.y + 0.2f, 0f), -1);
         // pes de milho num canto livre, so de enfeite
@@ -374,11 +374,11 @@ public static class MontarNiveis
         col.isTrigger = true;
         col.size = Vector2.one;
 
-        // Desenhado em 64x64 com PPU 12,8 (5x): uns 4,5 casas de largura, encostando no fim do
+        // Desenhado em 64x64 com PPU 10,67 (6x): uns 5,4 casas de largura, encostado na borda direita e no fim do
         // caminho para os inimigos "entrarem" no celeiro.
         // O nome "Celeiro" e usado pelas luzes da noite (NightLights).
         var celeiro = Sprite_(pai, "Props/prop_celeiro",
-            new Vector3(nv.celeiro.x + 1.75f, nv.celeiro.y, 0f), -1);
+            new Vector3(nv.celeiro.x + 1.28f, nv.celeiro.y, 0f), -1);
         celeiro.name = "Celeiro";
     }
 
