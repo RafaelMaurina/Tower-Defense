@@ -47,7 +47,8 @@ public class BuildPlot : MonoBehaviour
         int cost = Mathf.Max(0, data.levels[0].cost);
         if (!GameManager.Instance.Spend(cost)) return false;
 
-        GameObject towerObject = Instantiate(data.towerPrefab, transform.position, Quaternion.identity);
+        // o pe da torre apoia perto da base do canteiro, e nao no centro, para a terra ficar embaixo dela
+        GameObject towerObject = Instantiate(data.towerPrefab, transform.position + new Vector3(0f, -0.35f, 0f), Quaternion.identity);
         placed = towerObject.GetComponent<Tower>();
         if (placed == null)
         {
