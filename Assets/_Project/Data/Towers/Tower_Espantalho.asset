@@ -18,17 +18,17 @@ MonoBehaviour:
     damage: 8
     range: 2.5
     fireRate: 1
-    sprite: {fileID: 21300000, guid: 4ac37bfbf5af4585a1afa8dbc6a2d54c, type: 3}
+    sprite: {fileID: 21300000, guid: b929007e260f48a8a7bb83628402b54d, type: 3}
   - cost: 40
     damage: 14
     range: 3
     fireRate: 1.3
-    sprite: {fileID: 21300000, guid: 0563a23f5f414e2d8e0c319c1de882b6, type: 3}
+    sprite: {fileID: 21300000, guid: b929007e260f48a8a7bb83628402b54d, type: 3}
   - cost: 60
     damage: 22
     range: 3.5
     fireRate: 1.6
-    sprite: {fileID: 21300000, guid: d98f4481d9304d3d9302679026ec6e1f, type: 3}
+    sprite: {fileID: 21300000, guid: b929007e260f48a8a7bb83628402b54d, type: 3}
   hitsFlying: 0
   projectile: {fileID: 5956580456811665869, guid: 6997e250c9e2541d087aa835aeb4fe5c, type: 3}
   towerPrefab: {fileID: 7356716106556697185, guid: 0dd0d5526100f4b7f9864ec3e6516ec0, type: 3}

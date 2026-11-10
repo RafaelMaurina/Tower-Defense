@@ -33,7 +33,7 @@ public static class MontarNiveis
     {
         public int id; public string nome; public int estacao; public string cultura;
         public Vector2Int[][] caminhos;
-        public Vector2Int[] canteiros, plantacao, cogumelos;
+        public Vector2Int[] canteiros, plantacao, cogumelos, milho;
         public Vector2Int poco;
         public RectInt celeiro;   // area reservada para o celeiro, encostada no fim do caminho
     }
@@ -58,7 +58,8 @@ public static class MontarNiveis
             canteiros = P(4,13, 7,10, 10,6, 12,4, 14,6, 17,9, 19,12, 20,10, 22,7, 24,4),
             plantacao = P(2,3, 3,3, 4,3, 2,4, 3,4, 4,4, 2,5, 3,5, 4,5),
             poco = new Vector2Int(11, 8),
-            cogumelos = P(2,8, 18,2, 12,14, 28,13) },
+            cogumelos = P(2,8, 18,2, 12,14, 28,13),
+            milho     = P(27,1, 28,1) },
 
         // Verao: serpentina longa. 12 canteiros.
         new Nivel { id = 2, nome = "Verao", estacao = 2, cultura = "tile_trigo",
@@ -67,7 +68,8 @@ public static class MontarNiveis
             canteiros = P(3,4, 6,7, 6,11, 8,14, 10,10, 12,8, 14,5, 16,10, 18,7, 20,14, 22,10, 24,7),
             plantacao = P(19,1, 20,1, 21,1, 19,2, 20,2, 21,2, 19,3, 20,3, 21,3),
             poco = new Vector2Int(13, 9),
-            cogumelos = P(2,9, 8,1, 27,14, 14,15) },
+            cogumelos = P(2,9, 8,1, 27,14, 14,15),
+            milho     = P(27,2, 28,2) },
 
         // Outono: duas entradas que se juntam em (7,8). 12 canteiros.
         new Nivel { id = 3, nome = "Outono", estacao = 3, cultura = "tile_abobora",
@@ -77,7 +79,8 @@ public static class MontarNiveis
             canteiros = P(5,12, 5,4, 8,11, 6,7, 10,9, 12,7, 14,5, 16,6, 18,5, 20,3, 21,7, 24,10),
             plantacao = P(1,6, 2,6, 3,6, 1,7, 2,7, 3,7, 1,8, 2,8, 3,8),
             poco = new Vector2Int(10, 11),
-            cogumelos = P(3,14, 18,12, 27,2, 12,2) },
+            cogumelos = P(3,14, 18,12, 27,2, 12,2),
+            milho     = P(27,14, 28,14) },
     };
 
     [MenuItem("Defesa da Colheita/Gerar niveis")]
@@ -327,7 +330,7 @@ public static class MontarNiveis
         grupo.SetParent(pai);
         for (int i = 0; i < nv.canteiros.Length; i++)
         {
-            var go = Sprite_(grupo, "Tiles/tile_canteiro", Centro(nv.canteiros[i]), ORDEM_DECALQUE);
+            var go = Sprite_(grupo, "Tiles/canteiro_torre", Centro(nv.canteiros[i]), ORDEM_DECALQUE);
             go.name = "Canteiro_" + (i + 1).ToString("00");
             // colisor para o clique de construir, que vem depois
             go.AddComponent<BoxCollider2D>().isTrigger = true;
@@ -347,6 +350,9 @@ public static class MontarNiveis
         Sprite_(grupo, "Props/prop_poco_3x", new Vector3(nv.poco.x + 1.5f, nv.poco.y, 0f), -1);
         foreach (var c in nv.cogumelos)
             Sprite_(grupo, "Props/prop_cogumelos", new Vector3(c.x + 0.5f, c.y + 0.2f, 0f), -1);
+        // pes de milho num canto livre, so de enfeite
+        foreach (var c in nv.milho)
+            Sprite_(grupo, "Props/prop_milho", new Vector3(c.x + 0.5f, c.y, 0f), -1);
 
         // cerca em cima e embaixo; pecas _3x de 96px = uma casa e meia cada
         var cerca = new GameObject("Cerca").transform;
@@ -366,11 +372,11 @@ public static class MontarNiveis
         col.isTrigger = true;
         col.size = Vector2.one;
 
-        // Arte do celeiro ainda nao existe: este objeto marca a area reservada.
-        // Pivo no pe e no meio, como os outros props; e so colocar o SpriteRenderer.
-        var celeiro = new GameObject("Celeiro");
-        celeiro.transform.SetParent(pai);
-        celeiro.transform.position = new Vector3(nv.celeiro.x + nv.celeiro.width / 2f, nv.celeiro.y, 0f);
+        // Desenhado em 64x64 com PPU 16: ocupa as 4 x 4 casas reservadas.
+        // O nome "Celeiro" e usado pelas luzes da noite (NightLights).
+        var celeiro = Sprite_(pai, "Props/prop_celeiro",
+            new Vector3(nv.celeiro.x + nv.celeiro.width / 2f, nv.celeiro.y, 0f), -1);
+        celeiro.name = "Celeiro";
     }
 
     // --------------------------------------------------------- utilitarios
