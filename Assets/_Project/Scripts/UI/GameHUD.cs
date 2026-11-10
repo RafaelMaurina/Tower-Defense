@@ -40,6 +40,7 @@ public class GameHUD : MonoBehaviour
     bool selectedRange, decisionOpen;
     Image panelImage;
     bool towerPanel;
+    GameObject upgradeView;
     AudioSource uiAudio;
     AudioClip hoverSound, clickSound;
 
@@ -49,14 +50,59 @@ public class GameHUD : MonoBehaviour
         if (!sprites.TryGetValue(name, out Sprite sprite))
         {
             if (name.StartsWith("v2/")) sprite = NewHudArt(name.Substring(3));
-            else sprite = Resources.Load<Sprite>("hud/" + name);
+            else if (name.StartsWith("prioridade_")) sprite = PriorityArt(name);
+            else if (name == "moldura_atributos_nova") sprite = NewAttributesFrame();
+            else sprite = Resources.Load<Sprite>("hud/" + ArtPath(name));
             sprites[name] = sprite;
         }
         return sprite;
     }
+    Sprite PriorityArt(string name)
+    {
+        var source = Resources.Load<Sprite>("hud/melhorar_submenu/" + name);
+        if (source == null) return null;
+        // Ambos os estados compartilham o mesmo recorte para nao mudar de tamanho no hover.
+        var crop = new Rect(0,80,2172,550);
+        var sprite = Sprite.Create(source.texture,crop,new Vector2(.5f,.5f),source.pixelsPerUnit,
+            0,SpriteMeshType.FullRect);
+        sprite.name = name;
+        generatedSprites.Add(sprite);
+        return sprite;
+    }
+    Sprite NewAttributesFrame()
+    {
+        var source = Resources.Load<Sprite>("hud/melhorar_submenu/moldura_atributos_nova");
+        if (source == null) return null;
+        // Remove a margem transparente do PNG sem alterar a arte original.
+        var sprite = Sprite.Create(source.texture,new Rect(0,214,2172,305),
+            new Vector2(.5f,.5f),source.pixelsPerUnit,0,SpriteMeshType.FullRect);
+        sprite.name = "moldura_atributos_nova";
+        generatedSprites.Add(sprite);
+        return sprite;
+    }
+    static string ArtPath(string name)
+    {
+        if (name == "moldura_pausa_titulo" || name.StartsWith("continuar_") ||
+            name.StartsWith("recomecar_") || name.StartsWith("menu_"))
+            return "jogo_pausado_submenu/" + name;
+        if (name.StartsWith("melhorar_") || name.StartsWith("vender_") ||
+            name.StartsWith("prioridade_") || name == "moldura_melhorar" ||
+            name.StartsWith("moldura_retrato_torre") || name.StartsWith("moldura_atributos") ||
+            name == "icone_vender" || name == "icone_dano" ||
+            name == "icone_alcance" || name == "icone_cadencia" || name == "icone_aereos")
+            return "melhorar_submenu/" + name;
+        if (name == "icone_auto" || name == "icone_configuracoes" ||
+            name == "icone_continuar" || name == "icone_moedas" ||
+            name == "icone_pausa" || name == "icone_rodadas" ||
+            name == "icone_vida" || name == "status_frame" || name == "square_button")
+            return "hud_superior/" + name;
+        return name;
+    }
     Sprite NewHudArt(string name)
     {
-        var source = Resources.Load<Sprite>("hud/v2/" + name);
+        var path = name == "action_button" ? "hud/action_button" :
+            "hud/hud_superior/" + (name == "square_button" || name == "status_frame" ? "" : "v2/") + name;
+        var source = Resources.Load<Sprite>(path);
         if (source == null) return null;
         Rect crop;
         switch (name)
@@ -253,14 +299,14 @@ public class GameHUD : MonoBehaviour
         life = Counter(root.transform, "vida", .335f, .435f);
         coins = Counter(root.transform, "moedas", .45f, .55f);
         waves = Counter(root.transform, "rodadas", .565f, .665f);
-        buildPauseButton = TopControl(root.transform, "Pausar construção", null, "v2/icon_pause", "v2/square_button",
+        buildPauseButton = TopControl(root.transform, "Pausar construção", null, "pausa", "v2/square_button",
             new Vector2(.79f,.865f), new Vector2(.835f,.945f), () =>
                 GameManager.Instance?.SetBuildPause(!GameManager.IsBuildPaused));
         buildPauseIcon = buildPauseButton.transform.Find("Ícone").GetComponent<Image>();
         speedButton = TopControl(root.transform, "Velocidade", "1x", null, "v2/square_button",
             new Vector2(.845f,.865f), new Vector2(.92f,.945f), CycleSpeed);
         speedText = speedButton.GetComponentInChildren<Text>();
-        settingsButton = TopControl(root.transform, "Configurações", "⚙", "v2/icon_settings", "v2/square_button",
+        settingsButton = TopControl(root.transform, "Configurações", "⚙", "configuracoes", "v2/square_button",
             new Vector2(.935f,.865f), new Vector2(.98f,.945f), () => GameManager.Instance?.TogglePause());
         threat = Label(root.transform, "", new Vector2(.28f,.745f), new Vector2(.72f,.79f), 23);
         threat.color = new Color32(255,222,126,255);
@@ -269,7 +315,7 @@ public class GameHUD : MonoBehaviour
             new Vector2(.015f,.865f), new Vector2(.22f,.945f), () => waveSpawner?.StartNextWave());
         startWaveButton.GetComponent<HudButtonFeedback>().SetSprites(
             Art("v2/action_button"), Art("v2/action_button"), Art("v2/action_button"));
-        autoWaveButton = MakeTopWaveButton(root.transform, "Auto: desligado", "v2/action_button", "v2/icon_auto",
+        autoWaveButton = MakeTopWaveButton(root.transform, "Auto: desligado", "v2/action_button", "auto",
             new Vector2(.785f,.765f), new Vector2(.985f,.845f), () => {
                 if (waveSpawner != null) waveSpawner.SetAutoStart(!waveSpawner.AutoStart);
             });
@@ -299,7 +345,7 @@ public class GameHUD : MonoBehaviour
         buildPauseButton.interactable = playing;
         speedText.text = Mathf.Approximately(GameManager.GameSpeed, 1.5f) ? "1,5x" :
             Mathf.Approximately(GameManager.GameSpeed, 2f) ? "2x" : "1x";
-        buildPauseIcon.sprite = Art(GameManager.IsBuildPaused ? "v2/icon_play" : "v2/icon_pause");
+        buildPauseIcon.sprite = Art(GameManager.IsBuildPaused ? "icone_continuar" : "icone_pausa");
         buildPauseButton.GetComponent<HudButtonFeedback>().SetToggleState(GameManager.IsBuildPaused);
         if (waveSpawner != null)
         {
@@ -353,7 +399,7 @@ public class GameHUD : MonoBehaviour
     Text Counter(Transform parent, string icon, float left, float right)
     {
         var badge = Rect(parent, "Indicador " + icon, new Vector2(left,.875f), new Vector2(right,.935f));
-        string art = icon == "vida" ? "v2/icon_life" : icon == "moedas" ? "v2/icon_coins" : "v2/icon_rounds";
+        string art = "icone_" + icon;
         Picture(badge, icon, art, new Vector2(.04f,.13f), new Vector2(.31f,.87f), true);
         var value = Label(badge, "0", new Vector2(.32f,.05f), new Vector2(.99f,.95f), 32, false);
         value.resizeTextForBestFit = true;
@@ -367,6 +413,8 @@ public class GameHUD : MonoBehaviour
         => ShowWithLayout(title, body, isTower, false, actions);
     void ShowWithLayout(string title, string body, bool isTower, bool horizontalActions, params Action[] actions)
     {
+        if (upgradeView != null) upgradeView.SetActive(false);
+        panelImage.gameObject.SetActive(true);
         rows.gameObject.SetActive(true);
         stats.gameObject.SetActive(true);
         if (catalogView != null) catalogView.SetActive(false);
@@ -396,6 +444,8 @@ public class GameHUD : MonoBehaviour
     void Close()
     {
         overlay.SetActive(false);
+        if (upgradeView != null) { Destroy(upgradeView); upgradeView = null; }
+        panelImage.gameObject.SetActive(true);
         if (catalogView != null) catalogView.SetActive(false);
         towerPanel = false;
         selectedPlot = null;
@@ -512,31 +562,151 @@ public class GameHUD : MonoBehaviour
     public static void ShowTowerActions(BuildPlot plot)
     {
         if (current == null || plot == null || plot.Placed == null) return;
-
         current.selectedPlot = null;
         current.BeginDecisionPause();
+        current.ShowUpgrade(plot);
+    }
+    Sprite TowerSprite(Tower tower, int level)
+    {
+        var sprite = tower.data.levels[level].sprite;
+        if (sprite == null && level == tower.Level)
+            sprite = tower.GetComponent<SpriteRenderer>()?.sprite;
+        if (sprite == null && (level == tower.Level || level == 0))
+            sprite = tower.data.towerPrefab?.GetComponent<SpriteRenderer>()?.sprite;
+        return sprite;
+    }
+    string TowerLevelFrame(int level)
+    {
+        // Os tres primeiros niveis tem letreiro incorporado no sprite.
+        return level < 3 ? "moldura_retrato_torre_nivel_" + (level + 1) :
+            "moldura_retrato_torre";
+    }
+    Button UpgradeButton(Transform parent, string art, Vector2 min, Vector2 max,
+        UnityEngine.Events.UnityAction callback, bool enabled = true, int cost = -1)
+    {
+        var holder = Rect(parent, art, min, max);
+        var image = Picture(holder, "Placa", art + "_normal", Vector2.zero, Vector2.one, true);
+        image.raycastTarget = true;
+        var button = holder.gameObject.AddComponent<Button>();
+        button.targetGraphic = image;
+        button.transition = Selectable.Transition.None;
+        var feedback = holder.gameObject.AddComponent<HudButtonFeedback>();
+        feedback.Configure(image, Art(art + "_normal"), Art(art + "_selecionado"));
+        feedback.ConfigureSound(uiAudio, hoverSound);
+        button.interactable = enabled && (cost < 0 || GameManager.Money >= cost);
+        button.onClick.AddListener(PlayClick);
+        button.onClick.AddListener(callback);
+        if (enabled && cost >= 0) purchases.Add(new Purchase { button = button, cost = cost });
+        return button;
+    }
+    void UpgradeStat(Transform parent, int index, string icon, string title, string value)
+    {
+        float left = index * .25f;
+        Picture(parent, title, "icone_" + icon, new Vector2(left + .005f,.18f),
+            new Vector2(left + .075f,.82f), true);
+        var label = Label(parent, title + "\n" + value,
+            new Vector2(left + .08f,0), new Vector2(left + .245f,1), 22);
+        label.resizeTextForBestFit = true;
+        label.resizeTextMinSize = 15;
+        label.resizeTextMaxSize = 22;
+    }
+    void ShowUpgrade(BuildPlot plot)
+    {
         Tower tower = plot.Placed;
-        var actions = new List<Action>();
-        if (tower.CanUpgrade)
+        if (tower == null || tower.data == null || tower.data.levels == null) return;
+        if (catalogView != null) catalogView.SetActive(false);
+        if (upgradeView != null) { upgradeView.SetActive(false); Destroy(upgradeView); }
+        purchases.Clear();
+        towerPanel = true;
+        overlay.SetActive(true);
+        overlay.GetComponent<Image>().color = new Color(.06f,.035f,.015f,.6f);
+        panelImage.gameObject.SetActive(false);
+        upgradeView = Rect(overlay.transform,"Melhorar torre",new Vector2(.11f,.025f),
+            new Vector2(.89f,.975f)).gameObject;
+        var board = Rect(upgradeView.transform,"Painel de melhoria",Vector2.zero,Vector2.one);
+        var fit = board.gameObject.AddComponent<AspectRatioFitter>();
+        fit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+        fit.aspectRatio = 1.46f;
+        Picture(board,"Moldura","moldura_melhorar",Vector2.zero,Vector2.one);
+        var title = Label(board,tower.data.displayName.ToUpperInvariant(),
+            new Vector2(.20f,.695f),new Vector2(.80f,.775f),42);
+        title.resizeTextForBestFit = true;
+        title.resizeTextMinSize = 26;
+        title.resizeTextMaxSize = 42;
+
+        var portrait = Rect(board,"Torre atual",new Vector2(.12f,.335f),
+            new Vector2(.345f,.70f));
+        var portraitFrame = portrait.gameObject.AddComponent<Image>();
+        portraitFrame.sprite = Art(TowerLevelFrame(tower.Level));
+        portraitFrame.raycastTarget = false;
+        var currentSprite = Rect(portrait,"Sprite da torre",new Vector2(.16f,.23f),
+            new Vector2(.84f,.81f)).gameObject.AddComponent<Image>();
+        currentSprite.sprite = TowerSprite(tower,tower.Level);
+        currentSprite.preserveAspect = true;
+        currentSprite.raycastTarget = false;
+        if (tower.Level >= 3)
+            Label(portrait,$"Nível {tower.Level+1}",new Vector2(.07f,.04f),
+                new Vector2(.93f,.17f),27);
+
+        var attributesFrame = Rect(board,"Moldura dos atributos",
+            new Vector2(.37f,.565f),new Vector2(.89f,.69f));
+        var attributesImage = attributesFrame.gameObject.AddComponent<Image>();
+        attributesImage.sprite = Art("moldura_atributos_nova");
+        attributesImage.raycastTarget = false;
+        var attributes = Rect(attributesFrame,"Atributos",new Vector2(.045f,.13f),
+            new Vector2(.955f,.87f));
+        UpgradeStat(attributes,0,"dano","Dano",$"{tower.Stats.damage:0.#}");
+        UpgradeStat(attributes,1,"alcance","Alcance",$"{tower.Stats.range:0.#}");
+        UpgradeStat(attributes,2,"cadencia","Tiros/s",$"{tower.Stats.fireRate:0.#}");
+        UpgradeStat(attributes,3,"aereos","Aéreos",tower.data.hitsFlying?"SIM":"NÃO");
+
+        int levels = tower.data.levels.Length;
+        var levelStrip = Rect(board,"Níveis",new Vector2(.37f,.33f),
+            new Vector2(.89f,.55f));
+        for (int i = 0; i < levels; i++)
         {
-            int cost=plot.GetNextUpgradeCost();
-            actions.Add(new Action("Melhorar","melhorar","melhorar",()=>
-            { if (plot.Upgrade()) ShowTowerActions(plot); },cost,$"Custo: {cost} moedas"));
+            float start = i / (float)levels;
+            var card = Rect(levelStrip,"Nível " + (i+1),new Vector2(start+.021f,.015f),
+                new Vector2((i+1f)/levels-.021f,.985f));
+            var backdrop = card.gameObject.AddComponent<Image>();
+            backdrop.sprite = Art(TowerLevelFrame(i));
+            backdrop.color = i == tower.Level ? Color.white : new Color(.78f,.78f,.78f,1f);
+            backdrop.raycastTarget = false;
+            if (i >= 3)
+                Label(card,$"Nível {i+1}",new Vector2(.08f,.04f),new Vector2(.92f,.18f),20);
+            var icon = Rect(card,"Sprite nível " + (i+1),new Vector2(.18f,.23f),
+                new Vector2(.82f,.81f)).gameObject.AddComponent<Image>();
+            icon.sprite = TowerSprite(tower,i);
+            icon.preserveAspect = true;
+            icon.raycastTarget = false;
+            if (icon.sprite == null)
+            {
+                icon.gameObject.SetActive(false);
+                Label(card,"Arte pendente",new Vector2(.10f,.24f),new Vector2(.90f,.70f),18);
+            }
         }
-        else actions.Add(new Action("Melhorar","melhorar","melhorar",()=> { },-1,"Nível máximo",false));
-        actions.Add(new Action("Vender","vender","vender",()=> { if(plot.Sell()) current.Close(); },-1,$"Receber: {plot.GetSellRefund()} moedas"));
-        actions.Add(new Action(tower.mode == TargetMode.Strongest ? "Alvo: Mais vida" : "Alvo: Primeiro",
-            "construir", "alcance", () => {
+
+        int upgradeCost = tower.CanUpgrade ? plot.GetNextUpgradeCost() : -1;
+        UpgradeButton(board,"melhorar",new Vector2(.13f,.22f),
+            new Vector2(.36f,.305f),()=> { if (plot.Upgrade()) ShowTowerActions(plot); },
+            tower.CanUpgrade,upgradeCost);
+        UpgradeButton(board,"vender",new Vector2(.385f,.22f),
+            new Vector2(.615f,.305f),()=> { if (plot.Sell()) Close(); });
+        UpgradeButton(board,"prioridade",new Vector2(.64f,.22f),
+            new Vector2(.87f,.305f),()=> {
                 tower.mode = tower.mode == TargetMode.Strongest ? TargetMode.First : TargetMode.Strongest;
                 ShowTowerActions(plot);
-            },-1,"Alternar prioridade"));
-        string targetMode = tower.mode == TargetMode.Strongest ? "mais vida" : "mais avançado no caminho";
-        current.ShowWithLayout(tower.data.displayName.ToUpperInvariant(),$"Nível {tower.Level+1} · Alvo: {targetMode}\n"+(tower.data.hitsFlying?"Atinge inimigos aéreos e terrestres.":"Atinge apenas inimigos terrestres."),true,true,actions.ToArray());
-        current.ShowSelectedRange(plot, tower.Stats.range);
-        current.Stat(0,"dano",$"Dano\n{tower.Stats.damage:0.#}");
-        current.Stat(1,"alcance",$"Alcance\n{tower.Stats.range:0.#}");
-        current.Stat(2,"cadencia",$"Tiros/s\n{tower.Stats.fireRate:0.#}");
-        current.Stat(3,"aereos",tower.data.hitsFlying?"Aéreos\nSIM":"Aéreos\nNÃO");
+            });
+        Label(board,tower.CanUpgrade ? $"Custo: {upgradeCost} moedas" : "Nível máximo",
+            new Vector2(.13f,.17f),new Vector2(.36f,.215f),22);
+        Label(board,$"Receber: {plot.GetSellRefund()} moedas",
+            new Vector2(.385f,.17f),new Vector2(.615f,.215f),22);
+        Label(board,tower.mode == TargetMode.Strongest ? "Alvo: Mais vida" : "Alvo: Primeiro",
+            new Vector2(.64f,.17f),new Vector2(.87f,.215f),22);
+        UpgradeButton(board,"voltar",new Vector2(.39f,.055f),
+            new Vector2(.61f,.15f),Back);
+        ShowSelectedRange(plot,tower.Stats.range);
+        if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
     }
     void BeginDecisionPause()
     {
