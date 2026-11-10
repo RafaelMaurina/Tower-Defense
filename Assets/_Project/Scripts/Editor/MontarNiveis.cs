@@ -230,9 +230,12 @@ public static class MontarNiveis
             cam.transform.position = new Vector3(W / 2f, H / 2f, -10f);
             var ppc = cam.GetComponent<PixelPerfectCamera>();
             if (ppc == null) ppc = cam.gameObject.AddComponent<PixelPerfectCamera>();
-            ppc.assetsPPU = 64;
-            ppc.refResolutionX = REF_X;
-            ppc.refResolutionY = REF_Y;
+            // Grao do jogo: 1 pixel de desenho = 2 pixels de tela (PPU 32, base 960x540).
+            // O chao ainda e PPU 64 (pixel mais fino) ate ser redesenhado em 32x32.
+            ppc.assetsPPU = 32;
+            ppc.refResolutionX = REF_X / 2;
+            ppc.refResolutionY = REF_Y / 2;
+            ppc.upscaleRT = false;
         }
 
         // Para dar Play direto no nivel sem passar pelo menu. Vindo do menu, o
@@ -277,6 +280,14 @@ public static class MontarNiveis
         return "";
     }
 
+    // Sorteio fixo pela posicao (o nivel sai igual toda vez que e gerado).
+    static string Variacao(string grama, int x, int y)
+    {
+        int k = ((x * 73856093) ^ (y * 19349663)) & 0x7fffffff;
+        string sufixo = (k % 3) == 1 ? "_v2" : (k % 3) == 2 ? "_v3" : "";
+        return sufixo != "" && System.IO.File.Exists(SPR + grama + sufixo + ".png") ? sufixo : "";
+    }
+
     static void PintarChao(Nivel nv, HashSet<Vector2Int> estrada, Transform pai)
     {
         var grid = new GameObject("Grid").AddComponent<Grid>();
@@ -297,7 +308,10 @@ public static class MontarNiveis
             for (int y = -1; y < H + 1; y++)
             {
                 var c = new Vector3Int(x, y, 0);
-                mapa.SetTile(c, estrada.Contains(new Vector2Int(x, y)) ? pista : ObterTile(g + Borda(x, y, estrada)));
+                string borda = Borda(x, y, estrada);
+                // grama lisa sorteia entre as variacoes (grama_N, _v2, _v3) para nao formar grade
+                if (borda == "") borda = Variacao(g, x, y);
+                mapa.SetTile(c, estrada.Contains(new Vector2Int(x, y)) ? pista : ObterTile(g + borda));
             }
     }
 

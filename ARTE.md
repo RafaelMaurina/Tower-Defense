@@ -2,6 +2,28 @@
 
 Fica na raiz do projeto, fora de `Assets/`, para o Unity nao importar este arquivo.
 
+## Grao do jogo (vale a partir de 10/11)
+
+**1 pixel de desenho = 2 pixels de tela.** Uma casa do mapa tem 32x32 pixels de
+desenho e todo sprite novo entra com **Pixels Per Unit = 32**. A Pixel Perfect
+Camera dos niveis usa PPU 32 com base 960x540. Misturar tamanhos de pixel
+("mixels") e o que mais faz o jogo parecer remendado, entao nao amplie nada por
+PPU fracionado nem pelo Scale.
+
+| Arte | Tela no Piskel | No jogo |
+|---|---|---|
+| Inimigo | 32x32 | ~1 casa |
+| Torre | 64x64 | ~2 casas |
+| Poco, plantacao, milho | 64x64 | 2x2 casas |
+| Celeiro | 192x160 | ~6x5 casas |
+| Projetil | 16x16 | meia casa |
+| Grama e estrada | 32x32 | 1 casa |
+
+Ainda fora do grao, ate serem redesenhados: grama e estrada (64, pixel mais
+fino), canteiro de torre (64x64 em 1 casa, fica assim), corvo, guaxinim e rato
+(pixel maior), colmeia (32x32) e celeiro (64x64).
+A regra de densidade abaixo descreve o conjunto antigo de 64 PPU.
+
 ## Densidade
 
 **Pixels Per Unit = 64 em todo sprite.** 1 unidade de mundo = 1 tile de 64px.
