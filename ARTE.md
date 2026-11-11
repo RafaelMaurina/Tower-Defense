@@ -69,7 +69,7 @@ Cada grama e uma estacao, e a cor e o que identifica:
 
 | Arquivo | Cores base | Estacao |
 |---|---|---|
-| `grama_1` | `#5ac224` `#348808` `#99eb6f` | Primavera |
+| `grama_1` | `#4ea52d` `#3b8a26` `#6cc03f` | Primavera |
 | `grama_2` | `#06702c` `#00a03a` `#56e289` | Verao |
 | `grama_3` | `#92b121` `#5b7302` `#d4f269` | Outono |
 | - | - | Inverno (a fazer) |
