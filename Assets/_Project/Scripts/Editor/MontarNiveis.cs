@@ -33,7 +33,8 @@ public static class MontarNiveis
     {
         public int id; public string nome; public int estacao; public string cultura;
         public Vector2Int[][] caminhos;
-        public Vector2Int[] canteiros, plantacao, cogumelos, milho;
+        public Vector2Int[] canteiros, plantacao, cogumelos, milho, macieiras, laranjeiras;
+        public Vector2Int galinheiro, galinha, galo;
         public Vector2Int poco;
         public RectInt celeiro;   // area reservada para o celeiro, encostada no fim do caminho
     }
@@ -49,6 +50,7 @@ public static class MontarNiveis
     // x = -1, fora da tela: e de la que os inimigos entram.
     // O poco ocupa 2x2 casas; a posicao dada e a casa de baixo a esquerda.
     // As linhas y = 0 e y = 16 sao da cerca.
+    // A HUD cobre o topo: nada de canteiro nem enfeite em y >= 14 (nem em y >= 13 com x >= 23).
     static readonly Nivel[] NIVEIS =
     {
         // Primavera: zigue-zague com 6 curvas. 10 canteiros.
@@ -58,18 +60,22 @@ public static class MontarNiveis
             canteiros = P(4,13, 7,10, 10,6, 12,4, 14,6, 17,9, 19,12, 20,10, 22,7, 24,2),
             plantacao = P(2,2, 4,2, 2,4, 4,4),
             poco = new Vector2Int(11, 8),
-            cogumelos = P(2,8, 18,2, 12,14, 28,13),
-            milho     = P(26,1, 28,1) },
+            cogumelos = P(2,10, 18,2, 13,11, 28,10),
+            milho     = P(26,1, 28,1),
+            macieiras = P(0,8), laranjeiras = P(20,7),
+            galinheiro = new Vector2Int(13,1), galinha = new Vector2Int(11,1), galo = new Vector2Int(16,2) },
 
         // Verao: serpentina longa. 12 canteiros.
         new Nivel { id = 2, nome = "Verao", estacao = 2, cultura = "tile_trigo",
             caminhos  = new[] { P(-1,3, 5,3, 5,13, 11,13, 11,4, 17,4, 17,13, 23,13, 23,8, 25,8) },
             celeiro   = new RectInt(26, 7, 4, 4),
-            canteiros = P(3,4, 6,7, 6,11, 8,14, 10,10, 12,8, 14,5, 16,10, 18,7, 20,14, 22,10, 24,5),
+            canteiros = P(3,4, 6,7, 6,11, 8,11, 10,10, 12,8, 14,5, 16,10, 18,7, 20,11, 22,10, 24,5),
             plantacao = P(19,1, 21,1, 19,3, 21,3),
             poco = new Vector2Int(13, 9),
-            cogumelos = P(2,9, 8,1, 27,14, 14,15),
-            milho     = P(26,2, 28,2) },
+            cogumelos = P(2,9, 8,1, 27,12, 14,12),
+            milho     = P(26,2, 28,2),
+            macieiras = P(1,10), laranjeiras = P(27,4),
+            galinheiro = new Vector2Int(13,1), galinha = new Vector2Int(12,2), galo = new Vector2Int(15,1) },
 
         // Outono: duas entradas que se juntam em (7,8). 12 canteiros.
         new Nivel { id = 3, nome = "Outono", estacao = 3, cultura = "tile_abobora",
@@ -79,8 +85,10 @@ public static class MontarNiveis
             canteiros = P(5,12, 5,4, 8,11, 6,7, 10,9, 12,7, 14,5, 16,6, 18,5, 20,3, 21,7, 23,11),
             plantacao = P(1,5, 3,5, 1,7, 3,7),
             poco = new Vector2Int(10, 11),
-            cogumelos = P(3,14, 18,12, 27,2, 12,2),
-            milho     = P(23,1, 25,1) },
+            cogumelos = P(3,10, 18,12, 27,2, 12,2),
+            milho     = P(23,1, 25,1),
+            macieiras = P(0,1), laranjeiras = P(26,4),
+            galinheiro = new Vector2Int(9,1), galinha = new Vector2Int(8,2), galo = new Vector2Int(13,1) },
     };
 
     [MenuItem("Defesa da Colheita/Gerar niveis")]
@@ -378,6 +386,16 @@ public static class MontarNiveis
             vento.frameTime = .28f;
         }
 
+        // arvores e galinheiro ocupam 2x2 casas (posicao = casa de baixo a esquerda); galinha e galo, uma casa
+        foreach (var c in nv.macieiras)
+            Sprite_(grupo, "Props/prop_arvore_maca", new Vector3(c.x + 1f, c.y, 0f), -1).AddComponent<FallingLeaves>();
+        foreach (var c in nv.laranjeiras)
+            Sprite_(grupo, "Props/prop_arvore_laranja", new Vector3(c.x + 1f, c.y, 0f), -1).AddComponent<FallingLeaves>();
+        Sprite_(grupo, "Props/prop_galinheiro", new Vector3(nv.galinheiro.x + 1f, nv.galinheiro.y, 0f), -1);
+        // galinha e galo ciscam em volta de onde nascem; a galinha olha para a esquerda no desenho
+        Ave_(grupo, "Props/prop_galinha", new Vector3(nv.galinha.x + 0.5f, nv.galinha.y + 0.1f, 0f), true);
+        Ave_(grupo, "Props/prop_galo", new Vector3(nv.galo.x + 0.5f, nv.galo.y + 0.1f, 0f), false);
+
         // cerca em cima e embaixo; pecas _3x de 96px = uma casa e meia cada
         var cerca = new GameObject("Cerca").transform;
         cerca.SetParent(grupo);
@@ -422,6 +440,14 @@ public static class MontarNiveis
     static Vector3 Centro(Vector2Int c) => new Vector3(c.x + 0.5f, c.y + 0.5f, 0f);
 
     /// ordem &lt; 0 = objeto em pe, ordenado pela altura na tela.
+    static void Ave_(Transform pai, string caminho, Vector3 pos, bool olhaParaEsquerda)
+    {
+        var ave = Sprite_(pai, caminho, pos, -1).AddComponent<ChickenWander>();
+        ave.stepFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + caminho + "_passo.png");
+        ave.peckFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + caminho + "_bicando.png");
+        ave.facesLeft = olhaParaEsquerda;
+    }
+
     static GameObject Sprite_(Transform pai, string caminho, Vector3 pos, int ordem)
     {
         var go = new GameObject(System.IO.Path.GetFileNameWithoutExtension(caminho));

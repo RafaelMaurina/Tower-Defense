@@ -14,6 +14,7 @@ public class TowerFireFx : MonoBehaviour
 
     static TowerFireFx runner;
     static Sprite[] flashFrames;
+    static Sprite[] whiteFrames;
 
     readonly Dictionary<Tower, Vector3> restPosition = new Dictionary<Tower, Vector3>();
     readonly Stack<SpriteRenderer> freeFlashes = new Stack<SpriteRenderer>();
@@ -23,6 +24,7 @@ public class TowerFireFx : MonoBehaviour
     {
         runner = null;
         flashFrames = null;
+        whiteFrames = null;
         Tower.OnFired -= HandleFired;
         Tower.OnFired += HandleFired;
     }
@@ -50,7 +52,13 @@ public class TowerFireFx : MonoBehaviour
         var sr = tower.GetComponent<SpriteRenderer>();
         Vector3 center = sr != null ? sr.bounds.center - (tower.transform.position - rest) : rest;
         StartCoroutine(Recoil(tower, rest, dir));
-        StartCoroutine(Flash(Snap(center + dir * FlashDistance), sr != null ? sr.sortingOrder + 1 : 500));
+        int order = sr != null ? sr.sortingOrder + 1 : 500;
+        TowerShotFx.Kind kind = TowerShotFx.KindOf(tower);
+        if (kind == TowerShotFx.Kind.Hive) return;   // colmeia: so o recuo, sem clarao
+        if (kind == TowerShotFx.Kind.Grapes)         // metralhadora: clarao branco na boca do cano
+            StartCoroutine(Flash(Snap(rest + TowerShotFx.Muzzle(tower, kind)), order, WhiteFrames()));
+        else
+            StartCoroutine(Flash(Snap(center + dir * FlashDistance), order, FlashFrames()));
     }
 
     IEnumerator Recoil(Tower tower, Vector3 rest, Vector3 dir)
@@ -66,13 +74,12 @@ public class TowerFireFx : MonoBehaviour
         restPosition.Remove(tower);
     }
 
-    IEnumerator Flash(Vector3 position, int order)
+    IEnumerator Flash(Vector3 position, int order, Sprite[] frames)
     {
         SpriteRenderer flash = freeFlashes.Count > 0 ? freeFlashes.Pop() : NewFlash();
         flash.transform.position = position;
         flash.sortingOrder = order;
         flash.gameObject.SetActive(true);
-        Sprite[] frames = FlashFrames();
         for (int i = 0; i < frames.Length; i++)
         {
             flash.sprite = frames[i];
@@ -111,6 +118,18 @@ public class TowerFireFx : MonoBehaviour
         string[] pequeno = { ".b.", "bcb", ".b." };
         flashFrames = new[] { Draw(grande, claro, borda), Draw(pequeno, claro, borda) };
         return flashFrames;
+    }
+
+    // Clarao branco da boca da metralhadora: estrela de 5x5 e depois cruz de 3x3.
+    static Sprite[] WhiteFrames()
+    {
+        if (whiteFrames != null && whiteFrames[0] != null) return whiteFrames;
+        var branco = new Color32(0xff, 0xff, 0xff, 255);
+        var cinza = new Color32(0xd9, 0xd5, 0xd5, 255);
+        string[] grande = { "..b..", ".bcb.", "bcccb", ".bcb.", "..b.." };
+        string[] pequeno = { ".b.", "bcb", ".b." };
+        whiteFrames = new[] { Draw(grande, branco, cinza), Draw(pequeno, branco, cinza) };
+        return whiteFrames;
     }
 
     static Sprite Draw(string[] rows, Color32 light, Color32 edge)
