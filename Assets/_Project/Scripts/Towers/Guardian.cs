@@ -19,6 +19,7 @@ public class Guardian : MonoBehaviour
 
     Tower tower;
     Vector3 home;
+    Vector3 chaseOffset;              // cada cao morde de um lado do inimigo
     Enemy target;
     float cooldown;
     SpriteRenderer sr;
@@ -35,7 +36,10 @@ public class Guardian : MonoBehaviour
     public void Init(Tower owner, int index)
     {
         tower = owner;
-        home = tower.transform.position + new Vector3((index - 1) * 0.5f, -0.6f, 0f);
+        // um de cada lado da porta e o terceiro na frente, para um nao ficar em cima do outro
+        Vector3[] spots = { new Vector3(-0.9f, -0.6f, 0f), new Vector3(0.85f, -0.6f, 0f), new Vector3(0f, -1.2f, 0f) };
+        home = tower.transform.position + spots[index % spots.Length];
+        chaseOffset = new Vector3((index - 1) * 0.35f, 0f, 0f);
         transform.position = home;
         animTime = index * 0.37f;     // caes lado a lado nao abanam o rabo juntos
         UpdateOrder();
@@ -50,7 +54,7 @@ public class Guardian : MonoBehaviour
             Vector3.Distance(tower.transform.position, target.Transform.position) > tower.Stats.range)
             target = tower.FindTarget();
 
-        Vector3 goal = target != null ? target.Transform.position : home;
+        Vector3 goal = target != null ? target.Transform.position + chaseOffset : home;
         Vector3 to = goal - transform.position;
         if (sr != null && Mathf.Abs(to.x) > 0.01f) sr.flipX = to.x < 0f;   // sprites olham para a direita
         Vector3 before = transform.position;

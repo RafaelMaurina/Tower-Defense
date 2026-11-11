@@ -13,6 +13,8 @@ public class Tower : MonoBehaviour
 
     /// Avisa que a torre atirou: (torre, ponto de mira). Usado pelos efeitos de tiro (TowerFireFx).
     public static event System.Action<Tower, Vector3> OnFired;
+    /// Avisa quando o sprite da torre e definido ou trocado (as animacoes de ambiente escutam).
+    public static event System.Action<Tower, Sprite> OnSpriteChanged;
 
     float cooldown;
     readonly System.Collections.Generic.List<Guardian> guardians = new System.Collections.Generic.List<Guardian>();
@@ -130,6 +132,7 @@ public class Tower : MonoBehaviour
     {
         var sr = GetComponent<SpriteRenderer>();
         if (sr != null && Stats.sprite != null) sr.sprite = Stats.sprite;
+        if (sr != null) OnSpriteChanged?.Invoke(this, sr.sprite);
     }
 
     // Mostra o alcance na Scene view ao selecionar a torre.

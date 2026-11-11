@@ -387,12 +387,13 @@ public static class MontarNiveis
 
         // arvores e galinheiro ocupam 2x2 casas (posicao = casa de baixo a esquerda); galinha e galo, uma casa
         foreach (var c in nv.macieiras)
-            Sprite_(grupo, "Props/prop_arvore_maca", new Vector3(c.x + 1f, c.y, 0f), -1);
+            Sprite_(grupo, "Props/prop_arvore_maca", new Vector3(c.x + 1f, c.y, 0f), -1).AddComponent<FallingLeaves>();
         foreach (var c in nv.laranjeiras)
-            Sprite_(grupo, "Props/prop_arvore_laranja", new Vector3(c.x + 1f, c.y, 0f), -1);
+            Sprite_(grupo, "Props/prop_arvore_laranja", new Vector3(c.x + 1f, c.y, 0f), -1).AddComponent<FallingLeaves>();
         Sprite_(grupo, "Props/prop_galinheiro", new Vector3(nv.galinheiro.x + 1f, nv.galinheiro.y, 0f), -1);
-        Sprite_(grupo, "Props/prop_galinha", new Vector3(nv.galinha.x + 0.5f, nv.galinha.y + 0.1f, 0f), -1);
-        Sprite_(grupo, "Props/prop_galo", new Vector3(nv.galo.x + 0.5f, nv.galo.y + 0.1f, 0f), -1);
+        // galinha e galo ciscam em volta de onde nascem; a galinha olha para a esquerda no desenho
+        Ave_(grupo, "Props/prop_galinha", new Vector3(nv.galinha.x + 0.5f, nv.galinha.y + 0.1f, 0f), true);
+        Ave_(grupo, "Props/prop_galo", new Vector3(nv.galo.x + 0.5f, nv.galo.y + 0.1f, 0f), false);
 
         // cerca em cima e embaixo; pecas _3x de 96px = uma casa e meia cada
         var cerca = new GameObject("Cerca").transform;
@@ -438,6 +439,14 @@ public static class MontarNiveis
     static Vector3 Centro(Vector2Int c) => new Vector3(c.x + 0.5f, c.y + 0.5f, 0f);
 
     /// ordem &lt; 0 = objeto em pe, ordenado pela altura na tela.
+    static void Ave_(Transform pai, string caminho, Vector3 pos, bool olhaParaEsquerda)
+    {
+        var ave = Sprite_(pai, caminho, pos, -1).AddComponent<ChickenWander>();
+        ave.stepFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + caminho + "_passo.png");
+        ave.peckFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + caminho + "_bicando.png");
+        ave.facesLeft = olhaParaEsquerda;
+    }
+
     static GameObject Sprite_(Transform pai, string caminho, Vector3 pos, int ordem)
     {
         var go = new GameObject(System.IO.Path.GetFileNameWithoutExtension(caminho));
