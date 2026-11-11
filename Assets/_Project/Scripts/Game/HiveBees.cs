@@ -1,14 +1,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// Abelhas voando em volta da colmeia. As duas abelhas soltas do desenho saem do sprite e viram
+/// Abelhas voando em volta da colmeia. As abelhas do desenho saem do sprite e viram
 /// objetos que giram numa elipse: passam pela frente na metade de baixo e por tras na de cima.
 /// Movimento em pixel inteiro.
 [RequireComponent(typeof(SpriteRenderer))]
 public class HiveBees : MonoBehaviour
 {
-    // abelhas soltas no torre_colmeia.png (x, y de cima)
-    static readonly RectInt[] Drawn = { new RectInt(52, 9, 6, 3), new RectInt(5, 15, 6, 3) };
+    // abelhas desenhadas no torre_colmeia.png (x, y de cima). A terceira encosta na colmeia:
+    // o recorte comeca uma coluna depois para nao apagar o contorno dela.
+    static readonly RectInt[] Drawn = { new RectInt(52, 9, 6, 3), new RectInt(5, 15, 6, 3), new RectInt(52, 27, 5, 3) };
     const int Count = 4;
     const float RadiusX = 27f, RadiusY = 9f;     // em pixels de desenho
     static readonly Vector2 Center = new Vector2(31.5f, 22f);

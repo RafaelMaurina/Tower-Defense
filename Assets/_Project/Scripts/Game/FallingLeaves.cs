@@ -103,7 +103,7 @@ public class FallingLeaves : MonoBehaviour
             {
                 int cur = stack.Pop(), cx = cur % w, cy = cur / w;
                 size++;
-                if (px[cur].r > px[cur].g) green = false;
+                if (px[cur].r > px[cur].g + 40) green = false;      // o contorno escuro passa, fruta nao
                 if (cx < x0) x0 = cx;
                 if (cx > x1) x1 = cx;
                 if (cy < y0) y0 = cy;
