@@ -9,11 +9,25 @@ public class Guardian : MonoBehaviour
     public float speed = 4f;          // unidades de mundo por segundo
     public float biteRange = 0.5f;    // distancia dos pes do cao aos pes do inimigo para morder
 
+    [Header("Animacao (troca de quadro, sem Animator)")]
+    public Sprite[] idleFrames;       // parado: respira, abana o rabo, mexe a orelha
+    public Sprite[] runFrames;        // ciclo de corrida
+    public Sprite[] biteFrames;       // [0] abre a boca, [1] fecha: o dano sai junto com o [1]
+    public float idleFrameTime = .22f;
+    public float runFrameTime = .09f;
+    public float biteFrameTime = .08f;
+
     Tower tower;
     Vector3 home;
     Enemy target;
     float cooldown;
     SpriteRenderer sr;
+
+    float animTime;
+    bool running;
+    float biteTime = -1f;             // < 0: nao esta mordendo
+    bool biteLanded;
+    Enemy biteTarget;
 
     void Awake() => sr = GetComponent<SpriteRenderer>();
 
@@ -23,6 +37,7 @@ public class Guardian : MonoBehaviour
         tower = owner;
         home = tower.transform.position + new Vector3((index - 1) * 0.5f, -0.6f, 0f);
         transform.position = home;
+        animTime = index * 0.37f;     // caes lado a lado nao abanam o rabo juntos
         UpdateOrder();
     }
 
@@ -38,18 +53,55 @@ public class Guardian : MonoBehaviour
         Vector3 goal = target != null ? target.Transform.position : home;
         Vector3 to = goal - transform.position;
         if (sr != null && Mathf.Abs(to.x) > 0.01f) sr.flipX = to.x < 0f;   // sprites olham para a direita
+        Vector3 before = transform.position;
         transform.position = Vector3.MoveTowards(transform.position, goal, speed * Time.deltaTime);
+        bool moved = (transform.position - before).sqrMagnitude > 1e-8f;
         UpdateOrder();
 
         cooldown -= Time.deltaTime;
-        if (target != null && cooldown <= 0f &&
+        if (biteTime < 0f && target != null && cooldown <= 0f &&
             Vector3.Distance(transform.position, target.Transform.position) <= biteRange)
         {
-            float damage = target.ApplyDamage(tower.Stats.damage);
-            if (damage > 0f && GameManager.Instance != null)
-                GameManager.Instance.RegisterTowerDamage(tower, damage);
+            // comeca a mordida; o dano sai quando a boca fecha
+            biteTime = 0f;
+            biteLanded = false;
+            biteTarget = target;
             cooldown = 1f / tower.Stats.fireRate;
+            if (biteFrames == null || biteFrames.Length < 2) LandBite();
         }
+
+        Animate(moved);
+    }
+
+    void LandBite()
+    {
+        biteLanded = true;
+        if (biteTarget == null || !biteTarget.IsAlive) return;
+        float damage = biteTarget.ApplyDamage(tower.Stats.damage);
+        if (damage > 0f && GameManager.Instance != null)
+            GameManager.Instance.RegisterTowerDamage(tower, damage);
+    }
+
+    void Animate(bool moved)
+    {
+        if (sr == null) return;
+
+        if (biteTime >= 0f)
+        {
+            biteTime += Time.deltaTime;
+            bool closed = biteTime >= biteFrameTime;
+            if (closed && !biteLanded) LandBite();
+            if (biteTime >= biteFrameTime * 3f) biteTime = -1f;        // boca fechada dura 2 quadros
+            else if (biteFrames != null && biteFrames.Length >= 2) { sr.sprite = biteFrames[closed ? 1 : 0]; return; }
+            else return;
+        }
+
+        if (moved != running) { running = moved; animTime = 0f; }
+        Sprite[] frames = running ? runFrames : idleFrames;
+        if (frames == null || frames.Length == 0) return;
+        animTime += Time.deltaTime;
+        float step = running ? runFrameTime : idleFrameTime;
+        sr.sprite = frames[(int)(animTime / step) % frames.Length];
     }
 
     void UpdateOrder()
