@@ -15,6 +15,14 @@ public class FallingLeaves : MonoBehaviour
 
     static readonly Dictionary<Sprite, (Sprite tree, Sprite leaf)> cache = new Dictionary<Sprite, (Sprite, Sprite)>();
 
+    // folha desenhada pendurada na borda da copa: encosta nela, entao a busca por folha solta nao acha.
+    // O recorte (x, y de cima) tira so a folha; a linha de contorno da copa logo acima fica.
+    static readonly Dictionary<string, RectInt> Hanging = new Dictionary<string, RectInt>
+    {
+        { "prop_arvore_maca", new RectInt(43, 43, 3, 3) },
+        { "prop_arvore_laranja", new RectInt(18, 43, 3, 3) },
+    };
+
     SpriteRenderer sr;
     Sprite source;
     SpriteRenderer[] leaves;
@@ -33,6 +41,7 @@ public class FallingLeaves : MonoBehaviour
             if (loose.Count == 0) { enabled = false; return; }
             Sprite leaf = PixelSprites.Crop(source, px, w, h, loose[0], "folha");
             foreach (RectInt r in loose) PixelSprites.Erase(px, w, h, r);
+            if (Hanging.TryGetValue(source.name, out RectInt hanging)) PixelSprites.Erase(px, w, h, hanging);
             made = (PixelSprites.MakeLike(source, px, w, h, "_sem_folhas"), leaf);
             cache[source] = made;
         }
