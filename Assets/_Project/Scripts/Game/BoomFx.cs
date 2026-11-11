@@ -2,17 +2,17 @@ using System.Collections;
 using UnityEngine;
 
 /// Impacto do canhao de abobora: explosao de 3 quadros (laranja, amarelo e miolo branco)
-/// e poeira de bolinhas de terra que se espalham e somem em ~0,4 s.
+/// e poeira de bolinhas de terra que se espalham e somem em ~0,5 s.
 /// Liga sozinho: escuta Projectile.OnHit e so reage a projetil de area (splashRadius > 0).
 /// Tudo em pixel inteiro, sem escala nem rotacao.
 public class BoomFx : MonoBehaviour
 {
     const float Pixel = 1f / 32f;
-    const int DustCount = 5;
+    const int DustCount = 8;
 
     static BoomFx runner;
     static Sprite[] boom;
-    static Sprite[] dust;   // [0..2] 3x3 e [3..5] 2x2, cada um em 3 cores
+    static Sprite[] dust;   // [0..2] 4x4, [3..5] 3x3 e [6..8] 2x2, cada um em 3 cores
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void Subscribe()
@@ -49,19 +49,19 @@ public class BoomFx : MonoBehaviour
         for (int i = 0; i < DustCount; i++)
         {
             parts[i] = NewRenderer("Poeira", DrawOrder.Projectile);
-            int side = i % 2 == 0 ? 1 : -1;   // 3 a 5 pixels para os lados e 1 a 5 para cima
-            target[i] = new Vector2Int(side * Random.Range(3, 6), Random.Range(1, 6));
+            int side = i % 2 == 0 ? 1 : -1;   // 6 a 12 pixels para os lados e 2 a 9 para cima
+            target[i] = new Vector2Int(side * Random.Range(6, 13), Random.Range(2, 10));
             kind[i] = Random.Range(0, 3);
         }
 
-        // 4 passos de 0,1 s: a poeira sai rapido e desacelera, encolhe de 3x3 para 2x2 e some
-        for (int step = 0; step < 4; step++)
+        // 5 passos de 0,1 s: a poeira sai rapido e desacelera, encolhe de 4x4 ate 2x2 e some
+        for (int step = 0; step < 5; step++)
         {
             flash.sprite = step < boom.Length ? boom[step] : null;
-            float u = 1f - Mathf.Pow(1f - (step + 1) / 4f, 2f);
+            float u = 1f - Mathf.Pow(1f - (step + 1) / 5f, 2f);
             for (int i = 0; i < DustCount; i++)
             {
-                parts[i].sprite = step < 3 ? dust[(step < 2 ? 0 : 3) + kind[i]] : null;
+                parts[i].sprite = dust[(step < 2 ? 0 : step < 4 ? 3 : 6) + kind[i]];
                 Vector3 off = new Vector3(Mathf.Round(target[i].x * u), Mathf.Round(target[i].y * u), 0f) * Pixel;
                 parts[i].transform.position = basePos + off;
             }
@@ -83,7 +83,7 @@ public class BoomFx : MonoBehaviour
     static void EnsureSprites()
     {
         if (boom != null && boom[0] != null && dust != null) return;
-        boom = new[] { Disc(3, false), Disc(5, false), Disc(7, true) };
+        boom = new[] { Disc(5, false), Disc(8, false), Disc(11, true) };
 
         var colors = new[]
         {
@@ -91,11 +91,12 @@ public class BoomFx : MonoBehaviour
             new Color32(0xca, 0x86, 0x22, 255),
             new Color32(0xd9, 0xd5, 0xd5, 255),
         };
-        dust = new Sprite[6];
+        dust = new Sprite[9];
         for (int i = 0; i < 3; i++)
         {
-            dust[i] = Square(3, colors[i], "poeira_3");
-            dust[3 + i] = Square(2, colors[i], "poeira_2");
+            dust[i] = Square(4, colors[i], "poeira_4");
+            dust[3 + i] = Square(3, colors[i], "poeira_3");
+            dust[6 + i] = Square(2, colors[i], "poeira_2");
         }
     }
 
