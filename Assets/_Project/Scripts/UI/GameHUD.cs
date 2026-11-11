@@ -41,6 +41,7 @@ public class GameHUD : MonoBehaviour
     Image panelImage;
     bool towerPanel;
     GameObject upgradeView;
+    GameObject resultView;
     AudioSource uiAudio;
     AudioClip hoverSound, clickSound;
 
@@ -82,6 +83,7 @@ public class GameHUD : MonoBehaviour
     }
     static string ArtPath(string name)
     {
+        if (name.StartsWith("final_")) return "fianis_submenu/" + name.Substring(6);
         if (name == "moldura_pausa_titulo" || name.StartsWith("continuar_") ||
             name.StartsWith("recomecar_") || name.StartsWith("menu_"))
             return "jogo_pausado_submenu/" + name;
@@ -196,7 +198,7 @@ public class GameHUD : MonoBehaviour
         if (overlay.activeSelf && EventSystem.current != null && EventSystem.current.currentSelectedGameObject == null &&
             (Keyboard.current.tabKey.wasPressedThisFrame || Keyboard.current.downArrowKey.wasPressedThisFrame || Keyboard.current.upArrowKey.wasPressedThisFrame))
         {
-            foreach (Button option in rows.GetComponentsInChildren<Button>())
+            foreach (Button option in overlay.GetComponentsInChildren<Button>())
                 if (option.interactable) { EventSystem.current.SetSelectedGameObject(option.gameObject); break; }
         }
         if (!Keyboard.current.escapeKey.wasPressedThisFrame) return;
@@ -450,6 +452,7 @@ public class GameHUD : MonoBehaviour
     void Close()
     {
         overlay.SetActive(false);
+        if (resultView != null) { Destroy(resultView); resultView = null; }
         if (upgradeView != null) { Destroy(upgradeView); upgradeView = null; }
         panelImage.gameObject.SetActive(true);
         if (catalogView != null) catalogView.SetActive(false);
@@ -807,9 +810,56 @@ public class GameHUD : MonoBehaviour
     {
         EndDecisionPause();
         HideSelectedRange();
-        Show(result.won?"COLHEITA PROTEGIDA!":"A COLHEITA PRECISA DE VOCÊ",$"Pontuação: {result.score} · Rodada: {result.round}\nInimigos derrotados: {result.enemiesDefeated}/{result.enemiesTotal}\nMaior dano: {result.topDamageTower} ({result.topDamage:0})",false,
-            new Action("Jogar novamente","recomecar","continuar",()=>GameManager.Instance?.RestartCurrentLevel()),
-            new Action("Voltar ao menu","menu","voltar",ToMenu));
+        towerPanel = false;
+        purchases.Clear();
+        if (catalogView != null) catalogView.SetActive(false);
+        if (upgradeView != null) upgradeView.SetActive(false);
+        if (resultView != null) { resultView.SetActive(false); Destroy(resultView); }
+        overlay.SetActive(true);
+        overlay.GetComponent<Image>().color = new Color(.04f,.025f,.015f,.62f);
+        panelImage.gameObject.SetActive(false);
+        resultView = Rect(overlay.transform,"Resultado da partida",new Vector2(.08f,.04f),new Vector2(.92f,.96f)).gameObject;
+        var board = Rect(resultView.transform,"Painel",Vector2.zero,Vector2.one);
+        var fit = board.gameObject.AddComponent<AspectRatioFitter>();
+        fit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+        fit.aspectRatio = 1.65f;
+        string theme = result.won ? "vitoria" : "derrota";
+        Picture(board,"Moldura","final_moldura_" + theme,Vector2.zero,Vector2.one);
+        ResultStat(board,"icone_pontuacao","Pontuação",result.score.ToString(),.51f);
+        ResultStat(board,"icone_rodadas_final","Rodadas",result.round.ToString(),.39f);
+        ResultStat(board,"icone_derrotados","Inimigos derrotados",$"{result.enemiesDefeated}/{result.enemiesTotal}",.27f);
+        var card = Rect(board,"Torre com mais dano",new Vector2(.65f,.25f),new Vector2(.85f,.63f));
+        Picture(card,"Moldura da torre","final_torre_" + theme,Vector2.zero,Vector2.one);
+        ResultLabel(card,"TORRE COM MAIS DANO",new Vector2(.10f,.81f),new Vector2(.90f,.94f),24);
+        if (result.topDamageSprite != null)
+        {
+            var portrait = Rect(card,"Torre",new Vector2(.25f,.35f),new Vector2(.75f,.79f)).gameObject.AddComponent<Image>();
+            portrait.sprite = result.topDamageSprite;
+            portrait.preserveAspect = true;
+            portrait.raycastTarget = false;
+        }
+        else ResultLabel(card,"Nenhuma torre",new Vector2(.12f,.42f),new Vector2(.88f,.67f),23);
+        ResultLabel(card,result.topDamage > 0 ? result.topDamageTower : "Sem dano registrado",
+            new Vector2(.10f,.20f),new Vector2(.90f,.36f),23);
+        ResultLabel(card,$"Dano: {result.topDamage:0}",new Vector2(.12f,.08f),new Vector2(.88f,.20f),28);
+        UpgradeButton(board,"recomecar",new Vector2(.18f,.12f),new Vector2(.39f,.22f),()=>GameManager.Instance?.RestartCurrentLevel());
+        UpgradeButton(board,"menu",new Vector2(.41f,.12f),new Vector2(.62f,.22f),ToMenu);
+        UpgradeButton(board,"voltar",new Vector2(.64f,.12f),new Vector2(.82f,.22f),Back);
+        if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
+    }
+    Text ResultLabel(Transform parent,string text,Vector2 min,Vector2 max,int size)
+    {
+        var label = Label(parent,text,min,max,size);
+        label.resizeTextForBestFit = true;
+        label.resizeTextMinSize = 14;
+        label.resizeTextMaxSize = size;
+        return label;
+    }
+    void ResultStat(Transform parent,string icon,string title,string value,float bottom)
+    {
+        Picture(parent,title,"final_" + icon,new Vector2(.13f,bottom),new Vector2(.19f,bottom+.085f),true);
+        var label = ResultLabel(parent,title + ": " + value,new Vector2(.21f,bottom),new Vector2(.59f,bottom+.085f),32);
+        label.alignment = TextAnchor.MiddleLeft;
     }
     void UpdateMoney(int value)
     {

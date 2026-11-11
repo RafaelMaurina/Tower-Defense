@@ -18,6 +18,7 @@ public struct GameResult
     public int money;
     public string topDamageTower;
     public float topDamage;
+    [NonSerialized] public Sprite topDamageSprite;
     public GameDifficulty difficulty;
 }
 
@@ -53,6 +54,7 @@ public class GameManager : MonoBehaviour
     string activeLevelScene;
     string topDamageTower = "Nenhuma";
     float topDamage;
+    Sprite topDamageSprite;
     readonly Dictionary<Tower, float> damageByTower = new Dictionary<Tower, float>();
     float gameSpeed = 1f;
     bool decisionPaused;
@@ -130,6 +132,7 @@ public class GameManager : MonoBehaviour
         round = 0;
         topDamageTower = "Nenhuma";
         topDamage = 0f;
+        topDamageSprite = null;
         damageByTower.Clear();
     }
 
@@ -227,6 +230,8 @@ public class GameManager : MonoBehaviour
             topDamage = accumulated;
             Vector3 position = tower.transform.position;
             topDamageTower = $"{towerName} ({position.x:0.0}, {position.y:0.0})";
+            // Guarda a arte mesmo se a torre for vendida antes do fim da partida.
+            topDamageSprite = tower.GetComponent<SpriteRenderer>()?.sprite;
         }
     }
 
@@ -249,6 +254,7 @@ public class GameManager : MonoBehaviour
             money = money,
             topDamageTower = topDamageTower,
             topDamage = topDamage,
+            topDamageSprite = topDamageSprite,
             difficulty = Difficulty
         };
         LocalRanking.Record(result);
