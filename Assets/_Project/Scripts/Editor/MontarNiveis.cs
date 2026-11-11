@@ -359,8 +359,11 @@ public static class MontarNiveis
         grupo.SetParent(pai);
 
         // plantacao em blocos de 2x2 casas: cada tile entra ampliado 2x (PPU 32), a posicao e a casa de baixo a esquerda
+        // as folhas balancam de leve (PixelSway); a terra, igual a do tile_canteiro, fica parada
+        var terra = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Tiles/tile_canteiro.png");
         foreach (var c in nv.plantacao)
-            Sprite_(grupo, "Tiles/" + nv.cultura, new Vector3(c.x + 1f, c.y + 1f, 0f), ORDEM_DECALQUE);
+            Sprite_(grupo, "Tiles/" + nv.cultura, new Vector3(c.x + 1f, c.y + 1f, 0f), ORDEM_DECALQUE)
+                .AddComponent<PixelSway>().background = terra;
 
         // props de pivo no pe apoiam na base da casa; o poco (2x2, PPU 32) centra entre as duas casas
         Sprite_(grupo, "Props/prop_poco", new Vector3(nv.poco.x + 1f, nv.poco.y, 0f), -1);
@@ -368,7 +371,12 @@ public static class MontarNiveis
             Sprite_(grupo, "Props/prop_cogumelos", new Vector3(c.x + 0.5f, c.y + 0.2f, 0f), -1);
         // pes de milho num canto livre, so de enfeite
         foreach (var c in nv.milho)
-            Sprite_(grupo, "Props/prop_milho", new Vector3(c.x + 0.5f, c.y, 0f), -1);
+        {
+            var vento = Sprite_(grupo, "Props/prop_milho", new Vector3(c.x + 0.5f, c.y, 0f), -1).AddComponent<PixelSway>();
+            vento.amplitude = 2;
+            vento.fixedFraction = .25f;
+            vento.frameTime = .28f;
+        }
 
         // cerca em cima e embaixo; pecas _3x de 96px = uma casa e meia cada
         var cerca = new GameObject("Cerca").transform;
