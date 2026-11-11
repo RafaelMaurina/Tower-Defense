@@ -11,6 +11,9 @@ public class Tower : MonoBehaviour
     public TowerData data;
     public TargetMode mode = TargetMode.First; // First: maior distancia percorrida no caminho
 
+    /// Avisa que a torre atirou: (torre, ponto de mira). Usado pelos efeitos de tiro (TowerFireFx).
+    public static event System.Action<Tower, Vector3> OnFired;
+
     float cooldown;
     readonly System.Collections.Generic.List<Guardian> guardians = new System.Collections.Generic.List<Guardian>();
 
@@ -120,6 +123,7 @@ public class Tower : MonoBehaviour
         Projectile p = go.GetComponent<Projectile>();
         Vector3 aim = Projectile.AimPoint(transform.position, target, p.speed);
         p.Init(aim, Stats.damage, data.hitsFlying, this);
+        OnFired?.Invoke(this, aim);
     }
 
     void ApplySprite()
