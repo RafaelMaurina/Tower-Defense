@@ -121,10 +121,12 @@ public class Tower : MonoBehaviour
 
     void Fire(Enemy target)
     {
-        GameObject go = Pool.Get(data.projectile, transform.position, Quaternion.identity);
+        Vector3 origin = TowerShotFx.Origin(this);   // boca do cano, toca da colmeia ou o centro
+        GameObject go = Pool.Get(data.projectile, origin, Quaternion.identity);
         Projectile p = go.GetComponent<Projectile>();
-        Vector3 aim = Projectile.AimPoint(transform.position, target, p.speed);
+        Vector3 aim = Projectile.AimPoint(origin, target, p.speed);
         p.Init(aim, Stats.damage, data.hitsFlying, this);
+        TowerShotFx.Prepare(this, p, origin, aim);
         OnFired?.Invoke(this, aim);
     }
 

@@ -17,6 +17,9 @@ public class Guardian : MonoBehaviour
     public float runFrameTime = .09f;
     public float biteFrameTime = .08f;
 
+    /// Avisa que a mordida acertou: (cao, posicao do inimigo). Usado pelo BiteFx.
+    public static event System.Action<Guardian, Vector3> OnBite;
+
     Tower tower;
     Vector3 home;
     Vector3 chaseOffset;              // cada cao morde de um lado do inimigo
@@ -81,9 +84,11 @@ public class Guardian : MonoBehaviour
     {
         biteLanded = true;
         if (biteTarget == null || !biteTarget.IsAlive) return;
+        Vector3 where = biteTarget.Center;   // antes do dano: o inimigo pode morrer e sair do jogo
         float damage = biteTarget.ApplyDamage(tower.Stats.damage);
         if (damage > 0f && GameManager.Instance != null)
             GameManager.Instance.RegisterTowerDamage(tower, damage);
+        if (damage > 0f) OnBite?.Invoke(this, where);
     }
 
     void Animate(bool moved)
