@@ -33,7 +33,8 @@ public static class MontarNiveis
     {
         public int id; public string nome; public int estacao; public string cultura;
         public Vector2Int[][] caminhos;
-        public Vector2Int[] canteiros, plantacao, cogumelos, milho;
+        public Vector2Int[] canteiros, plantacao, cogumelos, milho, macieiras, laranjeiras;
+        public Vector2Int galinheiro, galinha, galo;
         public Vector2Int poco;
         public RectInt celeiro;   // area reservada para o celeiro, encostada no fim do caminho
     }
@@ -59,7 +60,9 @@ public static class MontarNiveis
             plantacao = P(2,2, 4,2, 2,4, 4,4),
             poco = new Vector2Int(11, 8),
             cogumelos = P(2,8, 18,2, 12,14, 28,13),
-            milho     = P(26,1, 28,1) },
+            milho     = P(26,1, 28,1),
+            macieiras = P(0,13), laranjeiras = P(20,14),
+            galinheiro = new Vector2Int(10,13), galinha = new Vector2Int(9,14), galo = new Vector2Int(13,13) },
 
         // Verao: serpentina longa. 12 canteiros.
         new Nivel { id = 2, nome = "Verao", estacao = 2, cultura = "tile_trigo",
@@ -69,7 +72,9 @@ public static class MontarNiveis
             plantacao = P(19,1, 21,1, 19,3, 21,3),
             poco = new Vector2Int(13, 9),
             cogumelos = P(2,9, 8,1, 27,14, 14,15),
-            milho     = P(26,2, 28,2) },
+            milho     = P(26,2, 28,2),
+            macieiras = P(0,13), laranjeiras = P(27,4),
+            galinheiro = new Vector2Int(13,1), galinha = new Vector2Int(12,2), galo = new Vector2Int(15,1) },
 
         // Outono: duas entradas que se juntam em (7,8). 12 canteiros.
         new Nivel { id = 3, nome = "Outono", estacao = 3, cultura = "tile_abobora",
@@ -80,7 +85,9 @@ public static class MontarNiveis
             plantacao = P(1,5, 3,5, 1,7, 3,7),
             poco = new Vector2Int(10, 11),
             cogumelos = P(3,14, 18,12, 27,2, 12,2),
-            milho     = P(23,1, 25,1) },
+            milho     = P(23,1, 25,1),
+            macieiras = P(0,1), laranjeiras = P(26,4),
+            galinheiro = new Vector2Int(9,14), galinha = new Vector2Int(8,15), galo = new Vector2Int(12,14) },
     };
 
     [MenuItem("Defesa da Colheita/Gerar niveis")]
@@ -377,6 +384,15 @@ public static class MontarNiveis
             vento.fixedFraction = .25f;
             vento.frameTime = .28f;
         }
+
+        // arvores e galinheiro ocupam 2x2 casas (posicao = casa de baixo a esquerda); galinha e galo, uma casa
+        foreach (var c in nv.macieiras)
+            Sprite_(grupo, "Props/prop_arvore_maca", new Vector3(c.x + 1f, c.y, 0f), -1);
+        foreach (var c in nv.laranjeiras)
+            Sprite_(grupo, "Props/prop_arvore_laranja", new Vector3(c.x + 1f, c.y, 0f), -1);
+        Sprite_(grupo, "Props/prop_galinheiro", new Vector3(nv.galinheiro.x + 1f, nv.galinheiro.y, 0f), -1);
+        Sprite_(grupo, "Props/prop_galinha", new Vector3(nv.galinha.x + 0.5f, nv.galinha.y + 0.1f, 0f), -1);
+        Sprite_(grupo, "Props/prop_galo", new Vector3(nv.galo.x + 0.5f, nv.galo.y + 0.1f, 0f), -1);
 
         // cerca em cima e embaixo; pecas _3x de 96px = uma casa e meia cada
         var cerca = new GameObject("Cerca").transform;

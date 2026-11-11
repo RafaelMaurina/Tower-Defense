@@ -18,17 +18,17 @@ MonoBehaviour:
     damage: 5
     range: 3
     fireRate: 1.5
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 0c29ec1285fd4aba89f7bad351667cf5, type: 3}
   - cost: 70
     damage: 8
     range: 3.3
     fireRate: 1.5
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 0c29ec1285fd4aba89f7bad351667cf5, type: 3}
   - cost: 110
     damage: 12
     range: 3.6
     fireRate: 2
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 0c29ec1285fd4aba89f7bad351667cf5, type: 3}
   hitsFlying: 0
   projectile: {fileID: 0}
   guardian: {fileID: 592597528476322065, guid: 92c5b0c434a0b45e99bc1703a6318fac, type: 3}
