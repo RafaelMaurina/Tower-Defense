@@ -35,6 +35,7 @@ public static class MontarNiveis
         public Vector2Int[][] caminhos;
         public Vector2Int[] canteiros, plantacao, cogumelos, milho, macieiras, laranjeiras;
         public Vector2Int galinheiro, galinha, galo;
+        public Vector2 pasto;     // centro do cantinho das vacas (feno, 3 vacas e cocho), ~5 casas de largura
         public Vector2Int poco;
         public RectInt celeiro;   // area reservada para o celeiro, encostada no fim do caminho
     }
@@ -63,7 +64,8 @@ public static class MontarNiveis
             cogumelos = P(2,10, 18,2, 13,11, 28,10),
             milho     = P(26,1, 28,1),
             macieiras = P(0,8), laranjeiras = P(20,7),
-            galinheiro = new Vector2Int(13,1), galinha = new Vector2Int(11,1), galo = new Vector2Int(16,2) },
+            galinheiro = new Vector2Int(13,1), galinha = new Vector2Int(11,1), galo = new Vector2Int(16,2),
+            pasto = new Vector2(4.8f, 8f) },
 
         // Verao: serpentina longa. 12 canteiros.
         new Nivel { id = 2, nome = "Verao", estacao = 2, cultura = "tile_trigo",
@@ -75,7 +77,8 @@ public static class MontarNiveis
             cogumelos = P(2,9, 8,1, 27,12, 14,12),
             milho     = P(26,2, 28,2),
             macieiras = P(1,10), laranjeiras = P(27,4),
-            galinheiro = new Vector2Int(13,1), galinha = new Vector2Int(12,2), galo = new Vector2Int(15,1) },
+            galinheiro = new Vector2Int(13,1), galinha = new Vector2Int(12,2), galo = new Vector2Int(15,1),
+            pasto = new Vector2(20.3f, 9f) },
 
         // Outono: duas entradas que se juntam em (7,8). 12 canteiros.
         new Nivel { id = 3, nome = "Outono", estacao = 3, cultura = "tile_abobora",
@@ -88,7 +91,8 @@ public static class MontarNiveis
             cogumelos = P(3,10, 18,12, 27,2, 12,2),
             milho     = P(23,1, 25,1),
             macieiras = P(0,1), laranjeiras = P(26,4),
-            galinheiro = new Vector2Int(9,1), galinha = new Vector2Int(8,2), galo = new Vector2Int(13,1) },
+            galinheiro = new Vector2Int(9,1), galinha = new Vector2Int(8,2), galo = new Vector2Int(13,1),
+            pasto = new Vector2(18.5f, 10.5f) },
     };
 
     [MenuItem("Defesa da Colheita/Gerar niveis")]
@@ -396,6 +400,23 @@ public static class MontarNiveis
         Ave_(grupo, "Props/prop_galinha", new Vector3(nv.galinha.x + 0.5f, nv.galinha.y + 0.1f, 0f), true);
         Ave_(grupo, "Props/prop_galo", new Vector3(nv.galo.x + 0.5f, nv.galo.y + 0.1f, 0f), false);
 
+        // cantinho das vacas: fardos de feno a esquerda, uma em pe, duas deitadas e o cocho a direita
+        Vector3 pasto = nv.pasto;
+        foreach (var f in new[] { new Vector2(-2.1f, .7f), new Vector2(-1.5f, .2f), new Vector2(-2.3f, -.3f) })
+            Sprite_(grupo, "Props/prop_feno", pasto + (Vector3)f, -1);
+        Sprite_(grupo, "Props/prop_vaca_marrom_em_pe", pasto + new Vector3(-.6f, -.1f, 0f), -1);
+        var dorme = Sprite_(grupo, "Props/prop_vaca_creme_deitada", pasto + new Vector3(.5f, -.5f, 0f), -1);
+        var zz = Sprite_(dorme.transform, "Props/fx_zz", dorme.transform.position + new Vector3(-.1f, .45f, 0f), -1);
+        zz.GetComponent<SpriteRenderer>().sortingOrder = dorme.GetComponent<SpriteRenderer>().sortingOrder + 1;
+        zz.AddComponent<SleepZ>();
+        Sprite_(grupo, "Props/prop_vaca_preta_deitada", pasto + new Vector3(1.2f, .5f, 0f), -1);
+        Sprite_(grupo, "Props/prop_cocho_agua", pasto + new Vector3(2.2f, -.1f, 0f), -1);
+        // porco e ovelha pastam por perto (andam pouco, para nao pisar na estrada)
+        Ave_(grupo, "Props/prop_porco", pasto + new Vector3(-.3f, .9f, 0f), true).radius = .4f;
+        Ave_(grupo, "Props/prop_ovelha", pasto + new Vector3(1.3f, -1f, 0f), true).radius = .4f;
+        // gato brincando na frente da porta do celeiro
+        Ave_(grupo, "Props/prop_gato", new Vector3(nv.celeiro.x + 1.3f, nv.celeiro.y - .5f, 0f), true).radius = .6f;
+
         // cerca em cima e embaixo; pecas _3x de 96px = uma casa e meia cada
         var cerca = new GameObject("Cerca").transform;
         cerca.SetParent(grupo);
@@ -420,6 +441,7 @@ public static class MontarNiveis
         var celeiro = Sprite_(pai, "Props/prop_celeiro",
             new Vector3(nv.celeiro.x + 1.28f, nv.celeiro.y, 0f), -1);
         celeiro.name = "Celeiro";
+        celeiro.AddComponent<BarnHitFx>();   // treme e solta lascas quando a base perde vida
     }
 
     // --------------------------------------------------------- utilitarios
@@ -440,12 +462,13 @@ public static class MontarNiveis
     static Vector3 Centro(Vector2Int c) => new Vector3(c.x + 0.5f, c.y + 0.5f, 0f);
 
     /// ordem &lt; 0 = objeto em pe, ordenado pela altura na tela.
-    static void Ave_(Transform pai, string caminho, Vector3 pos, bool olhaParaEsquerda)
+    static ChickenWander Ave_(Transform pai, string caminho, Vector3 pos, bool olhaParaEsquerda)
     {
         var ave = Sprite_(pai, caminho, pos, -1).AddComponent<ChickenWander>();
         ave.stepFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + caminho + "_passo.png");
         ave.peckFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + caminho + "_bicando.png");
         ave.facesLeft = olhaParaEsquerda;
+        return ave;
     }
 
     static GameObject Sprite_(Transform pai, string caminho, Vector3 pos, int ordem)

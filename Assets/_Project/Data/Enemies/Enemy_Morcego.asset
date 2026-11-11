@@ -19,5 +19,19 @@ MonoBehaviour:
   baseDamage: 1
   flying: 1
   centerOffset: {x: 0, y: 0.35}
-  frames: []
-  framesPerSecond: 8
+  frames:
+  - {fileID: 21300000, guid: a9c319476e0145d58623d75ea29ee543, type: 3}
+  - {fileID: 21300000, guid: 0320189da0e64ba3b4cb8e28e4e60aaf, type: 3}
+  - {fileID: 21300000, guid: b3f3340868554121890ca613b4d329f6, type: 3}
+  - {fileID: 21300000, guid: d4bbf17d6b124b06970898737114fb95, type: 3}
+  framesUp:
+  - {fileID: 21300000, guid: 590b49d97d5e4bdba9b974721576b80d, type: 3}
+  - {fileID: 21300000, guid: de369dd979584e5ba1815aa721e15c60, type: 3}
+  - {fileID: 21300000, guid: 4623a160e03144728f295898e98690b5, type: 3}
+  - {fileID: 21300000, guid: ae52e22725854830bc992b7dbcf1e9d4, type: 3}
+  framesDown:
+  - {fileID: 21300000, guid: a2d113c11d0f4842a4721d6650c78186, type: 3}
+  - {fileID: 21300000, guid: 95bf5e3a365f49a482050e9e33d9dfc0, type: 3}
+  - {fileID: 21300000, guid: b5de9fcd7c1c4dba8e8faa3dee505f43, type: 3}
+  - {fileID: 21300000, guid: 065387f13db4446ca4571fefc5b55350, type: 3}
+  framesPerSecond: 10
