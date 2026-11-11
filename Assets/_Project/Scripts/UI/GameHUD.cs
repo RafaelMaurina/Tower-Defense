@@ -100,15 +100,18 @@ public class GameHUD : MonoBehaviour
     }
     Sprite NewHudArt(string name)
     {
-        var path = name == "action_button" ? "hud/action_button" :
-            "hud/hud_superior/" + (name == "square_button" || name == "status_frame" ? "" : "v2/") + name;
+        var path = "hud/hud_superior/" + (name == "status_frame" ? "moldura_recursos_fazenda" :
+            name == "action_button" ? "moldura_acoes_fazenda" :
+            name == "square_button" ? "moldura_controle_fazenda" : "v2/" + name);
         var source = Resources.Load<Sprite>(path);
         if (source == null) return null;
         Rect crop;
         switch (name)
         {
-            case "status_frame": crop = new Rect(0, 124, 2172, 450); break;
-            case "action_button": crop = new Rect(0, 114, 2172, 490); break;
+            // Recortes das margens transparentes; preservam o celeiro e as folhas.
+            case "status_frame": crop = new Rect(24, 101, 2125, 556); break;
+            case "action_button": crop = new Rect(21, 136, 2112, 500); break;
+            case "square_button": crop = new Rect(143, 142, 964, 964); break;
             case "icon_life": crop = new Rect(40, 54, 1180, 1100); break;
             case "icon_coins": crop = new Rect(100, 24, 1050, 1150); break;
             case "icon_rounds": crop = new Rect(300, 0, 650, 1254); break;
@@ -272,11 +275,11 @@ public class GameHUD : MonoBehaviour
         button.transition = Selectable.Transition.None;
         if (!string.IsNullOrEmpty(icon))
             Picture(holder, "Ícone", icon.StartsWith("v2/") ? icon : "icone_" + icon,
-                new Vector2(.07f,.22f), new Vector2(.20f,.78f), true);
+                new Vector2(.16f,.24f), new Vector2(.27f,.67f), true);
         var caption = Label(holder, name,
-            new Vector2(string.IsNullOrEmpty(icon) ? .10f : .22f,.12f), new Vector2(.90f,.88f), 32);
+            new Vector2(string.IsNullOrEmpty(icon) ? .16f : .29f,.23f), new Vector2(.90f,.68f), 32);
         caption.resizeTextForBestFit = true;
-        caption.resizeTextMinSize = 22;
+        caption.resizeTextMinSize = 18;
         caption.resizeTextMaxSize = 32;
         var feedback = holder.gameObject.AddComponent<HudButtonFeedback>();
         feedback.Configure(plate, Art(plateArt),
@@ -294,29 +297,33 @@ public class GameHUD : MonoBehaviour
         root.GetComponent<Canvas>().sortingOrder = 50;
         var scaler = root.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920,1080); scaler.matchWidthOrHeight = .5f;
-        Picture(root.transform, "Moldura dos recursos", "v2/status_frame",
-            new Vector2(.26f,.815f), new Vector2(.74f,.965f), true);
-        life = Counter(root.transform, "vida", .335f, .435f);
-        coins = Counter(root.transform, "moedas", .45f, .55f);
-        waves = Counter(root.transform, "rodadas", .565f, .665f);
+        var resourceArea = Rect(root.transform, "Área dos recursos", new Vector2(.34f,.865f), new Vector2(.66f,.99f));
+        var resources = Rect(resourceArea, "Recursos", Vector2.zero, Vector2.one);
+        var resourceFit = resources.gameObject.AddComponent<AspectRatioFitter>();
+        resourceFit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+        resourceFit.aspectRatio = 2125f / 556f;
+        Picture(resources, "Moldura dos recursos", "v2/status_frame", Vector2.zero, Vector2.one);
+        life = Counter(resources, "vida", .10f, .35f);
+        coins = Counter(resources, "moedas", .38f, .62f);
+        waves = Counter(resources, "rodadas", .66f, .90f);
         buildPauseButton = TopControl(root.transform, "Pausar construção", null, "pausa", "v2/square_button",
-            new Vector2(.79f,.865f), new Vector2(.835f,.945f), () =>
+            new Vector2(.83f,.917f), new Vector2(.862f,.974f), () =>
                 GameManager.Instance?.SetBuildPause(!GameManager.IsBuildPaused));
         buildPauseIcon = buildPauseButton.transform.Find("Ícone").GetComponent<Image>();
         speedButton = TopControl(root.transform, "Velocidade", "1x", null, "v2/square_button",
-            new Vector2(.845f,.865f), new Vector2(.92f,.945f), CycleSpeed);
+            new Vector2(.8915f,.917f), new Vector2(.9235f,.974f), CycleSpeed);
         speedText = speedButton.GetComponentInChildren<Text>();
         settingsButton = TopControl(root.transform, "Configurações", "⚙", "configuracoes", "v2/square_button",
-            new Vector2(.935f,.865f), new Vector2(.98f,.945f), () => GameManager.Instance?.TogglePause());
+            new Vector2(.953f,.917f), new Vector2(.985f,.974f), () => GameManager.Instance?.TogglePause());
         threat = Label(root.transform, "", new Vector2(.28f,.745f), new Vector2(.72f,.79f), 23);
         threat.color = new Color32(255,222,126,255);
 
-        startWaveButton = MakeTopWaveButton(root.transform, "Iniciar onda", "v2/action_button", null,
-            new Vector2(.015f,.865f), new Vector2(.22f,.945f), () => waveSpawner?.StartNextWave());
+        startWaveButton = MakeTopWaveButton(root.transform, "Iniciar Onda", "v2/action_button", null,
+            new Vector2(.015f,.914f), new Vector2(.175f,.974f), () => waveSpawner?.StartNextWave());
         startWaveButton.GetComponent<HudButtonFeedback>().SetSprites(
             Art("v2/action_button"), Art("v2/action_button"), Art("v2/action_button"));
         autoWaveButton = MakeTopWaveButton(root.transform, "Auto: desligado", "v2/action_button", "auto",
-            new Vector2(.785f,.765f), new Vector2(.985f,.845f), () => {
+            new Vector2(.83f,.85f), new Vector2(.985f,.91f), () => {
                 if (waveSpawner != null) waveSpawner.SetAutoStart(!waveSpawner.AutoStart);
             });
         startWaveText = startWaveButton.GetComponentInChildren<Text>();
@@ -349,9 +356,8 @@ public class GameHUD : MonoBehaviour
         buildPauseButton.GetComponent<HudButtonFeedback>().SetToggleState(GameManager.IsBuildPaused);
         if (waveSpawner != null)
         {
-            startWaveText.text = waveSpawner.IsWaveActive ? "Onda em curso" :
-                waveSpawner.CurrentWave >= waveSpawner.TotalWaves ? "Última onda" :
-                $"Iniciar onda {waveSpawner.CurrentWave + 1}/{waveSpawner.TotalWaves}";
+            startWaveText.text = "Iniciar Onda";
+            UpdateWave(waveSpawner.CurrentWave, waveSpawner.TotalWaves);
             autoWaveText.text = waveSpawner.AutoStart ? "Auto: ligado" : "Auto: desligado";
             autoWaveButton.GetComponent<HudButtonFeedback>().SetToggleState(waveSpawner.AutoStart);
         }
@@ -379,7 +385,7 @@ public class GameHUD : MonoBehaviour
         if (icon != null)
         {
             var iconImage = Picture(holder, "Ícone", icon.StartsWith("v2/") ? icon : "icone_" + icon,
-                new Vector2(.28f,.16f), new Vector2(.72f,.84f), true);
+                new Vector2(.27f,.27f), new Vector2(.73f,.77f), true);
             if (iconImage.sprite == null)
             {
                 iconImage.gameObject.SetActive(false);
@@ -389,7 +395,7 @@ public class GameHUD : MonoBehaviour
         }
         else if (!string.IsNullOrEmpty(caption))
         {
-            var label = Label(holder, caption, new Vector2(.05f,.08f), new Vector2(.95f,.92f), 32);
+            var label = Label(holder, caption, new Vector2(.16f,.25f), new Vector2(.84f,.77f), 32);
             label.resizeTextForBestFit = true;
         }
         button.onClick.AddListener(PlayClick);
@@ -398,7 +404,7 @@ public class GameHUD : MonoBehaviour
     }
     Text Counter(Transform parent, string icon, float left, float right)
     {
-        var badge = Rect(parent, "Indicador " + icon, new Vector2(left,.875f), new Vector2(right,.935f));
+        var badge = Rect(parent, "Indicador " + icon, new Vector2(left,.24f), new Vector2(right,.53f));
         string art = "icone_" + icon;
         Picture(badge, icon, art, new Vector2(.04f,.13f), new Vector2(.31f,.87f), true);
         var value = Label(badge, "0", new Vector2(.32f,.05f), new Vector2(.99f,.95f), 32, false);
@@ -811,6 +817,6 @@ public class GameHUD : MonoBehaviour
         foreach(var p in purchases) if(p.button!=null) p.button.interactable=value>=p.cost;
     }
     void UpdateLife(int value) => life.text=$"{value}/{GameManager.StartingLife}";
-    void UpdateWave(int value,int total) => waves.text=total>0?$"{value}/{total}":value.ToString();
+    void UpdateWave(int value,int total) => waves.text=$"{value}/{total}";
     void UpdateComposition(int value,int total,bool flying) { UpdateWave(value,total); threat.text=flying?"AÉREOS NESTA RODADA · prepare sua defesa":""; }
 }
