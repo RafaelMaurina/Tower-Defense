@@ -33,6 +33,8 @@ public static class TowerAmbientFx
                 });
                 break;
             case "torre_canhao_abobora":
+            case "torre_canhao_abobora_2":
+            case "torre_canhao_abobora_3":
                 Get<PixelRegionSway>(tower).Setup(sprite, new[]
                 {
                     new PixelRegionSway.Region(33, 1, 13, 9, false),     // cabinho e folha
