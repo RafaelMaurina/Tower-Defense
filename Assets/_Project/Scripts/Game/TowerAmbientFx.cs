@@ -19,9 +19,13 @@ public static class TowerAmbientFx
         switch (sprite.name)
         {
             case "torre_colmeia":
-                Get<HiveBees>(tower).Setup(sprite);
+            case "torre_colmeia_2":
+            case "torre_colmeia_3":
+                Get<HiveBees>(tower).Setup(sprite, 3 + 2 * tower.Level);   // 3, 5 e 7 abelhas
                 break;
             case "torre_espantalho":
+            case "torre_espantalho_2":
+            case "torre_espantalho_3":
                 Get<PixelRegionSway>(tower).Setup(sprite, new[]
                 {
                     new PixelRegionSway.Region(21, 3, 23, 10, false),    // chapeu
