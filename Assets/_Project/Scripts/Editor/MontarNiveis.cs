@@ -395,26 +395,18 @@ public static class MontarNiveis
         // Trigo e abobora: canteiro de terra e, por cima, a planta no tamanho original (PPU 32), que passa um
         // pouco da casa; as de cima desenham por tras das de baixo.
         var terra = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Tiles/canteiro_horta.png");
-        // cada inimigo que chega ao celeiro faz um canteiro perder a planta
-        var horta = new GameObject("Horta").AddComponent<HortaMurcha>();
-        horta.transform.SetParent(grupo);
         foreach (var c in nv.plantacao)
             for (int dx = 0; dx < 2; dx++)
                 for (int dy = 0; dy < 2; dy++)
                 {
                     var cel = new Vector2Int(c.x + dx, c.y + dy);
                     if (nv.cultura == "tile_cenoura")
-                    {
-                        var canteiro = Sprite_(grupo, "Tiles/tile_cenoura", Centro(cel), ORDEM_DECALQUE);
-                        canteiro.AddComponent<PixelSway>().background = terra;
-                        horta.Add(new HortaMurcha.Canteiro { bed = canteiro.GetComponent<SpriteRenderer>(), empty = terra });
-                    }
+                        Sprite_(grupo, "Tiles/tile_cenoura", Centro(cel), ORDEM_DECALQUE).AddComponent<PixelSway>().background = terra;
                     else
                     {
                         Sprite_(grupo, "Tiles/canteiro_horta", Centro(cel), ORDEM_DECALQUE);
-                        var planta = Sprite_(grupo, "Tiles/" + nv.cultura.Replace("tile_", "planta_"), Centro(cel), 2 + (H - 1 - cel.y));
-                        planta.AddComponent<PixelSway>();
-                        horta.Add(new HortaMurcha.Canteiro { plant = planta });
+                        Sprite_(grupo, "Tiles/" + nv.cultura.Replace("tile_", "planta_"), Centro(cel), 2 + (H - 1 - cel.y))
+                            .AddComponent<PixelSway>();
                     }
                 }
 
