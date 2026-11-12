@@ -33,10 +33,11 @@ public static class TowerShotFx
         Sprite s = tower.GetComponent<SpriteRenderer>().sprite;
         if (kind == Kind.Grapes) return PixelSprites.Snap(PixelSprites.Local(s, 58f, 35f));
         if (kind == Kind.Hive) return PixelSprites.Snap(PixelSprites.Local(s, 32f, 26f));   // toca (buraco escuro)
+        if (kind == Kind.Pumpkin) return PixelSprites.Snap(PixelSprites.Local(s, 8f, 25f)); // boca do canhao (esquerda); so visual
         return Vector3.zero;
     }
 
-    /// Ponto de onde o projetil nasce.
+    /// Ponto de onde o projetil nasce. A abobora nasce no centro (posicao logica); so o desenho sai da boca.
     public static Vector3 Origin(Tower tower)
     {
         Kind k = KindOf(tower);
@@ -63,7 +64,7 @@ public static class TowerShotFx
             case Kind.Pumpkin:
                 ShotArc arc = p.GetComponent<ShotArc>();
                 if (arc == null) arc = p.gameObject.AddComponent<ShotArc>();
-                arc.Begin(origin, aim);
+                arc.Begin(origin, aim, Muzzle(tower, Kind.Pumpkin));
                 break;
         }
     }
@@ -125,41 +126,56 @@ public static class TowerShotFx
     }
 }
 
-/// Arco so visual da abobora: a posicao logica do projetil nao muda. O desenho sobe numa
-/// parabola em pixel inteiro e uma sombrinha fica no chao.
+/// Arco so visual da abobora: a posicao logica do projetil nao muda. O desenho sai da boca do
+/// canhao, sobe rapido numa parabola alta (paira no topo e cai) em pixel inteiro, e uma sombra
+/// no chao encolhe quando a abobora esta alta e cresce na queda.
 public class ShotArc : MonoBehaviour
 {
     const float Pixel = 1f / 32f;
+    const float MinHeight = 0f;       // casas (0 = voo reto, sem arco)
+    const float MaxHeight = 0f;
+    const float HeightPerDist = 0f;
+    const float LeaveMuzzle = 1f;     // o desenho sai da boca e chega ao alvo em linha reta, durante o voo todo
 
-    static Sprite shadowSprite;
+    static Sprite[] shadowSprites;   // 7x3 (no chao), 5x2 (meio), 3x1 (no alto)
 
     SpriteRenderer own, body, shadow;
-    Vector3 start, aim;
+    Vector3 start, aim, muzzleOffset;
     float height;
+    int shadowIndex = -1;
 
-    public void Begin(Vector3 from, Vector3 to)
+    public void Begin(Vector3 from, Vector3 to, Vector3 muzzle = default)
     {
         start = from;
         aim = to;
+        muzzleOffset = muzzle;
         float dist = Vector3.Distance(from, to);
-        height = Mathf.Round(Mathf.Clamp(dist * .5f, .5f, 3f) / Pixel) * Pixel;
+        height = Mathf.Round(Mathf.Clamp(dist * HeightPerDist, MinHeight, MaxHeight) / Pixel) * Pixel;
+        shadowIndex = -1;
 
         if (own == null)
         {
             own = GetComponent<SpriteRenderer>();
             body = NewChild("Arco", own.sprite, DrawOrder.Projectile + 1);
-            if (shadowSprite == null)
-            {
-                var c = new Color32(0x20, 0x18, 0x21, 120);
-                var o = new Color32(0, 0, 0, 0);
-                shadowSprite = PixelSprites.Make(new[] { o, c, c, c, o, c, c, c, c, c }, 5, 2, new Vector2(.5f, .5f), 32f, "sombra_abobora");
-            }
-            shadow = NewChild("Sombra", shadowSprite, DrawOrder.Projectile - 1);
+            if (shadowSprites == null || shadowSprites[0] == null) shadowSprites = BuildShadows();
+            shadow = NewChild("Sombra", shadowSprites[0], DrawOrder.Projectile - 1);
         }
         own.enabled = false;   // quem desenha e o filho, que sobe no arco
         body.gameObject.SetActive(true);
-        shadow.gameObject.SetActive(true);
+        shadow.gameObject.SetActive(false);   // sem arco, sem sombra no chao
         LateUpdate();
+    }
+
+    static Sprite[] BuildShadows()
+    {
+        var c = new Color32(0x20, 0x18, 0x21, 120);
+        var o = new Color32(0, 0, 0, 0);
+        return new[]
+        {
+            PixelSprites.Make(new[] { o, c, c, c, c, c, o, c, c, c, c, c, c, c, o, c, c, c, c, c, o }, 7, 3, new Vector2(.5f, .5f), 32f, "sombra_abobora_7"),
+            PixelSprites.Make(new[] { o, c, c, c, o, c, c, c, c, c }, 5, 2, new Vector2(.5f, .5f), 32f, "sombra_abobora_5"),
+            PixelSprites.Make(new[] { c, c, c }, 3, 1, new Vector2(.5f, .5f), 32f, "sombra_abobora_3"),
+        };
     }
 
     SpriteRenderer NewChild(string childName, Sprite sprite, int order)
@@ -177,9 +193,23 @@ public class ShotArc : MonoBehaviour
         if (body == null) return;
         float total = Vector3.Distance(start, aim);
         float t = total < .01f ? 1f : Mathf.Clamp01(Vector3.Distance(start, transform.position) / total);
-        float lift = Mathf.Round(4f * height * t * (1f - t) / Pixel) * Pixel;
+
+        // 1 - p^4: sobe rapido, fica um tempo no alto e cai
+        float p = 2f * t - 1f;
+        float profile = 1f - p * p * p * p;
+        float lift = Mathf.Round(height * profile / Pixel) * Pixel;
+
+        // o desenho nasce na boca (offset) e se junta a trajetoria logica nos primeiros 30% do voo
+        Vector3 off = muzzleOffset * (1f - Mathf.Clamp01(t / LeaveMuzzle));
         Vector3 ground = PixelSprites.Snap(transform.position);
-        body.transform.position = ground + new Vector3(0f, lift, 0f);
-        shadow.transform.position = ground + new Vector3(0f, -2f * Pixel, 0f);
+        body.transform.position = PixelSprites.Snap(ground + off) + new Vector3(0f, lift, 0f);
+        shadow.transform.position = PixelSprites.Snap(ground + new Vector3(off.x, 0f, 0f)) + new Vector3(0f, -2f * Pixel, 0f);
+
+        int idx = profile < .3f ? 0 : profile < .7f ? 1 : 2;
+        if (idx != shadowIndex)
+        {
+            shadowIndex = idx;
+            shadow.sprite = shadowSprites[idx];
+        }
     }
 }
