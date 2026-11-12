@@ -13,6 +13,9 @@ public class Projectile : MonoBehaviour
     public float hitRadius = 0.3f;    // distancia para contar como acerto
     public float splashRadius = 0f;   // 0 = dano so no inimigo acertado
 
+    /// Avisa onde o projetil acertou (ou explodiu): (projetil, ponto). Usado pelos efeitos de impacto.
+    public static event System.Action<Projectile, Vector3> OnHit;
+
     // Reaproveitado entre explosoes para nao gerar lixo a cada tiro.
     static readonly List<Enemy> atingidos = new List<Enemy>();
 
@@ -103,6 +106,7 @@ public class Projectile : MonoBehaviour
             }
             for (int i = 0; i < atingidos.Count; i++) ApplyDamage(atingidos[i]);
         }
+        OnHit?.Invoke(this, center);
         Pool.Release(gameObject);
     }
 

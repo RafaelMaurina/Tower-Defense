@@ -1,0 +1,111 @@
+using UnityEngine;
+
+/// Galinha e galo ciscando: ficam parados e, a cada 3, 5 ou 10 segundos (sorteado), ou andam ate
+/// um ponto perto de casa ou dao umas bicadas no chao. Anda em pixel inteiro.
+[RequireComponent(typeof(SpriteRenderer))]
+public class ChickenWander : MonoBehaviour
+{
+    public Sprite stepFrame;             // corpo 1 pixel acima, pernas esticadas
+    public Sprite peckFrame;             // cabeca no chao
+    public bool facesLeft;               // para que lado o desenho olha
+    public float radius = .9f;           // ate onde se afasta do ponto inicial, em casas
+    public float speed = .8f;            // casas por segundo
+    public float frameTime = .16f;
+    // limites do mapa em casas: abaixo de 1,15 e a cerca de baixo; acima de 15,3, a de cima
+    public Vector2 minPos = new Vector2(.6f, 1.15f), maxPos = new Vector2(29.4f, 15.3f);
+
+    static readonly float[] Waits = { 3f, 5f, 10f };
+
+    enum State { Idle, Walk, Peck }
+    State state;
+    SpriteRenderer sr;
+    Sprite idleFrame;
+    Vector3 home, position, goal;
+    float timer, clock;
+    int pecks;
+    bool fleeing;                        // correndo de um clique: anda mais depressa
+
+    void Start()
+    {
+        sr = GetComponent<SpriteRenderer>();
+        idleFrame = sr.sprite;
+        home = position = transform.position;
+        timer = Waits[Random.Range(0, Waits.Length)] * Random.Range(.3f, 1f);   // nao comecam juntas
+    }
+
+    void Update()
+    {
+        clock += Time.deltaTime;
+        switch (state)
+        {
+            case State.Idle:
+                timer -= Time.deltaTime;
+                if (timer > 0f) break;
+                if (Random.value < .5f && stepFrame != null) StartWalk(); else StartPeck();
+                break;
+
+            case State.Walk:
+                position = Vector3.MoveTowards(position, goal, speed * (fleeing ? 2.4f : 1f) * Time.deltaTime);
+                transform.position = PixelSprites.Snap(position);
+                sr.sortingOrder = DrawOrder.ForY(transform.position.y);
+                sr.sprite = (int)(clock / frameTime) % 2 == 0 ? stepFrame : idleFrame;
+                if ((goal - position).sqrMagnitude < 1e-6f)
+                {
+                    fleeing = false;
+                    if (Random.value < .6f) StartPeck(); else Rest();               // chegou: costuma bicar
+                }
+                break;
+
+            case State.Peck:
+                float beat = frameTime * 1.3f;
+                bool down = (int)(clock / beat) % 2 == 0;
+                sr.sprite = down && peckFrame != null ? peckFrame : idleFrame;
+                if (clock >= pecks * 2 * beat) Rest();
+                break;
+        }
+    }
+
+    /// Sai correndo para longe do ponto 'from' (um clique), sem passar de 1,5x o raio de casa.
+    public void Flee(Vector3 from)
+    {
+        if (sr == null) return;
+        Vector3 away = position - from;
+        away.z = 0f;
+        away = away.sqrMagnitude < .01f ? Vector3.right : away.normalized;
+        goal = position + away * 1.2f;
+        Vector3 off = goal - home;
+        if (off.magnitude > radius * 1.5f) goal = home + off.normalized * radius * 1.5f;
+        goal = Limit(goal);
+        sr.flipX = (goal.x < position.x) != facesLeft;
+        fleeing = true;
+        state = State.Walk;
+        clock = 0f;
+    }
+
+    void StartWalk()
+    {
+        Vector2 r = Random.insideUnitCircle * radius;
+        goal = Limit(home + new Vector3(r.x, r.y * .5f, 0f));
+        sr.flipX = (goal.x < position.x) != facesLeft;
+        state = State.Walk;
+        clock = 0f;
+    }
+
+    Vector3 Limit(Vector3 v) =>
+        new Vector3(Mathf.Clamp(v.x, minPos.x, maxPos.x), Mathf.Clamp(v.y, minPos.y, maxPos.y), v.z);
+
+    void StartPeck()
+    {
+        pecks = Random.Range(2, 5);
+        state = State.Peck;
+        clock = 0f;
+    }
+
+    void Rest()
+    {
+        fleeing = false;
+        sr.sprite = idleFrame;
+        state = State.Idle;
+        timer = Waits[Random.Range(0, Waits.Length)];
+    }
+}

@@ -22,5 +22,19 @@ MonoBehaviour:
   jumpInterval: 1.2
   jumpDistance: 2
   jumpDuration: 0.35
-  frames: []
-  framesPerSecond: 8
+  frames:
+  - {fileID: 21300000, guid: 0fa939fff4a840fb8855ce426f695ec2, type: 3}
+  - {fileID: 21300000, guid: fe946eedeb4e4e608c15dc3a572ec208, type: 3}
+  - {fileID: 21300000, guid: 4a9f996f26054f3e9205014cc5ae3439, type: 3}
+  - {fileID: 21300000, guid: bc96116d46834cdfa9935c14e355ecb9, type: 3}
+  framesUp:
+  - {fileID: 21300000, guid: 58541bce08f945b28646d1844a2efd17, type: 3}
+  - {fileID: 21300000, guid: 4d77ffed3ee54a9592be131cfbf88f0d, type: 3}
+  - {fileID: 21300000, guid: 11f4ab3c3b13431c9beeec3b16695f75, type: 3}
+  - {fileID: 21300000, guid: 155b09d6e0a24896b3f3cce0b4c827ca, type: 3}
+  framesDown:
+  - {fileID: 21300000, guid: 7878f693d2eb48579ddb67eac8379075, type: 3}
+  - {fileID: 21300000, guid: da71e12fcc6844029e436c0bc4ad2ad0, type: 3}
+  - {fileID: 21300000, guid: 0f532fd5429e472992b903b4ce53e4b6, type: 3}
+  - {fileID: 21300000, guid: 40deb53f56d640ac9aea454949a84917, type: 3}
+  framesPerSecond: 5

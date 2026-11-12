@@ -33,7 +33,9 @@ public static class MontarNiveis
     {
         public int id; public string nome; public int estacao; public string cultura;
         public Vector2Int[][] caminhos;
-        public Vector2Int[] canteiros, plantacao, cogumelos, milho;
+        public Vector2Int[] canteiros, plantacao, cogumelos, milho, macieiras, laranjeiras;
+        public Vector2Int galinheiro, galinha, galo;
+        public Vector2 pasto;     // centro do cantinho das vacas (feno, 2 vacas, cocho, porco e ovelha), ~4 x 2,5 casas; longe de canteiro e estrada
         public Vector2Int poco;
         public RectInt celeiro;   // area reservada para o celeiro, encostada no fim do caminho
     }
@@ -49,6 +51,9 @@ public static class MontarNiveis
     // x = -1, fora da tela: e de la que os inimigos entram.
     // O poco ocupa 2x2 casas; a posicao dada e a casa de baixo a esquerda.
     // As linhas y = 0 e y = 16 sao da cerca.
+    // A HUD cobre o topo: nada de canteiro nem enfeite em y >= 14 (nem em y >= 13 com x >= 23).
+    // A plantacao sao 2 blocos de 2x2 casas lado a lado (4x2 canteiros de 1 casa); a posicao e a casa de baixo a esquerda de cada bloco.
+    // Deixe 2 casas de grama entre ela e a estrada: a grama em volta ganha borda de terra.
     static readonly Nivel[] NIVEIS =
     {
         // Primavera: zigue-zague com 6 curvas. 10 canteiros.
@@ -56,20 +61,26 @@ public static class MontarNiveis
             caminhos  = new[] { P(-1,12, 8,12, 8,5, 16,5, 16,11, 23,11, 23,5, 25,5) },
             celeiro   = new RectInt(26, 4, 4, 4),
             canteiros = P(4,13, 7,10, 10,6, 12,4, 14,6, 17,9, 19,12, 20,10, 22,7, 24,2),
-            plantacao = P(2,2, 4,2, 2,4, 4,4),
+            plantacao = P(2,2, 4,2),
             poco = new Vector2Int(11, 8),
-            cogumelos = P(2,8, 18,2, 12,14, 28,13),
-            milho     = P(26,1, 28,1) },
+            cogumelos = P(7,3, 18,2, 13,11, 28,10),
+            milho     = P(26,1, 27,1, 28,1, 29,1),
+            macieiras = P(0,8), laranjeiras = P(19,6),
+            galinheiro = new Vector2Int(13,1), galinha = new Vector2Int(11,1), galo = new Vector2Int(16,2),
+            pasto = new Vector2(4.9f, 7.6f) },
 
         // Verao: serpentina longa. 12 canteiros.
         new Nivel { id = 2, nome = "Verao", estacao = 2, cultura = "tile_trigo",
             caminhos  = new[] { P(-1,3, 5,3, 5,13, 11,13, 11,4, 17,4, 17,13, 23,13, 23,8, 25,8) },
             celeiro   = new RectInt(26, 7, 4, 4),
-            canteiros = P(3,4, 6,7, 6,11, 8,14, 10,10, 12,8, 14,5, 16,10, 18,7, 20,14, 22,10, 24,5),
-            plantacao = P(19,1, 21,1, 19,3, 21,3),
+            canteiros = P(3,4, 6,7, 6,11, 8,11, 10,10, 12,8, 14,5, 16,10, 18,7, 20,11, 22,10, 24,5),
+            plantacao = P(20,1, 22,1),
             poco = new Vector2Int(13, 9),
-            cogumelos = P(2,9, 8,1, 27,14, 14,15),
-            milho     = P(26,2, 28,2) },
+            cogumelos = P(9,6, 8,1, 27,12, 14,12),
+            milho     = P(25,1, 26,1, 27,1, 28,1),
+            macieiras = P(1,10), laranjeiras = P(27,3),
+            galinheiro = new Vector2Int(13,1), galinha = new Vector2Int(12,2), galo = new Vector2Int(15,1),
+            pasto = new Vector2(2.1f, 7.2f) },
 
         // Outono: duas entradas que se juntam em (7,8). 12 canteiros.
         new Nivel { id = 3, nome = "Outono", estacao = 3, cultura = "tile_abobora",
@@ -77,10 +88,13 @@ public static class MontarNiveis
                                 P(-1,3, 7,3, 7,8, 15,8, 15,4, 22,4, 22,9, 25,9) },
             celeiro   = new RectInt(26, 8, 4, 4),
             canteiros = P(5,12, 5,4, 8,11, 6,7, 10,9, 12,7, 14,5, 16,6, 18,5, 20,3, 21,7, 23,11),
-            plantacao = P(1,5, 3,5, 1,7, 3,7),
+            plantacao = P(1,6, 3,6),
             poco = new Vector2Int(10, 11),
-            cogumelos = P(3,14, 18,12, 27,2, 12,2),
-            milho     = P(23,1, 25,1) },
+            cogumelos = P(9,13, 13,12, 27,2, 12,2),
+            milho     = P(22,1, 23,1, 24,1, 25,1),
+            macieiras = P(1,9), laranjeiras = P(26,4),
+            galinheiro = new Vector2Int(9,1), galinha = new Vector2Int(8,2), galo = new Vector2Int(13,1),
+            pasto = new Vector2(18.5f, 10.5f) },
     };
 
     [MenuItem("Defesa da Colheita/Gerar niveis")]
@@ -262,7 +276,19 @@ public static class MontarNiveis
         return r;
     }
 
-    /// Qual borda de grama usar: a terra fica do lado que encosta na estrada.
+    /// Casas ocupadas pela plantacao (blocos de 2x2). So entram na conta da borda de grama:
+    /// o inimigo nao anda ali, entao nao viram estrada.
+    static HashSet<Vector2Int> CelulasDaPlantacao(Nivel nv)
+    {
+        var r = new HashSet<Vector2Int>();
+        foreach (var c in nv.plantacao)
+            for (int dx = 0; dx < 2; dx++)
+                for (int dy = 0; dy < 2; dy++)
+                    r.Add(new Vector2Int(c.x + dx, c.y + dy));
+        return r;
+    }
+
+    /// Qual borda de grama usar: a terra fica do lado que encosta na estrada (ou na plantacao).
     static string Borda(int x, int y, HashSet<Vector2Int> r)
     {
         bool cima  = r.Contains(new Vector2Int(x, y + 1));
@@ -300,6 +326,9 @@ public static class MontarNiveis
         go.AddComponent<TilemapRenderer>().sortingOrder = ORDEM_CHAO;
 
         var pista = ObterTile("Tiles/Estrada/estrada");
+        // a grama vizinha da plantacao ganha a mesma borda de terra da estrada, virada para ela
+        var terra = new HashSet<Vector2Int>(estrada);
+        terra.UnionWith(CelulasDaPlantacao(nv));
         string g = "Tiles/Grama/grama_" + nv.estacao;
         // Uma casa de sobra em volta: a camera mostra 8,4 casas de altura e o
         // mapa tem 8, entao sem isso aparece a cor de fundo em cima e embaixo.
@@ -308,7 +337,7 @@ public static class MontarNiveis
             for (int y = -1; y < H + 1; y++)
             {
                 var c = new Vector3Int(x, y, 0);
-                string borda = Borda(x, y, estrada);
+                string borda = Borda(x, y, terra);
                 // grama lisa sorteia entre as variacoes (grama_N, _v2, _v3) para nao formar grade
                 if (borda == "") borda = Variacao(g, x, y);
                 mapa.SetTile(c, estrada.Contains(new Vector2Int(x, y)) ? pista : ObterTile(g + borda));
@@ -344,12 +373,14 @@ public static class MontarNiveis
         grupo.SetParent(pai);
         for (int i = 0; i < nv.canteiros.Length; i++)
         {
-            var go = Sprite_(grupo, "Tiles/canteiro_torre", Centro(nv.canteiros[i]), ORDEM_DECALQUE);
+            // terra de 1 casa (PPU 64) com o carrinho e as ferramentas por cima em 3/4 do tamanho (PPU 42,67),
+            // que passam da casa; o BuildPlot esconde as ferramentas quando a torre e construida
+            var go = Sprite_(grupo, "Tiles/canteiro_terra", Centro(nv.canteiros[i]), ORDEM_DECALQUE);
             go.name = "Canteiro_" + (i + 1).ToString("00");
+            var ferramentas = Sprite_(go.transform, "Tiles/canteiro_ferramentas", Centro(nv.canteiros[i]) + new Vector3(0f, .25f, 0f), -1);
             // colisor para o clique de construir, que vem depois
             go.AddComponent<BoxCollider2D>().isTrigger = true;
-            go.AddComponent<BuildPlot>().builtSprite =
-                AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Tiles/canteiro_terra.png");
+            go.AddComponent<BuildPlot>().ferramentas = ferramentas;
         }
     }
 
@@ -358,18 +389,32 @@ public static class MontarNiveis
         var grupo = new GameObject("Decoracao").transform;
         grupo.SetParent(pai);
 
-        // plantacao em blocos de 2x2 casas: cada tile entra ampliado 2x (PPU 32), a posicao e a casa de baixo a esquerda
-        // as folhas balancam de leve (PixelSway); a terra, igual a do tile_canteiro, fica parada
-        var terra = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Tiles/tile_canteiro.png");
+        // plantacao em canteiros de 1 casa: cada entrada de 'plantacao' e a casa de baixo a esquerda de um
+        // bloco de 2x2 canteiros; 2 blocos lado a lado = 8 canteiros. As folhas balancam de leve (PixelSway).
+        // Cenoura: desenho de 32x32 que ja inclui o canteiro (a terra fica parada).
+        // Trigo e abobora: canteiro de terra e, por cima, a planta no tamanho original (PPU 32), que passa um
+        // pouco da casa; as de cima desenham por tras das de baixo.
+        var terra = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Tiles/canteiro_horta.png");
         foreach (var c in nv.plantacao)
-            Sprite_(grupo, "Tiles/" + nv.cultura, new Vector3(c.x + 1f, c.y + 1f, 0f), ORDEM_DECALQUE)
-                .AddComponent<PixelSway>().background = terra;
+            for (int dx = 0; dx < 2; dx++)
+                for (int dy = 0; dy < 2; dy++)
+                {
+                    var cel = new Vector2Int(c.x + dx, c.y + dy);
+                    if (nv.cultura == "tile_cenoura")
+                        Sprite_(grupo, "Tiles/tile_cenoura", Centro(cel), ORDEM_DECALQUE).AddComponent<PixelSway>().background = terra;
+                    else
+                    {
+                        Sprite_(grupo, "Tiles/canteiro_horta", Centro(cel), ORDEM_DECALQUE);
+                        Sprite_(grupo, "Tiles/" + nv.cultura.Replace("tile_", "planta_"), Centro(cel), 2 + (H - 1 - cel.y))
+                            .AddComponent<PixelSway>();
+                    }
+                }
 
         // props de pivo no pe apoiam na base da casa; o poco (2x2, PPU 32) centra entre as duas casas
         Sprite_(grupo, "Props/prop_poco", new Vector3(nv.poco.x + 1f, nv.poco.y, 0f), -1);
         foreach (var c in nv.cogumelos)
             Sprite_(grupo, "Props/prop_cogumelos", new Vector3(c.x + 0.5f, c.y + 0.2f, 0f), -1);
-        // pes de milho num canto livre, so de enfeite
+        // carreira de pes de milho num canto livre, so de enfeite
         foreach (var c in nv.milho)
         {
             var vento = Sprite_(grupo, "Props/prop_milho", new Vector3(c.x + 0.5f, c.y, 0f), -1).AddComponent<PixelSway>();
@@ -377,6 +422,82 @@ public static class MontarNiveis
             vento.fixedFraction = .25f;
             vento.frameTime = .28f;
         }
+
+        // galinheiro (PPU 21,33) ocupa uns 2,3 x 2,6 casas, pe no meio de c.x + 1; galinha e galo, uma casa.
+        // arvores: desenho de 64 px em PPU 16, uns 2,8 casas de copa por 3,6 de altura, pe no meio de c.x + 1
+        foreach (var c in nv.macieiras)
+            Sprite_(grupo, "Props/prop_arvore_maca", new Vector3(c.x + 1.4f, c.y, 0f), -1).AddComponent<FallingLeaves>();
+        foreach (var c in nv.laranjeiras)
+            Sprite_(grupo, "Props/prop_arvore_laranja", new Vector3(c.x + 1f, c.y, 0f), -1).AddComponent<FallingLeaves>();
+        Sprite_(grupo, "Props/prop_galinheiro", new Vector3(nv.galinheiro.x + 1f, nv.galinheiro.y, 0f), -1);
+        // galinha e galo ciscam em volta de onde nascem; a galinha olha para a esquerda no desenho
+        Som_(Ave_(grupo, "Props/prop_galinha", new Vector3(nv.galinha.x + 0.5f, nv.galinha.y + 0.1f, 0f), true).gameObject, "galinha", "COCO").flee = true;
+        var cantoDoGalo = Som_(Ave_(grupo, "Props/prop_galo", new Vector3(nv.galo.x + 0.5f, nv.galo.y + 0.1f, 0f), false).gameObject, "galo", "COCORICO");
+        cantoDoGalo.flee = true;
+        cantoDoGalo.crowsOnWave = true;   // canta no comeco de cada onda
+
+        // cantinho das vacas (bichos em PPU 21,33, o mesmo grao do gato e da galinha): 2 fardos de feno a esquerda,
+        // a marrom passeando e pastando, a creme dormindo, o cocho a direita, porco e ovelha atras.
+        // Ocupa umas 4 casas de largura por 2,5 de altura em volta de nv.pasto.
+        Vector3 pasto = nv.pasto;
+        foreach (var f in new[] { new Vector2(-1.4f, .4f), new Vector2(-1.1f, -.15f) })
+            Sprite_(grupo, "Props/prop_feno", pasto + (Vector3)f, -1);
+        var vaca = Sprite_(grupo, "Props/prop_vaca_marrom_em_pe", pasto + new Vector3(-.25f, .25f, 0f), -1).AddComponent<AnimalWander>();
+        vaca.walkFrames = new Sprite[4];
+        for (int i = 0; i < 4; i++)
+            vaca.walkFrames[i] = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Props/prop_vaca_marrom_anda_" + (i + 1) + ".png");
+        vaca.grazeFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Props/prop_vaca_marrom_pasta.png");
+        vaca.chewFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Props/prop_vaca_marrom_pasta_2.png");
+        vaca.facesLeft = true;
+        vaca.radius = .3f;
+        vaca.speed = .35f;
+        Som_(vaca.gameObject, "vaca", "MUU");
+        var dorme = Sprite_(grupo, "Props/prop_vaca_creme_deitada", pasto + new Vector3(.75f, -.45f, 0f), -1);
+        Som_(dorme, "vaca", "MUU").awakeSprite = Bicho_("prop_vaca_creme_em_pe");   // 2 cliques: ZZZZ; no 3o levanta uns segundos e faz MUU
+        var zz = Sprite_(dorme.transform, "Props/fx_zz", dorme.transform.position + new Vector3(-.15f, .7f, 0f), -1);
+        zz.GetComponent<SpriteRenderer>().sortingOrder = dorme.GetComponent<SpriteRenderer>().sortingOrder + 1;
+        zz.AddComponent<SleepZ>();
+        Sprite_(grupo, "Props/prop_cocho_agua", pasto + new Vector3(1.5f, .1f, 0f), -1);
+        // porco e ovelha pastam por perto (andam pouco, para nao pisar na estrada)
+        var porco = Ave_(grupo, "Props/prop_porco", pasto + new Vector3(-.7f, 1.15f, 0f), true);
+        porco.radius = .22f;
+        Som_(porco.gameObject, "porco", "OINK");
+        var ovelha = Ave_(grupo, "Props/prop_ovelha", pasto + new Vector3(.55f, 1.05f, 0f), true);
+        ovelha.radius = .22f;
+        Som_(ovelha.gameObject, "ovelha", "MEE");
+
+        // gato brincando com o novelo na frente da porta do celeiro; o novelo nasce a esquerda dele
+        Vector3 gatoPos = new Vector3(nv.celeiro.x + 1.3f, nv.celeiro.y - .5f, 0f);
+        var gato = Sprite_(grupo, "Props/prop_gato_bicando", gatoPos, -1).AddComponent<CatYarnPlay>();
+        var novelo = Sprite_(grupo, "Props/prop_novelo_1", gatoPos + new Vector3(-14f / 21.333f, 0f, 0f), -1);   // 14 pixels do gato
+        Som_(gato.gameObject, "gato", "MEOW");
+        gato.sit = Bicho_("prop_gato_bicando");
+        gato.crouch = Bicho_("prop_gato_agacha");
+        gato.crouch2 = Bicho_("prop_gato_agacha_2");
+        gato.pounce = Bicho_("prop_gato_pula");
+        gato.pat1 = Bicho_("prop_gato_tapa_1");
+        gato.pat2 = Bicho_("prop_gato_tapa_2");
+        gato.lie = Bicho_("prop_gato_brinca");
+        gato.walkFrames = new[] { Bicho_("prop_gato"), Bicho_("prop_gato_passo") };
+        gato.yarn = novelo.GetComponent<SpriteRenderer>();
+        gato.yarnFrames = new[] { Bicho_("prop_novelo_1"), Bicho_("prop_novelo_2") };
+        gato.facesLeft = true;
+        gato.radius = .8f;
+
+        // cerquinha so no lado de tras (y maior) da plantacao: pecas _3x de 1,5 casa, centradas na largura dela
+        int px0 = int.MaxValue, px1 = int.MinValue, py1 = int.MinValue;
+        foreach (var c in nv.plantacao)
+        {
+            px0 = Mathf.Min(px0, c.x);
+            px1 = Mathf.Max(px1, c.x + 2);
+            py1 = Mathf.Max(py1, c.y + 2);
+        }
+        int pecas = Mathf.CeilToInt((px1 - px0) / 1.5f);
+        float inicio = (px0 + px1) / 2f - pecas * 0.75f;
+        var cercaPlantacao = new GameObject("CercaPlantacao").transform;
+        cercaPlantacao.SetParent(grupo);
+        for (int i = 0; i < pecas; i++)
+            Sprite_(cercaPlantacao, "Cerca/cerca_lado_" + (i % 3 + 1) + "_3x", new Vector3(inicio + 0.75f + i * 1.5f, py1 + 0.1f, 0f), -1);
 
         // cerca em cima e embaixo; pecas _3x de 96px = uma casa e meia cada
         var cerca = new GameObject("Cerca").transform;
@@ -402,6 +523,14 @@ public static class MontarNiveis
         var celeiro = Sprite_(pai, "Props/prop_celeiro",
             new Vector3(nv.celeiro.x + 1.28f, nv.celeiro.y, 0f), -1);
         celeiro.name = "Celeiro";
+        celeiro.AddComponent<BarnHitFx>();   // treme e solta lascas quando a base perde vida
+        // telhado torto, tabua solta e janela quebrada conforme a vida cai (desenhos por cima, nao mexem no celeiro)
+        celeiro.AddComponent<BarnDamage>().stages = new[]
+        {
+            AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Props/celeiro_dano_1.png"),
+            AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Props/celeiro_dano_2.png"),
+            AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Props/celeiro_dano_3.png"),
+        };
     }
 
     // --------------------------------------------------------- utilitarios
@@ -422,6 +551,26 @@ public static class MontarNiveis
     static Vector3 Centro(Vector2Int c) => new Vector3(c.x + 0.5f, c.y + 0.5f, 0f);
 
     /// ordem &lt; 0 = objeto em pe, ordenado pela altura na tela.
+    static Sprite Bicho_(string nome) => AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Props/" + nome + ".png");
+
+    /// Clicar no bicho mostra a palavra e toca Resources/sons/<id>, se existir (ver AnimalSound).
+    static AnimalSound Som_(GameObject bicho, string id, string palavra)
+    {
+        var som = bicho.AddComponent<AnimalSound>();
+        som.id = id;
+        som.word = palavra;
+        return som;
+    }
+
+    static ChickenWander Ave_(Transform pai, string caminho, Vector3 pos, bool olhaParaEsquerda)
+    {
+        var ave = Sprite_(pai, caminho, pos, -1).AddComponent<ChickenWander>();
+        ave.stepFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + caminho + "_passo.png");
+        ave.peckFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + caminho + "_bicando.png");
+        ave.facesLeft = olhaParaEsquerda;
+        return ave;
+    }
+
     static GameObject Sprite_(Transform pai, string caminho, Vector3 pos, int ordem)
     {
         var go = new GameObject(System.IO.Path.GetFileNameWithoutExtension(caminho));

@@ -47,7 +47,9 @@ public class EnemyData : ScriptableObject
     public float splitOffset;           // quanto a copia nasce atras do original, em unidades (0 = no mesmo ponto)
     [Header("Boss (Chomsky). Sem fases = inimigo comum")]
     public BossPhase[] phases;
-    public Sprite[] frames;                 // quadros da animacao de andar, em ordem
+    public Sprite[] frames;                 // quadros da animacao de andar de lado, em ordem
+    public Sprite[] framesUp;               // andar para cima (de costas); vazio = usa frames
+    public Sprite[] framesDown;             // andar para baixo (de frente); vazio = usa frames
     public float framesPerSecond = 6f;
 
     /// Velocidade media no caminho, contando os saltos. E a que a torre usa para mirar:

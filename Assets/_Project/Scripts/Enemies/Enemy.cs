@@ -130,13 +130,29 @@ public class Enemy : MonoBehaviour, IDamageable
     }
 
     // Troca o quadro pelo tempo. Sem quadros (ex.: placeholder), mantem o sprite do prefab.
-    // Os sprites olham para a direita e os caminhos so vao para a direita ou na vertical;
-    // se um caminho passar a ir para a esquerda, espelhar aqui (sr.flipX).
+    // O conjunto de quadros vem da direcao do caminho neste ponto: para cima (framesUp, de costas),
+    // para baixo (framesDown, de frente) ou de lado (frames). Conjunto vazio cai em frames (o rato so
+    // tem lado). Os sprites de lado olham para a direita; se o caminho vai para a esquerda, espelha (flipX).
     void Animate()
     {
         if (sr == null || data.frames == null || data.frames.Length == 0) return;
-        int i = (int)(animTime * data.framesPerSecond) % data.frames.Length;
-        sr.sprite = data.frames[i];
+
+        Vector3 dir = path.PointAt(Distance + 0.1f) - path.PointAt(Distance);
+        Sprite[] frameSet = data.frames;
+        bool flip = false;
+        if (Mathf.Abs(dir.y) > Mathf.Abs(dir.x))
+        {
+            Sprite[] vertical = dir.y > 0f ? data.framesUp : data.framesDown;
+            if (vertical != null && vertical.Length > 0) frameSet = vertical;
+        }
+        else
+        {
+            flip = dir.x < 0f;
+        }
+
+        int i = (int)(animTime * data.framesPerSecond) % frameSet.Length;
+        sr.sprite = frameSet[i];
+        sr.flipX = flip;
     }
 
     /// Centro do corpo. O pivo do sprite fica no pe; projetil mira e acerta aqui.

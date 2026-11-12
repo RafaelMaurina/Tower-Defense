@@ -18,6 +18,20 @@ MonoBehaviour:
   reward: 14
   baseDamage: 2
   flying: 0
-  centerOffset: {x: 0, y: 0.35}
-  frames: []
-  framesPerSecond: 8
+  centerOffset: {x: 0, y: 0.45}
+  frames:
+  - {fileID: 21300000, guid: 5278aa6b11b145dfad6638f361b70400, type: 3}
+  - {fileID: 21300000, guid: 6cc48010cfdb4a0f90809b7e4b864751, type: 3}
+  - {fileID: 21300000, guid: 4eaadc08f50f42f1b0938b86f3da1874, type: 3}
+  - {fileID: 21300000, guid: bb1ba6d043f04207b7385e068e866f46, type: 3}
+  framesUp:
+  - {fileID: 21300000, guid: 0e3a75d44e9e464288cb2fb3afe2627a, type: 3}
+  - {fileID: 21300000, guid: 940208a8399f4ce9acf67c0caefb2f67, type: 3}
+  - {fileID: 21300000, guid: 35bba27c60cd4309b05f6b2ce392f18b, type: 3}
+  - {fileID: 21300000, guid: 51a066fc9a2e4cdba8b3bffffbf6ab19, type: 3}
+  framesDown:
+  - {fileID: 21300000, guid: 3c6e0bda2cca46d89ecafff1723a6946, type: 3}
+  - {fileID: 21300000, guid: b0e5e0ce9c9547eb9b718cd2bb4b807f, type: 3}
+  - {fileID: 21300000, guid: 8480e56b117244e99e03a0267263f2ae, type: 3}
+  - {fileID: 21300000, guid: 20937e664f2e40eeb72cd07f126a2c8d, type: 3}
+  framesPerSecond: 9

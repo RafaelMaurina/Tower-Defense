@@ -18,10 +18,20 @@ MonoBehaviour:
   reward: 8
   baseDamage: 1
   flying: 0
-  centerOffset: {x: 0, y: 0.35}
+  centerOffset: {x: 0, y: 0.5}
   frames:
-  - {fileID: 21300000, guid: 3d83ee83829d40239aa642ebb33af866, type: 3}
-  - {fileID: 21300000, guid: 7393cb8dc08448029c8d18ab33be8f3b, type: 3}
-  - {fileID: 21300000, guid: 6b16f9a84322445fbffc8158d20fe949, type: 3}
-  - {fileID: 21300000, guid: 0fb9fc9876f842018115ed6b58f34171, type: 3}
-  framesPerSecond: 8
+  - {fileID: 21300000, guid: 30992129d79f48f9bd86a84965523ee3, type: 3}
+  - {fileID: 21300000, guid: 25a22a1582424842893e8f79544ad4c7, type: 3}
+  - {fileID: 21300000, guid: 8b34ad08cf8448109a13c262c53ba13e, type: 3}
+  - {fileID: 21300000, guid: edc7a6506e424af6bcc2af505034aa26, type: 3}
+  framesUp:
+  - {fileID: 21300000, guid: 49ef8bb03c854e9d8b121fa824641d94, type: 3}
+  - {fileID: 21300000, guid: 925ab6838c96441086333094e05bc0ba, type: 3}
+  - {fileID: 21300000, guid: 6bd6a2997efc4053bfd38e1a3ee71486, type: 3}
+  - {fileID: 21300000, guid: e0154a83b3384c8cb2c9e3c8679ba506, type: 3}
+  framesDown:
+  - {fileID: 21300000, guid: 3d6ca7bff0ee416598e1abb6f64c68c3, type: 3}
+  - {fileID: 21300000, guid: 394c14e97c7c4538a4ff98f8e9587f87, type: 3}
+  - {fileID: 21300000, guid: e1150cca95ea4bbc9f1bdf59063a7ce8, type: 3}
+  - {fileID: 21300000, guid: 2557cb64f28a4fdba0f29b263f6b2ef0, type: 3}
+  framesPerSecond: 7
