@@ -65,6 +65,10 @@ public class GameManager : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+#if UNITY_EDITOR
+        // Saldo ampliado para testar construcoes e upgrades no Play do editor.
+        startingMoney = Mathf.Max(startingMoney, 10000);
+#endif
         money = Mathf.Max(0, startingMoney);
         startingMoney = money;
         baseLife = Mathf.Max(1, startingLife);

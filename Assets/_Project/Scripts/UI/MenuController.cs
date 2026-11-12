@@ -166,7 +166,7 @@ public class MenuController : MonoBehaviour
         var go = new GameObject("Texto " + value, typeof(RectTransform), typeof(Text));
         go.transform.SetParent(parent, false);
         var rect = go.GetComponent<RectTransform>(); rect.anchorMin = min; rect.anchorMax = max; rect.offsetMin = Vector2.zero; rect.offsetMax = Vector2.zero;
-        var text = go.GetComponent<Text>(); text.text = value; text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"); text.fontSize = size;
+        var text = go.GetComponent<Text>(); text.text = value; UiTypography.Apply(text,size);
         text.color = color; text.alignment = TextAnchor.MiddleCenter; text.horizontalOverflow = HorizontalWrapMode.Wrap; text.verticalOverflow = VerticalWrapMode.Truncate;
         return text;
     }
@@ -420,7 +420,7 @@ public class InfoPanel : MonoBehaviour
 
     public static void StyleSubmenuHeading(Text heading)
     {
-        heading.fontStyle = FontStyle.Bold;
+        UiTypography.Apply(heading,heading.fontSize);
         heading.raycastTarget = false;
         var outline = heading.gameObject.AddComponent<Outline>();
         outline.effectColor = new Color32(68, 35, 19, 255);
@@ -432,8 +432,8 @@ public class InfoPanel : MonoBehaviour
         var go = new GameObject("Texto " + value, typeof(RectTransform), typeof(Text)); go.transform.SetParent(parent, false);
         var rect = go.GetComponent<RectTransform>(); rect.anchorMin = min; rect.anchorMax = max;
         rect.offsetMin = Vector2.zero; rect.offsetMax = Vector2.zero;
-        var text = go.GetComponent<Text>(); text.text = value; text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        text.fontSize = size; text.color = color; text.alignment = TextAnchor.MiddleCenter;
+        var text = go.GetComponent<Text>(); text.text = value; UiTypography.Apply(text,size);
+        text.color = color; text.alignment = TextAnchor.MiddleCenter;
         text.horizontalOverflow = HorizontalWrapMode.Wrap; text.verticalOverflow = VerticalWrapMode.Truncate;
         return text;
     }
@@ -449,7 +449,7 @@ public class InfoPanel : MonoBehaviour
         var text = new GameObject("Texto", typeof(RectTransform), typeof(Text)).GetComponent<Text>(); text.transform.SetParent(buttonObject.transform, false);
         text.rectTransform.anchorMin = Vector2.zero; text.rectTransform.anchorMax = Vector2.one;
         text.rectTransform.offsetMin = new Vector2(4, 2); text.rectTransform.offsetMax = new Vector2(-4, -2);
-        text.text = label; text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"); text.fontSize = 40;
+        text.text = label; UiTypography.Apply(text,40);
         text.fontStyle = FontStyle.Bold; text.alignment = TextAnchor.MiddleCenter;
         text.color = new Color32(255, 237, 190, 255); text.raycastTarget = false;
     }
@@ -475,3 +475,19 @@ public class InfoPanel : MonoBehaviour
 
 
 
+
+/// Padrao compartilhado pelos textos editaveis do menu, HUD e submenus.
+public static class UiTypography
+{
+    static Font sharedFont;
+
+    public static void Apply(Text text, int size)
+    {
+        if (sharedFont == null) sharedFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        text.font = sharedFont;
+        text.fontStyle = FontStyle.Bold;
+        text.fontSize = size;
+        text.lineSpacing = 1f;
+        text.supportRichText = true;
+    }
+}

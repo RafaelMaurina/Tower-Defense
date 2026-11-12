@@ -42,6 +42,17 @@ public class GameHUD : MonoBehaviour
     bool towerPanel;
     GameObject upgradeView;
     GameObject resultView;
+    RectTransform bottomBarArea;
+    readonly List<HudButtonFeedback> bottomCardFeedback = new List<HudButtonFeedback>();
+    readonly List<Text> bottomPrices = new List<Text>();
+    readonly List<int> bottomCosts = new List<int>();
+    readonly List<TowerData> bottomTowers = new List<TowerData>();
+    BuildPlot[] buildPlots;
+    BuildPlot pendingBuildPlot;
+    TowerData buildSelection, hoveredCard;
+    SpriteRenderer buildGhost, buildRadius, plotMarker;
+    Text buildHint;
+    bool draggingCard;
     AudioSource uiAudio;
     AudioClip hoverSound, clickSound;
 
@@ -51,6 +62,16 @@ public class GameHUD : MonoBehaviour
         if (!sprites.TryGetValue(name, out Sprite sprite))
         {
             if (name.StartsWith("v2/")) sprite = NewHudArt(name.Substring(3));
+            else if (name == "inferior_barra_torres" || name == "inferior_carta_torre")
+            {
+                var source = Resources.Load<Sprite>("hud/" + ArtPath(name));
+                if (source != null)
+                {
+                    var crop = name == "inferior_barra_torres" ? new Rect(16,74,2140,598) : new Rect(188,114,754,1165);
+                    sprite = Sprite.Create(source.texture,crop,new Vector2(.5f,.5f),32,0,SpriteMeshType.FullRect);
+                    generatedSprites.Add(sprite);
+                }
+            }
             else if (name.StartsWith("prioridade_")) sprite = PriorityArt(name);
             else if (name == "moldura_atributos_nova") sprite = NewAttributesFrame();
             else sprite = Resources.Load<Sprite>("hud/" + ArtPath(name));
@@ -83,7 +104,8 @@ public class GameHUD : MonoBehaviour
     }
     static string ArtPath(string name)
     {
-        if (name.StartsWith("final_")) return "fianis_submenu/" + name.Substring(6);
+        if (name.StartsWith("inferior_")) return "hud_inferior/" + name.Substring(9);
+        if (name.StartsWith("final_")) return "finais_submenu/" + name.Substring(6);
         if (name == "moldura_pausa_titulo" || name.StartsWith("continuar_") ||
             name.StartsWith("recomecar_") || name.StartsWith("menu_"))
             return "jogo_pausado_submenu/" + name;
@@ -169,6 +191,7 @@ public class GameHUD : MonoBehaviour
     public static bool IsOverlayOpen => current != null && current.overlay != null && current.overlay.activeSelf;
     void Start()
     {
+        CreateBottomTowerBar();
         UpdateMoney(GameManager.Money); UpdateLife(GameManager.BaseLife);
         UpdateWave(GameManager.StateRound, 0);
         waveSpawner = FindAnyObjectByType<WaveSpawner>();
@@ -184,6 +207,9 @@ public class GameHUD : MonoBehaviour
         GameManager.OnGameEnded -= Result;
         EndDecisionPause();
         if (rangeRenderer != null) Destroy(rangeRenderer.gameObject);
+        if (buildGhost != null) Destroy(buildGhost.gameObject);
+        if (buildRadius != null) Destroy(buildRadius.gameObject);
+        if (plotMarker != null) Destroy(plotMarker.gameObject);
         if (current == this) current = null;
     }
     void OnDestroy()
@@ -194,6 +220,11 @@ public class GameHUD : MonoBehaviour
     void Update()
     {
         UpdateWaveControls();
+        if (bottomBarArea != null)
+        {
+            bool visible = bottomCardFeedback.Count > 0 && !IsOverlayOpen && GameManager.State == GameState.Playing;
+            if (bottomBarArea.gameObject.activeSelf != visible) bottomBarArea.gameObject.SetActive(visible);
+        }
         if (Keyboard.current == null) return;
         if (overlay.activeSelf && EventSystem.current != null && EventSystem.current.currentSelectedGameObject == null &&
             (Keyboard.current.tabKey.wasPressedThisFrame || Keyboard.current.downArrowKey.wasPressedThisFrame || Keyboard.current.upArrowKey.wasPressedThisFrame))
@@ -202,6 +233,7 @@ public class GameHUD : MonoBehaviour
                 if (option.interactable) { EventSystem.current.SetSelectedGameObject(option.gameObject); break; }
         }
         if (!Keyboard.current.escapeKey.wasPressedThisFrame) return;
+        if (!IsOverlayOpen && (buildSelection != null || pendingBuildPlot != null)) { CancelBuildSelection(); return; }
         if (towerPanel && overlay.activeSelf) Back();
         else if (GameManager.State == GameState.Victory || GameManager.State == GameState.Defeat) return;
         else GameManager.Instance?.TogglePause();
@@ -222,8 +254,8 @@ public class GameHUD : MonoBehaviour
     static Text Label(Transform parent, string text, Vector2 min, Vector2 max, int size, bool withShadow = true)
     {
         var t = Rect(parent, text, min, max).gameObject.AddComponent<Text>();
-        t.text = text; t.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        t.fontSize = size; t.fontStyle = FontStyle.Bold; t.color = new Color32(255, 239, 196, 255);
+        t.text = text; UiTypography.Apply(t,size);
+        t.color = new Color32(255, 239, 196, 255);
         t.alignment = TextAnchor.MiddleCenter; t.raycastTarget = false;
         t.horizontalOverflow = HorizontalWrapMode.Wrap;
         if (withShadow)
@@ -331,6 +363,8 @@ public class GameHUD : MonoBehaviour
         startWaveText = startWaveButton.GetComponentInChildren<Text>();
         autoWaveText = autoWaveButton.GetComponentInChildren<Text>();
 
+        // Centro em x=0.5, no mesmo eixo do celeiro da moldura superior.
+        bottomBarArea = Rect(root.transform,"HUD inferior de torres",new Vector2(.20f,.008f),new Vector2(.80f,.258f));
         overlay = Rect(root.transform, "Submenu", Vector2.zero, Vector2.one).gameObject;
         var dim = overlay.AddComponent<Image>(); dim.color = new Color(.06f,.035f,.015f,.72f);
         var panel = Picture(overlay.transform, "Moldura da pausa", "moldura_pausa", new Vector2(.23f,.13f), new Vector2(.77f,.87f));
@@ -341,6 +375,188 @@ public class GameHUD : MonoBehaviour
         rows = Rect(panel.transform,"Opcoes",new Vector2(.16f,.16f),new Vector2(.84f,.53f));
         MakeButton(panel.transform, new Action("Voltar", "voltar", "voltar", Back), new Vector2(.34f,.055f), new Vector2(.66f,.15f));
         overlay.SetActive(false);
+    }
+    void CreateBottomTowerBar()
+    {
+        var towers = new List<TowerData>();
+        buildPlots = FindObjectsByType<BuildPlot>();
+        foreach (var plot in buildPlots)
+            foreach (var data in plot.AvailableTowers ?? new TowerData[0])
+                if (data != null && data.towerPrefab != null && data.levels != null &&
+                    data.levels.Length > 0 && !towers.Contains(data)) towers.Add(data);
+        towers.Sort((a,b) => {
+            int cost = a.levels[0].cost.CompareTo(b.levels[0].cost);
+            return cost != 0 ? cost : string.CompareOrdinal(a.displayName,b.displayName);
+        });
+        if (towers.Count == 0) { bottomBarArea.gameObject.SetActive(false); return; }
+        var board = Rect(bottomBarArea,"Barra de cartas",Vector2.zero,Vector2.one);
+        var fit = board.gameObject.AddComponent<AspectRatioFitter>();
+        fit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+        fit.aspectRatio = 2140f / 598f;
+        var background = Picture(board,"Moldura","inferior_barra_torres",Vector2.zero,Vector2.one);
+        background.raycastTarget = true;
+        buildHint = Label(bottomBarArea,"",new Vector2(-.10f,1.01f),new Vector2(1.10f,1.15f),20);
+        buildHint.resizeTextForBestFit = true;
+        buildHint.resizeTextMinSize = 14;
+        float step = .90f / towers.Count;
+        for (int i=0;i<towers.Count;i++)
+        {
+            var data = towers[i];
+            var card = Rect(board,data.displayName,new Vector2(.05f+i*step+.004f,.13f),
+                new Vector2(.05f+(i+1)*step-.004f,.85f));
+            var plate = Picture(card,"Carta","inferior_carta_torre",Vector2.zero,Vector2.one);
+            plate.raycastTarget = true;
+            var button = card.gameObject.AddComponent<Button>();
+            button.targetGraphic = plate;
+            button.transition = Selectable.Transition.None;
+            var feedback = card.gameObject.AddComponent<HudButtonFeedback>();
+            feedback.Configure(plate,Art("inferior_carta_torre"),Art("inferior_carta_torre"));
+            feedback.ConfigureSound(uiAudio,hoverSound);
+            bottomCardFeedback.Add(feedback);
+            bottomTowers.Add(data);
+            button.onClick.AddListener(PlayClick);
+            button.onClick.AddListener(()=> {
+                SelectBuildTower(data);
+            });
+            var events = card.gameObject.AddComponent<EventTrigger>();
+            CardEvent(events,EventTriggerType.PointerEnter,()=>hoveredCard=data);
+            CardEvent(events,EventTriggerType.PointerExit,()=> { if (hoveredCard == data) hoveredCard=null; });
+            CardEvent(events,EventTriggerType.BeginDrag,()=> { draggingCard=true; SelectBuildTower(data,false); });
+            CardEvent(events,EventTriggerType.Drag,()=> {});
+            CardEvent(events,EventTriggerType.EndDrag,()=> {
+                draggingCard=false;
+                var plot=PlotUnderPointer();
+                if (plot != null) TryBuildSelected(plot);
+            });
+            string cardName = data.displayName;
+            if (cardName == "Metralhadora de Uvas") cardName = "Metralhadora\nde Uvas";
+            else if (cardName == "Canhao de Abobora" || cardName == "Canhão de Abóbora") cardName = "Canhão de\nAbóbora";
+            else if (cardName == "Tufao") cardName = "Tufão";
+            var title = Label(card,cardName,new Vector2(.095f,.79f),new Vector2(.905f,.955f),22,false);
+            title.color = new Color32(55,30,14,255);
+            title.resizeTextForBestFit = true;
+            title.resizeTextMinSize = 10;
+            title.resizeTextMaxSize = 22;
+            var portrait = Rect(card,"Torre nível 1",new Vector2(.18f,.25f),new Vector2(.82f,.76f)).gameObject.AddComponent<Image>();
+            portrait.sprite = data.levels[0].sprite != null ? data.levels[0].sprite :
+                data.towerPrefab.GetComponent<SpriteRenderer>()?.sprite;
+            portrait.preserveAspect = true;
+            portrait.raycastTarget = false;
+            Picture(card,"Moeda","icone_moedas",new Vector2(.19f,.045f),new Vector2(.38f,.195f),true);
+            int cost = Mathf.Max(0,data.levels[0].cost);
+            var price = Label(card,cost.ToString(),new Vector2(.40f,.04f),new Vector2(.83f,.20f),25,false);
+            price.resizeTextForBestFit = true;
+            price.resizeTextMinSize = 14;
+            price.resizeTextMaxSize = 25;
+            bottomCosts.Add(cost);
+            bottomPrices.Add(price);
+        }
+    }
+    static void CardEvent(EventTrigger trigger,EventTriggerType type,UnityEngine.Events.UnityAction callback)
+    {
+        var entry = new EventTrigger.Entry { eventID=type };
+        entry.callback.AddListener(_=>callback());
+        trigger.triggers.Add(entry);
+    }
+    void SelectBuildTower(TowerData data,bool buildPending=true)
+    {
+        if (IsOverlayOpen || GameManager.State != GameState.Playing) return;
+        buildSelection=data;
+        HideSelectedRange();
+        for (int i=0;i<bottomCardFeedback.Count;i++) bottomCardFeedback[i].SetToggleState(bottomTowers[i]==data);
+        buildHint.text=data.displayName+" selecionada · Esc ou botão direito para cancelar";
+        if (buildPending && pendingBuildPlot != null) TryBuildSelected(pendingBuildPlot);
+    }
+    public static void SelectBuildPlot(BuildPlot plot)
+    {
+        if (current == null || plot == null || plot.Placed != null || IsOverlayOpen || GameManager.State != GameState.Playing) return;
+        current.pendingBuildPlot=plot;
+        current.HideSelectedRange();
+        if (current.buildSelection != null) current.TryBuildSelected(plot);
+        else if (current.buildHint != null) current.buildHint.text="Canteiro selecionado · passe pelas cartas e clique para construir";
+    }
+    void TryBuildSelected(BuildPlot plot)
+    {
+        if (IsOverlayOpen || GameManager.State != GameState.Playing || buildSelection == null || plot == null) return;
+        if (plot.Placed != null) { buildHint.text="Este canteiro já está ocupado"; return; }
+        if (!plot.Accepts(buildSelection)) { buildHint.text="Torre indisponível neste canteiro"; return; }
+        if (!plot.Build(buildSelection)) { buildHint.text="Moedas insuficientes para construir "+buildSelection.displayName; return; }
+        CancelBuildSelection();
+    }
+    BuildPlot PlotUnderPointer()
+    {
+        if (Mouse.current == null || Camera.main == null) return null;
+        // Raycast da UI explicito: tambem cobre o instante de soltar um arrasto.
+        if (EventSystem.current != null)
+        {
+            var hits = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(new PointerEventData(EventSystem.current) { position=Mouse.current.position.ReadValue() },hits);
+            if (hits.Count>0) return null;
+        }
+        Vector2 point=Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+        foreach (var plot in buildPlots ?? new BuildPlot[0])
+            if (plot != null && plot.GetComponent<Collider2D>().OverlapPoint(point)) return plot;
+        return null;
+    }
+    SpriteRenderer BuildVisual(string name,Sprite sprite)
+    {
+        var renderer=new GameObject(name).AddComponent<SpriteRenderer>();
+        renderer.sprite=sprite;
+        return renderer;
+    }
+    void CancelBuildSelection()
+    {
+        buildSelection=null; hoveredCard=null; pendingBuildPlot=null; draggingCard=false;
+        foreach (var feedback in bottomCardFeedback) feedback.SetToggleState(false);
+        if (buildHint != null) buildHint.text="";
+        HideBuildPreview();
+    }
+    void HideBuildPreview()
+    {
+        if (buildGhost != null) buildGhost.enabled=false;
+        if (buildRadius != null) buildRadius.enabled=false;
+        if (plotMarker != null) plotMarker.enabled=false;
+    }
+    void LateUpdate()
+    {
+        HideBuildPreview();
+        if (IsOverlayOpen || GameManager.State != GameState.Playing) { hoveredCard=null; return; }
+        if (Mouse.current == null || Camera.main == null) return;
+        if (Mouse.current.rightButton.wasPressedThisFrame) { CancelBuildSelection(); return; }
+        if (pendingBuildPlot != null && pendingBuildPlot.Placed != null) pendingBuildPlot=null;
+        if (pendingBuildPlot != null)
+        {
+            if (plotMarker == null) plotMarker=BuildVisual("Canteiro selecionado",RangeSprite());
+            plotMarker.transform.position=pendingBuildPlot.transform.position;
+            plotMarker.transform.localScale=Vector3.one*.7f;
+            plotMarker.color=new Color(.3f,1f,1f,.9f);
+            plotMarker.sortingOrder=DrawOrder.ForY(pendingBuildPlot.transform.position.y)+5;
+            plotMarker.enabled=true;
+        }
+        TowerData data=hoveredCard != null && pendingBuildPlot != null && !draggingCard ? hoveredCard : buildSelection;
+        if (data == null) return;
+        var plot=draggingCard ? PlotUnderPointer() : pendingBuildPlot != null ? pendingBuildPlot : PlotUnderPointer();
+        bool overUi=EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+        if (plot == null && overUi && !draggingCard) return;
+        Vector3 position=plot != null ? plot.transform.position+new Vector3(0,-.35f,0) : Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+        position.z=0;
+        bool valid=plot != null && plot.Placed == null && plot.Accepts(data) && GameManager.Money>=Mathf.Max(0,data.levels[0].cost);
+        var prefabSprite=data.towerPrefab.GetComponent<SpriteRenderer>();
+        if (buildGhost == null) buildGhost=BuildVisual("Prévia da torre",null);
+        buildGhost.sprite=data.levels[0].sprite != null ? data.levels[0].sprite : prefabSprite?.sprite;
+        buildGhost.transform.position=position;
+        buildGhost.transform.localScale=data.towerPrefab.transform.localScale;
+        buildGhost.sortingLayerID=prefabSprite != null ? prefabSprite.sortingLayerID : 0;
+        buildGhost.sortingOrder=DrawOrder.ForY(position.y)+5;
+        buildGhost.color=valid ? new Color(.75f,1f,.75f,.7f) : new Color(1f,.4f,.4f,.65f);
+        buildGhost.enabled=true;
+        if (buildRadius == null) buildRadius=BuildVisual("Alcance da prévia",RangeSprite());
+        buildRadius.transform.position=position;
+        buildRadius.transform.localScale=Vector3.one*data.levels[0].range;
+        buildRadius.sortingLayerID=buildGhost.sortingLayerID;
+        buildRadius.sortingOrder=buildGhost.sortingOrder-1;
+        buildRadius.color=valid ? new Color(.6f,1f,.55f,.75f) : new Color(1f,.35f,.25f,.65f);
+        buildRadius.enabled=true;
     }
     void UpdateWaveControls()
     {
@@ -571,6 +787,7 @@ public class GameHUD : MonoBehaviour
     public static void ShowTowerActions(BuildPlot plot)
     {
         if (current == null || plot == null || plot.Placed == null) return;
+        current.CancelBuildSelection();
         current.selectedPlot = null;
         current.BeginDecisionPause();
         current.ShowUpgrade(plot);
@@ -775,7 +992,7 @@ public class GameHUD : MonoBehaviour
     }
     public static void ShowHoverRange(BuildPlot plot)
     {
-        if (current == null || current.selectedRange || plot == null || plot.Placed == null || IsOverlayOpen) return;
+        if (current == null || current.selectedRange || current.buildSelection != null || current.pendingBuildPlot != null || plot == null || plot.Placed == null || IsOverlayOpen) return;
         if (current.hoverPlot == plot) return;
         current.hoverPlot = plot;
         current.DrawRange(plot, plot.Placed.Stats.range, false);
@@ -842,9 +1059,8 @@ public class GameHUD : MonoBehaviour
         ResultLabel(card,result.topDamage > 0 ? result.topDamageTower : "Sem dano registrado",
             new Vector2(.10f,.20f),new Vector2(.90f,.36f),23);
         ResultLabel(card,$"Dano: {result.topDamage:0}",new Vector2(.12f,.08f),new Vector2(.88f,.20f),28);
-        UpgradeButton(board,"recomecar",new Vector2(.18f,.12f),new Vector2(.39f,.22f),()=>GameManager.Instance?.RestartCurrentLevel());
-        UpgradeButton(board,"menu",new Vector2(.41f,.12f),new Vector2(.62f,.22f),ToMenu);
-        UpgradeButton(board,"voltar",new Vector2(.64f,.12f),new Vector2(.82f,.22f),Back);
+        UpgradeButton(board,"recomecar",new Vector2(.25f,.12f),new Vector2(.48f,.22f),()=>GameManager.Instance?.RestartCurrentLevel());
+        UpgradeButton(board,"menu",new Vector2(.52f,.12f),new Vector2(.75f,.22f),ToMenu);
         if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
     }
     Text ResultLabel(Transform parent,string text,Vector2 min,Vector2 max,int size)
@@ -864,6 +1080,8 @@ public class GameHUD : MonoBehaviour
     void UpdateMoney(int value)
     {
         coins.text=value.ToString();
+        for (int i=0;i<bottomPrices.Count;i++)
+            bottomPrices[i].color = value >= bottomCosts[i] ? new Color32(55,30,14,255) : new Color32(155,35,25,255);
         foreach(var p in purchases) if(p.button!=null) p.button.interactable=value>=p.cost;
     }
     void UpdateLife(int value) => life.text=$"{value}/{GameManager.StartingLife}";
