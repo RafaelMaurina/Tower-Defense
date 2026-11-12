@@ -431,8 +431,8 @@ public static class MontarNiveis
             Sprite_(grupo, "Props/prop_arvore_laranja", new Vector3(c.x + 1f, c.y, 0f), -1).AddComponent<FallingLeaves>();
         Sprite_(grupo, "Props/prop_galinheiro", new Vector3(nv.galinheiro.x + 1f, nv.galinheiro.y, 0f), -1);
         // galinha e galo ciscam em volta de onde nascem; a galinha olha para a esquerda no desenho
-        Ave_(grupo, "Props/prop_galinha", new Vector3(nv.galinha.x + 0.5f, nv.galinha.y + 0.1f, 0f), true);
-        Ave_(grupo, "Props/prop_galo", new Vector3(nv.galo.x + 0.5f, nv.galo.y + 0.1f, 0f), false);
+        Som_(Ave_(grupo, "Props/prop_galinha", new Vector3(nv.galinha.x + 0.5f, nv.galinha.y + 0.1f, 0f), true).gameObject, "galinha", "COCO");
+        Som_(Ave_(grupo, "Props/prop_galo", new Vector3(nv.galo.x + 0.5f, nv.galo.y + 0.1f, 0f), false).gameObject, "galo", "COCORICO");
 
         // cantinho das vacas (bichos em PPU 21,33, o mesmo grao do gato e da galinha): 2 fardos de feno a esquerda,
         // a marrom passeando e pastando, a creme dormindo, o cocho a direita, porco e ovelha atras.
@@ -449,19 +449,26 @@ public static class MontarNiveis
         vaca.facesLeft = true;
         vaca.radius = .3f;
         vaca.speed = .35f;
+        Som_(vaca.gameObject, "vaca", "MUU");
         var dorme = Sprite_(grupo, "Props/prop_vaca_creme_deitada", pasto + new Vector3(.75f, -.45f, 0f), -1);
+        Som_(dorme, "vaca", "MUU");
         var zz = Sprite_(dorme.transform, "Props/fx_zz", dorme.transform.position + new Vector3(-.15f, .7f, 0f), -1);
         zz.GetComponent<SpriteRenderer>().sortingOrder = dorme.GetComponent<SpriteRenderer>().sortingOrder + 1;
         zz.AddComponent<SleepZ>();
         Sprite_(grupo, "Props/prop_cocho_agua", pasto + new Vector3(1.5f, .1f, 0f), -1);
         // porco e ovelha pastam por perto (andam pouco, para nao pisar na estrada)
-        Ave_(grupo, "Props/prop_porco", pasto + new Vector3(-.7f, 1.15f, 0f), true).radius = .22f;
-        Ave_(grupo, "Props/prop_ovelha", pasto + new Vector3(.55f, 1.05f, 0f), true).radius = .22f;
+        var porco = Ave_(grupo, "Props/prop_porco", pasto + new Vector3(-.7f, 1.15f, 0f), true);
+        porco.radius = .22f;
+        Som_(porco.gameObject, "porco", "OINK");
+        var ovelha = Ave_(grupo, "Props/prop_ovelha", pasto + new Vector3(.55f, 1.05f, 0f), true);
+        ovelha.radius = .22f;
+        Som_(ovelha.gameObject, "ovelha", "MEE");
 
         // gato brincando com o novelo na frente da porta do celeiro; o novelo nasce a esquerda dele
         Vector3 gatoPos = new Vector3(nv.celeiro.x + 1.3f, nv.celeiro.y - .5f, 0f);
         var gato = Sprite_(grupo, "Props/prop_gato_bicando", gatoPos, -1).AddComponent<CatYarnPlay>();
         var novelo = Sprite_(grupo, "Props/prop_novelo_1", gatoPos + new Vector3(-14f / 21.333f, 0f, 0f), -1);   // 14 pixels do gato
+        Som_(gato.gameObject, "gato", "MEOW");
         gato.sit = Bicho_("prop_gato_bicando");
         gato.crouch = Bicho_("prop_gato_agacha");
         gato.crouch2 = Bicho_("prop_gato_agacha_2");
@@ -536,6 +543,14 @@ public static class MontarNiveis
 
     /// ordem &lt; 0 = objeto em pe, ordenado pela altura na tela.
     static Sprite Bicho_(string nome) => AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Props/" + nome + ".png");
+
+    /// Clicar no bicho mostra a palavra e toca Resources/sons/<id>, se existir (ver AnimalSound).
+    static void Som_(GameObject bicho, string id, string palavra)
+    {
+        var som = bicho.AddComponent<AnimalSound>();
+        som.id = id;
+        som.word = palavra;
+    }
 
     static ChickenWander Ave_(Transform pai, string caminho, Vector3 pos, bool olhaParaEsquerda)
     {
