@@ -11,6 +11,8 @@ public class BuildPlot : MonoBehaviour
     /// Canteiro so de terra, para ficar embaixo da torre construida. O gerador dos niveis preenche.
     public Sprite builtSprite;
     Sprite emptySprite;
+    /// Carrinho e ferramentas por cima da terra do canteiro; somem quando a torre e construida.
+    public GameObject ferramentas;
 
     public Tower Placed => placed;
     public TowerData[] AvailableTowers => availableTowers;
@@ -59,6 +61,7 @@ public class BuildPlot : MonoBehaviour
 
         placed.Init(data);
         // com torre em cima, o carrinho de mao da lugar ao canteiro so de terra
+        if (ferramentas != null) { ferramentas.SetActive(false); return true; }
         var sr = GetComponent<SpriteRenderer>();
         if (emptySprite == null) emptySprite = sr.sprite;
         if (builtSprite != null) sr.sprite = builtSprite;
@@ -94,6 +97,7 @@ public class BuildPlot : MonoBehaviour
         GameManager.Instance.AddMoney(GetSellRefund());
         Destroy(placed.gameObject);
         placed = null;
+        if (ferramentas != null) { ferramentas.SetActive(true); return true; }
         var sr = GetComponent<SpriteRenderer>();
         if (emptySprite != null) sr.sprite = emptySprite;
         sr.enabled = true;
