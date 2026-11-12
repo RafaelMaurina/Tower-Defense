@@ -18,7 +18,7 @@ MonoBehaviour:
   reward: 10
   baseDamage: 1
   flying: 0
-  centerOffset: {x: 0, y: 0.35}
+  centerOffset: {x: 0, y: 0.45}
   frames:
   - {fileID: 21300000, guid: b77b81729e844b83b72647e08f8cee86, type: 3}
   - {fileID: 21300000, guid: 6f45d5c210ed4a7ea0411971fa418e2a, type: 3}

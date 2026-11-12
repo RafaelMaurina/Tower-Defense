@@ -22,6 +22,8 @@ PPU fracionado nem pelo Scale.
 Ainda fora do grao, ate serem redesenhados: grama e estrada (64, pixel mais
 fino), canteiro de torre (64x64 em 1 casa, fica assim), corvo, guaxinim e rato
 (pixel maior), colmeia (32x32) e celeiro (64x64).
+As arvores de fruta usam PPU 16 de proposito (1 pixel de desenho = 4 de tela), com umas 3,6 casas de
+altura, e o galinheiro PPU 21,33 (1 pixel = 3 de tela), sem redesenhar.
 A regra de densidade abaixo descreve o conjunto antigo de 64 PPU.
 
 ## Densidade
