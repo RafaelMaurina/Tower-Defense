@@ -41,7 +41,10 @@ public static class TowerAmbientFx
                 });
                 break;
             case "torre_uvas":
-                Get<MuzzleSmoke>(tower).muzzle = PixelSprites.Local(sprite, 58f, 35f);
+            case "torre_uvas_2":
+            case "torre_uvas_3":
+                if (TowerShotFx.TryGetSpot(sprite, out TowerShotFx.Spot spot))
+                    Get<MuzzleSmoke>(tower).muzzle = PixelSprites.Local(sprite, spot.a.x, spot.a.y);
                 break;
         }
     }

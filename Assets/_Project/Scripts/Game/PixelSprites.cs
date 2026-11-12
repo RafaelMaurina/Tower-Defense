@@ -62,4 +62,36 @@ public static class PixelSprites
 
     public static Vector3 Snap(Vector3 v) =>
         new Vector3(Mathf.Round(v.x / Pixel) * Pixel, Mathf.Round(v.y / Pixel) * Pixel, 0f);
+
+    /// Copia de px com o retangulo r (x, y de cima) deslocado por shift (dx, dy de cima), por cima do resto.
+    /// bodyDx != 0: o que o retangulo deixou vazio e era desenho (braco esticando) ganha a cor do pixel
+    /// vizinho do lado do corpo (+1 = corpo a direita do retangulo, -1 = a esquerda).
+    public static Color32[] ShiftRegion(Color32[] px, int w, int h, RectInt r, Vector2Int shift, int bodyDx)
+    {
+        var dst = (Color32[])px.Clone();
+        var clear = new Color32(0, 0, 0, 0);
+        for (int y = r.y; y < r.y + r.height; y++)
+            for (int x = r.x; x < r.x + r.width; x++) dst[(h - 1 - y) * w + x] = clear;
+        for (int y = r.y; y < r.y + r.height; y++)
+            for (int x = r.x; x < r.x + r.width; x++)
+            {
+                Color32 c = px[(h - 1 - y) * w + x];
+                int tx = x + shift.x, ty = y + shift.y;
+                if (c.a != 0 && tx >= 0 && tx < w && ty >= 0 && ty < h) dst[(h - 1 - ty) * w + tx] = c;
+            }
+        if (bodyDx != 0)
+        {
+            int edge = bodyDx > 0 ? r.xMax : r.x - 1;   // coluna logo fora do retangulo, do lado do corpo
+            int inner = edge + bodyDx;                   // e a seguinte, que ja e tecido da manga
+            for (int y = r.y; y < r.y + r.height; y++)
+            {
+                if (inner < 0 || inner >= w) break;
+                Color32 fill = px[(h - 1 - y) * w + inner];
+                if (fill.a == 0) continue;
+                for (int x = r.x; x < r.x + r.width; x++)
+                    if (px[(h - 1 - y) * w + x].a != 0 && dst[(h - 1 - y) * w + x].a == 0) dst[(h - 1 - y) * w + x] = fill;
+            }
+        }
+        return dst;
+    }
 }
