@@ -7,49 +7,50 @@ using UnityEngine;
 [RequireComponent(typeof(SpriteRenderer))]
 public class HiveBees : MonoBehaviour
 {
-    // abelhas desenhadas no torre_colmeia.png (x, y de cima). A terceira encosta na colmeia:
-    // o recorte comeca uma coluna depois para nao apagar o contorno dela.
-    static readonly RectInt[] Drawn = { new RectInt(52, 9, 6, 3), new RectInt(5, 15, 6, 3), new RectInt(52, 27, 5, 3) };
-    const int Count = 4;
     const float RadiusX = 27f, RadiusY = 9f;     // em pixels de desenho
     static readonly Vector2 Center = new Vector2(31.5f, 22f);
 
-    static readonly Dictionary<Sprite, (Sprite hive, Sprite bee)> cache = new Dictionary<Sprite, (Sprite, Sprite)>();
+    static Sprite bee;
 
     SpriteRenderer sr;
     Sprite source;
     readonly List<SpriteRenderer> bees = new List<SpriteRenderer>();
     float[] speed, phase, height;
 
-    public void Setup(Sprite sprite)
+    /// 'count' abelhas em volta da colmeia: mais abelhas a cada nivel da torre.
+    public void Setup(Sprite sprite, int count)
     {
         sr = GetComponent<SpriteRenderer>();
-        if (!cache.TryGetValue(sprite, out var made) || made.hive == null)
-        {
-            Color32[] px = PixelSprites.Read(sprite, out int w, out int h);
-            if (px == null) return;
-            Sprite bee = PixelSprites.Crop(sprite, px, w, h, Drawn[0], "abelha");
-            foreach (RectInt r in Drawn) PixelSprites.Erase(px, w, h, r);
-            made = (PixelSprites.MakeLike(sprite, px, w, h, "_sem_abelhas"), bee);
-            cache[sprite] = made;
-        }
         source = sprite;
-        sr.sprite = made.hive;
+        if (bee == null) bee = MakeBee();
 
-        if (bees.Count == 0)
+        // refaz as abelhas quando o numero muda (melhoria da torre)
+        foreach (SpriteRenderer b in bees) if (b != null) Destroy(b.gameObject);
+        bees.Clear();
+        speed = new float[count]; phase = new float[count]; height = new float[count];
+        for (int i = 0; i < count; i++)
         {
-            speed = new float[Count]; phase = new float[Count]; height = new float[Count];
-            for (int i = 0; i < Count; i++)
-            {
-                var go = new GameObject("Abelha");
-                go.transform.SetParent(transform, false);
-                bees.Add(go.AddComponent<SpriteRenderer>());
-                speed[i] = Random.Range(1.6f, 2.4f) * (i % 2 == 0 ? 1f : -1f);
-                phase[i] = i * Mathf.PI * 2f / Count + Random.Range(-.4f, .4f);
-                height[i] = Random.Range(-6f, 6f);
-            }
+            var go = new GameObject("Abelha");
+            go.transform.SetParent(transform, false);
+            var r = go.AddComponent<SpriteRenderer>();
+            r.sprite = bee;
+            bees.Add(r);
+            speed[i] = Random.Range(1.6f, 2.4f) * (i % 2 == 0 ? 1f : -1f);
+            phase[i] = i * Mathf.PI * 2f / count + Random.Range(-.4f, .4f);
+            height[i] = Random.Range(-6f, 6f);
         }
-        foreach (SpriteRenderer b in bees) b.sprite = made.bee;
+    }
+
+    // abelha de 6x3 pixels: asas claras em cima, corpo listrado embaixo
+    static Sprite MakeBee()
+    {
+        Color32 o = new Color32(0x28, 0x18, 0x01, 255), w = new Color32(0xe2, 0xe2, 0xe2, 255), y = new Color32(0xf9, 0xc2, 0x2b, 255);
+        Color32[] rows = { o, o, w, w, o, o,   o, y, o, y, o, o,   o, o, o, o, o, o };
+        var px = new Color32[18];
+        for (int row = 0; row < 3; row++)
+            for (int x = 0; x < 6; x++)
+                px[(2 - row) * 6 + x] = rows[row * 6 + x];
+        return PixelSprites.Make(px, 6, 3, new Vector2(.5f, .5f), 32f, "abelha");
     }
 
     void Update()
