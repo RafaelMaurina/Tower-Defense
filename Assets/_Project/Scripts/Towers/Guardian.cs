@@ -20,6 +20,9 @@ public class Guardian : MonoBehaviour
     /// Avisa que a mordida acertou: (cao, posicao do inimigo). Usado pelo BiteFx.
     public static event System.Action<Guardian, Vector3> OnBite;
 
+    /// Todos os caes em campo (usado pelo GroundFx para a poeira da corrida).
+    public static readonly System.Collections.Generic.List<Guardian> All = new System.Collections.Generic.List<Guardian>();
+
     Tower tower;
     Vector3 home;
     Vector3 chaseOffset;              // cada cao morde de um lado do inimigo
@@ -34,6 +37,9 @@ public class Guardian : MonoBehaviour
     Enemy biteTarget;
 
     void Awake() => sr = GetComponent<SpriteRenderer>();
+
+    void OnEnable() => All.Add(this);
+    void OnDisable() => All.Remove(this);
 
     /// 'index' separa os caes parados ao lado da casinha.
     public void Init(Tower owner, int index)
