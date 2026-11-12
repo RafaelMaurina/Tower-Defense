@@ -522,6 +522,13 @@ public static class MontarNiveis
             new Vector3(nv.celeiro.x + 1.28f, nv.celeiro.y, 0f), -1);
         celeiro.name = "Celeiro";
         celeiro.AddComponent<BarnHitFx>();   // treme e solta lascas quando a base perde vida
+        // telhado torto, tabua solta e janela quebrada conforme a vida cai (desenhos por cima, nao mexem no celeiro)
+        celeiro.AddComponent<BarnDamage>().stages = new[]
+        {
+            AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Props/celeiro_dano_1.png"),
+            AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Props/celeiro_dano_2.png"),
+            AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Props/celeiro_dano_3.png"),
+        };
     }
 
     // --------------------------------------------------------- utilitarios
