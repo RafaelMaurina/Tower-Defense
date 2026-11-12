@@ -112,6 +112,9 @@ public static class MontarNiveis
         return false;
     }
 
+    /// Apaga e gera de novo sem perguntar (usado quando este script mudou desde a ultima geracao).
+    public static void RefazerSemPerguntar() => GerarTodos(true);
+
     [MenuItem("Defesa da Colheita/Gerar niveis (apagar e refazer)")]
     public static void Refazer()
     {
