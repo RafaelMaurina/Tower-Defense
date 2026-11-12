@@ -439,8 +439,10 @@ public static class MontarNiveis
             Sprite_(grupo, "Props/prop_arvore_laranja", new Vector3(c.x + 1f, c.y, 0f), -1).AddComponent<FallingLeaves>();
         Sprite_(grupo, "Props/prop_galinheiro", new Vector3(nv.galinheiro.x + 1f, nv.galinheiro.y, 0f), -1);
         // galinha e galo ciscam em volta de onde nascem; a galinha olha para a esquerda no desenho
-        Som_(Ave_(grupo, "Props/prop_galinha", new Vector3(nv.galinha.x + 0.5f, nv.galinha.y + 0.1f, 0f), true).gameObject, "galinha", "COCO");
-        Som_(Ave_(grupo, "Props/prop_galo", new Vector3(nv.galo.x + 0.5f, nv.galo.y + 0.1f, 0f), false).gameObject, "galo", "COCORICO");
+        Som_(Ave_(grupo, "Props/prop_galinha", new Vector3(nv.galinha.x + 0.5f, nv.galinha.y + 0.1f, 0f), true).gameObject, "galinha", "COCO").flee = true;
+        var cantoDoGalo = Som_(Ave_(grupo, "Props/prop_galo", new Vector3(nv.galo.x + 0.5f, nv.galo.y + 0.1f, 0f), false).gameObject, "galo", "COCORICO");
+        cantoDoGalo.flee = true;
+        cantoDoGalo.crowsOnWave = true;   // canta no comeco de cada onda
 
         // cantinho das vacas (bichos em PPU 21,33, o mesmo grao do gato e da galinha): 2 fardos de feno a esquerda,
         // a marrom passeando e pastando, a creme dormindo, o cocho a direita, porco e ovelha atras.
@@ -459,7 +461,7 @@ public static class MontarNiveis
         vaca.speed = .35f;
         Som_(vaca.gameObject, "vaca", "MUU");
         var dorme = Sprite_(grupo, "Props/prop_vaca_creme_deitada", pasto + new Vector3(.75f, -.45f, 0f), -1);
-        Som_(dorme, "vaca", "MUU");
+        Som_(dorme, "vaca", "MUU").awakeSprite = Bicho_("prop_vaca_creme_em_pe");   // 2 cliques: ZZZZ; no 3o levanta uns segundos e faz MUU
         var zz = Sprite_(dorme.transform, "Props/fx_zz", dorme.transform.position + new Vector3(-.15f, .7f, 0f), -1);
         zz.GetComponent<SpriteRenderer>().sortingOrder = dorme.GetComponent<SpriteRenderer>().sortingOrder + 1;
         zz.AddComponent<SleepZ>();
@@ -560,11 +562,12 @@ public static class MontarNiveis
     static Sprite Bicho_(string nome) => AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Props/" + nome + ".png");
 
     /// Clicar no bicho mostra a palavra e toca Resources/sons/<id>, se existir (ver AnimalSound).
-    static void Som_(GameObject bicho, string id, string palavra)
+    static AnimalSound Som_(GameObject bicho, string id, string palavra)
     {
         var som = bicho.AddComponent<AnimalSound>();
         som.id = id;
         som.word = palavra;
+        return som;
     }
 
     static ChickenWander Ave_(Transform pai, string caminho, Vector3 pos, bool olhaParaEsquerda)

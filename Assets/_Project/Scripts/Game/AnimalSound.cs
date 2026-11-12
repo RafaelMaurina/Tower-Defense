@@ -7,34 +7,74 @@ using UnityEngine.InputSystem;
 /// Clicar num bicho do cenario faz uma palavra de pixel subir da cabeca dele ("MUU", "OINK"...), no mesmo
 /// estilo do "NHAC" do Tufao (fonte feita a mao, branca com contorno escuro, sobe uns pixels e some).
 ///
-/// Som: se existir o arquivo Assets/_Project/Resources/sons/<id>.wav (ou .ogg/.mp3), ele toca no clique.
-/// ids: galinha, galo, vaca, ovelha, porco, gato. Sem arquivo, so aparece o texto.
+/// Som: se existir o arquivo Assets/_Project/Resources/sons/<id>.wav (ou .ogg/.mp3), ele toca no clique
+/// (ver SoundBank). ids: galinha, galo, vaca, ovelha, porco, gato. Sem arquivo, so aparece o texto.
+///
+/// Extras: a vaca que dorme acorda por uns segundos, galinha e galo saem correndo, o gato pula no novelo,
+/// 5 cliques seguidos no mesmo bicho soltam um coracao, e o galo canta sozinho no comeco de cada onda.
 public class AnimalSound : MonoBehaviour
 {
     const float Pixel = 1f / 32f;
 
-    public string id;              // nome do arquivo de som e da palavra
-    public string word = "MUU";    // so letras da fonte: C O M U I N K E W R
+    public string id;              // nome do arquivo de som
+    public string word = "MUU";    // so letras da fonte: C O M U I N K E W R F Z
     public float cooldown = .6f;   // evita encher a tela clicando sem parar
+    public Sprite awakeSprite;     // se tiver, o bicho "acorda" com este desenho por awakeTime segundos
+    public float awakeTime = 2f;
+    public string sleepWord = "ZZZZ";   // dormindo, os primeiros cliques mostram isto
+    public int clicksToWake = 3;         // o ultimo clique acorda o bicho e mostra 'word'
+    public bool flee;              // sai correndo do clique (galinha e galo)
+    public bool crowsOnWave;       // canta sozinho no comeco de cada onda (galo)
 
     static readonly Dictionary<string, Sprite> cache = new Dictionary<string, Sprite>();
     static AnimalSound runner;
+    static Sprite heart;
 
     SpriteRenderer sr;
-    AudioClip clip;
-    float nextTime;
+    float nextTime, lastClick;
+    int streak, sleepClicks;
+    bool awake;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetStatics()
     {
         cache.Clear();
         runner = null;
+        heart = null;
     }
 
-    void Start()
+    void Start() => sr = GetComponent<SpriteRenderer>();
+
+    // inscreve por bicho, porque o GameManager zera os eventos de onda ao fim de cada partida
+    void OnEnable()
     {
-        sr = GetComponent<SpriteRenderer>();
-        if (!string.IsNullOrEmpty(id)) clip = Resources.Load<AudioClip>("sons/" + id);
+        if (crowsOnWave) GameManager.OnWaveChanged += HandleWave;
+    }
+
+    void OnDisable()
+    {
+        if (crowsOnWave) GameManager.OnWaveChanged -= HandleWave;
+    }
+
+    void HandleWave(int current, int total)
+    {
+        if (sr == null) return;
+        SoundBank.Play(id);
+        Say(word, new Vector3(sr.bounds.center.x, sr.bounds.max.y, 0f));
+    }
+
+    /// Mostra uma palavra de pixel subindo de 'above' (usada tambem pelo Tufao ao chegar).
+    public static void Say(string text, Vector3 above)
+    {
+        EnsureRunner();
+        runner.StartCoroutine(runner.Show(Word(text), above, text));
+    }
+
+    static void EnsureRunner()
+    {
+        if (runner != null) return;
+        runner = new GameObject("AnimalSoundFx").AddComponent<AnimalSound>();
+        DontDestroyOnLoad(runner.gameObject);
     }
 
     void Update()
@@ -51,19 +91,53 @@ public class AnimalSound : MonoBehaviour
         if (!sr.bounds.Contains(p)) return;
 
         nextTime = Time.unscaledTime + cooldown;
-        if (clip != null) AudioSource.PlayClipAtPoint(clip, cam.transform.position);
-        if (runner == null)
+        // dormindo: os primeiros cliques so mostram o ZZZZ; o ultimo acorda o bicho, que faz o seu barulho
+        string say = word;
+        bool makesSound = true, wakeNow = false;
+        if (awakeSprite != null && !awake)
         {
-            runner = new GameObject("AnimalSoundFx").AddComponent<AnimalSound>();
-            DontDestroyOnLoad(runner.gameObject);
+            sleepClicks++;
+            if (sleepClicks < clicksToWake) { say = sleepWord; makesSound = false; }
+            else { sleepClicks = 0; wakeNow = true; }
         }
-        runner.StartCoroutine(runner.Show(word, new Vector3(sr.bounds.center.x, sr.bounds.max.y, 0f)));
+        if (makesSound) SoundBank.Play(id);
+        Vector3 above = new Vector3(sr.bounds.center.x, sr.bounds.max.y, 0f);
+        Say(say, above);
+
+        // 5 cliques seguidos (cada um em ate 1,2 s do anterior): coracao
+        streak = Time.unscaledTime - lastClick < 1.2f ? streak + 1 : 1;
+        lastClick = Time.unscaledTime;
+        if (streak >= 5)
+        {
+            streak = 0;
+            EnsureRunner();
+            runner.StartCoroutine(runner.Show(Heart(), above + new Vector3(0f, 9f * Pixel, 0f), "coracao"));
+        }
+
+        var bird = GetComponent<ChickenWander>();
+        if (flee && bird != null) bird.Flee(p);
+        var cat = GetComponent<CatYarnPlay>();
+        if (cat != null) cat.Startle();
+        if (wakeNow) StartCoroutine(Wake());
     }
 
-    IEnumerator Show(string text, Vector3 above)
+    // a vaca que dormia levanta (some o "Z") e volta a deitar
+    IEnumerator Wake()
     {
-        Sprite sprite = Word(text);
-        var go = new GameObject("Palavra_" + text);
+        awake = true;
+        Sprite sleeping = sr.sprite;
+        SleepZ z = GetComponentInChildren<SleepZ>(true);
+        if (z != null) z.gameObject.SetActive(false);
+        sr.sprite = awakeSprite;
+        yield return new WaitForSeconds(awakeTime);
+        sr.sprite = sleeping;
+        if (z != null) z.gameObject.SetActive(true);
+        awake = false;
+    }
+
+    IEnumerator Show(Sprite sprite, Vector3 above, string label)
+    {
+        var go = new GameObject("Palavra_" + label);
         go.transform.SetParent(transform);
         var r = go.AddComponent<SpriteRenderer>();
         r.sprite = sprite;
@@ -91,6 +165,8 @@ public class AnimalSound : MonoBehaviour
         { 'K', new[] { "X.X", "X.X", "XX.", "X.X", "X.X" } },
         { 'E', new[] { "XXX", "X..", "XXX", "X..", "XXX" } },
         { 'R', new[] { "XX.", "X.X", "XX.", "X.X", "X.X" } },
+        { 'F', new[] { "XXX", "X..", "XX.", "X..", "X.." } },
+        { 'Z', new[] { "XXX", "..X", ".X.", "X..", "XXX" } },
     };
 
     static Sprite Word(string text)
@@ -111,15 +187,34 @@ public class AnimalSound : MonoBehaviour
                     if (g[y][x] == 'X') fill[x0 + x, 1 + (4 - y)] = true;
             x0 += g[0].Length + 1;
         }
+        Sprite s = Outlined(fill, w, h, new Color32(255, 255, 255, 255), "palavra_" + text);
+        cache[text] = s;
+        return s;
+    }
 
-        var white = new Color32(255, 255, 255, 255);
+    // coracao 7x6 vermelho com o mesmo contorno escuro das palavras
+    static Sprite Heart()
+    {
+        if (heart != null) return heart;
+        string[] rows = { ".XX.XX.", "XXXXXXX", "XXXXXXX", ".XXXXX.", "..XXX..", "...X..." };
+        int w = 7 + 2, h = 6 + 2;
+        var fill = new bool[w, h];
+        for (int y = 0; y < 6; y++)
+            for (int x = 0; x < 7; x++)
+                if (rows[y][x] == 'X') fill[1 + x, 1 + (5 - y)] = true;
+        heart = Outlined(fill, w, h, new Color32(0xE0, 0x30, 0x48, 255), "coracao");
+        return heart;
+    }
+
+    static Sprite Outlined(bool[,] fill, int w, int h, Color32 color, string name)
+    {
         var dark = new Color32(0x20, 0x18, 0x21, 255);
         var none = new Color32(0, 0, 0, 0);
         var px = new Color32[w * h];
         for (int y = 0; y < h; y++)
             for (int x = 0; x < w; x++)
             {
-                if (fill[x, y]) { px[y * w + x] = white; continue; }
+                if (fill[x, y]) { px[y * w + x] = color; continue; }
                 bool near = false;
                 for (int dy = -1; dy <= 1; dy++)
                     for (int dx = -1; dx <= 1; dx++)
@@ -129,8 +224,6 @@ public class AnimalSound : MonoBehaviour
                     }
                 px[y * w + x] = near ? dark : none;
             }
-        Sprite s = PixelSprites.Make(px, w, h, new Vector2(.5f, 0f), 32f, "palavra_" + text);
-        cache[text] = s;
-        return s;
+        return PixelSprites.Make(px, w, h, new Vector2(.5f, 0f), 32f, name);
     }
 }
