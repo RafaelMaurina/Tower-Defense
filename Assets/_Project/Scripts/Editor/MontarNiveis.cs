@@ -393,7 +393,7 @@ public static class MontarNiveis
         // bloco de 2x2 canteiros; 2 blocos lado a lado = 8 canteiros. As folhas balancam de leve (PixelSway).
         // Cenoura: desenho de 32x32 que ja inclui o canteiro (a terra fica parada).
         // Trigo e abobora: canteiro de terra e, por cima, a planta no tamanho original (PPU 32), que passa um
-        // pouco da casa, uma em cada duas casas (xadrez); as de cima desenham por tras das de baixo.
+        // pouco da casa; as de cima desenham por tras das de baixo.
         var terra = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Tiles/canteiro_horta.png");
         foreach (var c in nv.plantacao)
             for (int dx = 0; dx < 2; dx++)
@@ -405,10 +405,8 @@ public static class MontarNiveis
                     else
                     {
                         Sprite_(grupo, "Tiles/canteiro_horta", Centro(cel), ORDEM_DECALQUE);
-                        // as plantas tem 1,3 a 1,4 casa: uma em cada duas casas (em xadrez), senao as folhas se sobrepoem
-                        if ((cel.x + cel.y) % 2 == 0)
-                            Sprite_(grupo, "Tiles/" + nv.cultura.Replace("tile_", "planta_"), Centro(cel), 2 + (H - 1 - cel.y))
-                                .AddComponent<PixelSway>();
+                        Sprite_(grupo, "Tiles/" + nv.cultura.Replace("tile_", "planta_"), Centro(cel), 2 + (H - 1 - cel.y))
+                            .AddComponent<PixelSway>();
                     }
                 }
 
