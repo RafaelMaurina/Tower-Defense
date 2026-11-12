@@ -11,6 +11,8 @@ public class ChickenWander : MonoBehaviour
     public float radius = .9f;           // ate onde se afasta do ponto inicial, em casas
     public float speed = .8f;            // casas por segundo
     public float frameTime = .16f;
+    // limites do mapa em casas: abaixo de 1,15 e a cerca de baixo; acima de 15,3, a de cima
+    public Vector2 minPos = new Vector2(.6f, 1.15f), maxPos = new Vector2(29.4f, 15.3f);
 
     static readonly float[] Waits = { 3f, 5f, 10f };
 
@@ -73,6 +75,7 @@ public class ChickenWander : MonoBehaviour
         goal = position + away * 1.2f;
         Vector3 off = goal - home;
         if (off.magnitude > radius * 1.5f) goal = home + off.normalized * radius * 1.5f;
+        goal = Limit(goal);
         sr.flipX = (goal.x < position.x) != facesLeft;
         fleeing = true;
         state = State.Walk;
@@ -82,11 +85,14 @@ public class ChickenWander : MonoBehaviour
     void StartWalk()
     {
         Vector2 r = Random.insideUnitCircle * radius;
-        goal = home + new Vector3(r.x, r.y * .5f, 0f);
+        goal = Limit(home + new Vector3(r.x, r.y * .5f, 0f));
         sr.flipX = (goal.x < position.x) != facesLeft;
         state = State.Walk;
         clock = 0f;
     }
+
+    Vector3 Limit(Vector3 v) =>
+        new Vector3(Mathf.Clamp(v.x, minPos.x, maxPos.x), Mathf.Clamp(v.y, minPos.y, maxPos.y), v.z);
 
     void StartPeck()
     {

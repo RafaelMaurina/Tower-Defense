@@ -71,6 +71,8 @@ public class AnimalWander : MonoBehaviour
         if (r.sqrMagnitude < .09f)                                       // caminhada minima: 0,3 casa
             r = (r.sqrMagnitude < 1e-6f ? Vector2.right : r.normalized) * .3f;
         goal = home + new Vector3(r.x, r.y * .5f, 0f);
+        goal.x = Mathf.Clamp(goal.x, .6f, 29.4f);   // nunca passa da cerca nem da borda
+        goal.y = Mathf.Clamp(goal.y, 1.15f, 15.3f);
         if (Mathf.Abs(goal.x - position.x) > .01f)
             sr.flipX = (goal.x < position.x) != facesLeft;
         state = State.Walk;
