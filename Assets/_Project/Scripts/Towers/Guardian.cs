@@ -52,6 +52,8 @@ public class Guardian : MonoBehaviour
         transform.position = home;
         animTime = index * 0.37f;     // caes lado a lado nao abanam o rabo juntos
         UpdateOrder();
+        SoundBank.Play("tufao_chega");
+        AnimalSound.Say("WOOF", home + new Vector3(0f, 1.1f, 0f));
     }
 
     void Update()
