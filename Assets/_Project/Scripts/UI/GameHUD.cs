@@ -26,9 +26,6 @@ public class GameHUD : MonoBehaviour
     readonly List<Purchase> purchases = new List<Purchase>();
     Text coins, life, waves, threat, heading, description;
     RectTransform rows, stats;
-    BuildPlot selectedPlot;
-    TowerData[] catalog;
-    GameObject catalogView;
     GameObject overlay;
     Button settingsButton, buildPauseButton;
     Button startWaveButton, autoWaveButton, speedButton;
@@ -53,6 +50,9 @@ public class GameHUD : MonoBehaviour
     SpriteRenderer buildGhost, buildRadius, plotMarker;
     Text buildHint;
     bool draggingCard;
+    readonly List<RaycastResult> buildRaycastHits = new List<RaycastResult>(16);
+    PointerEventData buildPointer;
+    EventSystem buildEventSystem;
     AudioSource uiAudio;
     AudioClip hoverSound, clickSound;
 
@@ -68,6 +68,9 @@ public class GameHUD : MonoBehaviour
                 if (source != null)
                 {
                     var crop = name == "inferior_barra_torres" ? new Rect(16,74,2140,598) : new Rect(188,114,754,1165);
+                    var originalSize = name == "inferior_barra_torres" ? new Vector2(2172,724) : new Vector2(1158,1358);
+                    crop = new Rect(crop.x * source.texture.width / originalSize.x, crop.y * source.texture.height / originalSize.y,
+                        crop.width * source.texture.width / originalSize.x, crop.height * source.texture.height / originalSize.y);
                     sprite = Sprite.Create(source.texture,crop,new Vector2(.5f,.5f),32,0,SpriteMeshType.FullRect);
                     generatedSprites.Add(sprite);
                 }
@@ -364,7 +367,7 @@ public class GameHUD : MonoBehaviour
         autoWaveText = autoWaveButton.GetComponentInChildren<Text>();
 
         // Centro em x=0.5, no mesmo eixo do celeiro da moldura superior.
-        bottomBarArea = Rect(root.transform,"HUD inferior de torres",new Vector2(.20f,.008f),new Vector2(.80f,.258f));
+        bottomBarArea = Rect(root.transform,"HUD inferior de torres",new Vector2(.28f,.006f),new Vector2(.72f,.165f));
         overlay = Rect(root.transform, "Submenu", Vector2.zero, Vector2.one).gameObject;
         var dim = overlay.AddComponent<Image>(); dim.color = new Color(.06f,.035f,.015f,.72f);
         var panel = Picture(overlay.transform, "Moldura da pausa", "moldura_pausa", new Vector2(.23f,.13f), new Vector2(.77f,.87f));
@@ -392,9 +395,9 @@ public class GameHUD : MonoBehaviour
         var board = Rect(bottomBarArea,"Barra de cartas",Vector2.zero,Vector2.one);
         var fit = board.gameObject.AddComponent<AspectRatioFitter>();
         fit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
-        fit.aspectRatio = 2140f / 598f;
+        fit.aspectRatio = 5f;
         var background = Picture(board,"Moldura","inferior_barra_torres",Vector2.zero,Vector2.one);
-        background.raycastTarget = true;
+        background.raycastTarget = false;
         buildHint = Label(bottomBarArea,"",new Vector2(-.10f,1.01f),new Vector2(1.10f,1.15f),20);
         buildHint.resizeTextForBestFit = true;
         buildHint.resizeTextMinSize = 14;
@@ -402,9 +405,13 @@ public class GameHUD : MonoBehaviour
         for (int i=0;i<towers.Count;i++)
         {
             var data = towers[i];
-            var card = Rect(board,data.displayName,new Vector2(.05f+i*step+.004f,.13f),
+            var slot = Rect(board,data.displayName,new Vector2(.05f+i*step+.004f,.13f),
                 new Vector2(.05f+(i+1)*step-.004f,.85f));
-            var plate = Picture(card,"Carta","inferior_carta_torre",Vector2.zero,Vector2.one);
+            var card = Rect(slot,"Carta proporcional",Vector2.zero,Vector2.one);
+            var cardFit = card.gameObject.AddComponent<AspectRatioFitter>();
+            cardFit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+            cardFit.aspectRatio = 754f/1165f;
+            var plate = Picture(card,"Carta","inferior_carta_torre",Vector2.zero,Vector2.one,true);
             plate.raycastTarget = true;
             var button = card.gameObject.AddComponent<Button>();
             button.targetGraphic = plate;
@@ -428,7 +435,7 @@ public class GameHUD : MonoBehaviour
                 var plot=PlotUnderPointer();
                 if (plot != null) TryBuildSelected(plot);
             });
-            string cardName = data.displayName;
+            string cardName = TowerDisplayName(data);
             if (cardName == "Metralhadora de Uvas") cardName = "Metralhadora\nde Uvas";
             else if (cardName == "Canhao de Abobora" || cardName == "Canhão de Abóbora") cardName = "Canhão de\nAbóbora";
             else if (cardName == "Tufao") cardName = "Tufão";
@@ -452,6 +459,10 @@ public class GameHUD : MonoBehaviour
             bottomPrices.Add(price);
         }
     }
+    static string TowerDisplayName(TowerData data)
+    {
+        return data.displayName.Replace("Canhao", "Canhão").Replace("Abobora", "Abóbora").Replace("Tufao", "Tufão");
+    }
     static void CardEvent(EventTrigger trigger,EventTriggerType type,UnityEngine.Events.UnityAction callback)
     {
         var entry = new EventTrigger.Entry { eventID=type };
@@ -464,7 +475,7 @@ public class GameHUD : MonoBehaviour
         buildSelection=data;
         HideSelectedRange();
         for (int i=0;i<bottomCardFeedback.Count;i++) bottomCardFeedback[i].SetToggleState(bottomTowers[i]==data);
-        buildHint.text=data.displayName+" selecionada · Esc ou botão direito para cancelar";
+        buildHint.text="Selecionado: "+TowerDisplayName(data)+" · Esc ou botão direito para cancelar";
         if (buildPending && pendingBuildPlot != null) TryBuildSelected(pendingBuildPlot);
     }
     public static void SelectBuildPlot(BuildPlot plot)
@@ -480,7 +491,7 @@ public class GameHUD : MonoBehaviour
         if (IsOverlayOpen || GameManager.State != GameState.Playing || buildSelection == null || plot == null) return;
         if (plot.Placed != null) { buildHint.text="Este canteiro já está ocupado"; return; }
         if (!plot.Accepts(buildSelection)) { buildHint.text="Torre indisponível neste canteiro"; return; }
-        if (!plot.Build(buildSelection)) { buildHint.text="Moedas insuficientes para construir "+buildSelection.displayName; return; }
+        if (!plot.Build(buildSelection)) { buildHint.text="Moedas insuficientes para construir "+TowerDisplayName(buildSelection); return; }
         CancelBuildSelection();
     }
     BuildPlot PlotUnderPointer()
@@ -489,12 +500,17 @@ public class GameHUD : MonoBehaviour
         // Raycast da UI explicito: tambem cobre o instante de soltar um arrasto.
         if (EventSystem.current != null)
         {
-            var hits = new List<RaycastResult>();
-            EventSystem.current.RaycastAll(new PointerEventData(EventSystem.current) { position=Mouse.current.position.ReadValue() },hits);
-            if (hits.Count>0) return null;
+            if (buildPointer == null || buildEventSystem != EventSystem.current)
+                { buildEventSystem = EventSystem.current; buildPointer = new PointerEventData(buildEventSystem); }
+            buildPointer.Reset();
+            buildPointer.position=Mouse.current.position.ReadValue();
+            buildRaycastHits.Clear();
+            EventSystem.current.RaycastAll(buildPointer,buildRaycastHits);
+            if (buildRaycastHits.Count>0) return null;
         }
         Vector2 point=Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-        foreach (var plot in buildPlots ?? new BuildPlot[0])
+        if (buildPlots == null) return null;
+        foreach (var plot in buildPlots)
             if (plot != null && plot.GetComponent<Collider2D>().OverlapPoint(point)) return plot;
         return null;
     }
@@ -641,7 +657,6 @@ public class GameHUD : MonoBehaviour
         panelImage.gameObject.SetActive(true);
         rows.gameObject.SetActive(true);
         stats.gameObject.SetActive(true);
-        if (catalogView != null) catalogView.SetActive(false);
         Clear(rows); Clear(stats); purchases.Clear(); towerPanel = isTower;
         heading.text = title; description.text = body; overlay.SetActive(true);
         description.rectTransform.anchorMin = new Vector2(.12f,horizontalActions ? .73f : .64f);
@@ -671,9 +686,7 @@ public class GameHUD : MonoBehaviour
         if (resultView != null) { Destroy(resultView); resultView = null; }
         if (upgradeView != null) { Destroy(upgradeView); upgradeView = null; }
         panelImage.gameObject.SetActive(true);
-        if (catalogView != null) catalogView.SetActive(false);
         towerPanel = false;
-        selectedPlot = null;
         purchases.Clear();
         selectedRange = false;
         hoverPlot = null;
@@ -682,9 +695,8 @@ public class GameHUD : MonoBehaviour
     }
     void Back()
     {
-        if (towerPanel && catalogView != null && catalogView.activeSelf) Close();
-        else if (towerPanel && selectedPlot != null && selectedPlot.Placed == null) ShowTowerChoices(selectedPlot, catalog);
-        else if (towerPanel) Close();
+        if (towerPanel) Close();
+
         else if (GameManager.State == GameState.Paused) GameManager.Instance?.TogglePause();
         else if (GameManager.State == GameState.Victory || GameManager.State == GameState.Defeat) ToMenu();
         else Close();
@@ -695,100 +707,10 @@ public class GameHUD : MonoBehaviour
         GameManager.Instance?.SetState(GameState.Menu);
         MenuController.LoadMenu();
     }
-    public static void ShowTowerChoices(BuildPlot plot, TowerData[] choices)
-    {
-        if (current == null || plot == null) return;
-        current.selectedPlot = plot;
-        current.catalog = choices;
-        current.BeginDecisionPause();
-        current.ShowCatalog();
-    }
-    void ShowCatalog()
-    {
-        if (catalogView != null) { catalogView.SetActive(false); Destroy(catalogView); catalogView = null; }
-        Show("ESCOLHA UMA TORRE", "Ordenadas pelo custo inicial. Selecione uma placa para ver os atributos.", true);
-        HideSelectedRange();
-        description.rectTransform.anchorMin = new Vector2(.13f,.70f);
-        rows.gameObject.SetActive(false);
-        stats.gameObject.SetActive(false);
-        catalogView = Rect(panelImage.transform,"Lista de torres",new Vector2(.12f,.16f),new Vector2(.88f,.70f)).gameObject;
-        var viewport = Rect(catalogView.transform,"Area visivel",Vector2.zero,Vector2.one);
-        // RectMask2D corta pelo retangulo. O Mask com imagem quase transparente escondia
-        // a lista inteira: alpha 0,001 vira 0 em 8 bits e a mascara nao desenha nada.
-        viewport.gameObject.AddComponent<RectMask2D>();
-        // imagem transparente so para a rolagem do mouse funcionar no espaco vazio
-        var viewportImage = viewport.gameObject.AddComponent<Image>();
-        viewportImage.color = Color.clear;
-        var content = Rect(viewport,"Conteudo",new Vector2(0,1),new Vector2(1,1));
-        content.pivot = new Vector2(.5f,1);
-        var scroll = catalogView.AddComponent<ScrollRect>();
-        scroll.viewport = viewport; scroll.content = content;
-        scroll.horizontal = false; scroll.vertical = true;
-        scroll.movementType = ScrollRect.MovementType.Clamped;
-        scroll.scrollSensitivity = 55;
-        var sorted = new List<TowerData>();
-        foreach (TowerData data in catalog ?? new TowerData[0])
-            if (data != null && data.towerPrefab != null && data.levels != null && data.levels.Length > 0) sorted.Add(data);
-        sorted.Sort((a,b) => {
-            int cmp = a.levels[0].cost.CompareTo(b.levels[0].cost);
-            return cmp != 0 ? cmp : string.CompareOrdinal(a.displayName,b.displayName);
-        });
-        const float cardHeight = 112f, gap = 10f;
-        content.sizeDelta = new Vector2(0, sorted.Count * (cardHeight + gap));
-        for (int i = 0; i < sorted.Count; i++)
-        {
-            TowerData data = sorted[i];
-            var card = Rect(content,data.displayName,new Vector2(0,1),new Vector2(1,1));
-            card.pivot = new Vector2(.5f,1);
-            card.anchoredPosition = new Vector2(0,-i * (cardHeight + gap));
-            card.sizeDelta = new Vector2(-12,cardHeight);
-            var image = card.gameObject.AddComponent<Image>();
-            image.sprite = Art("botao_normal"); image.type = Image.Type.Sliced;
-            var button = card.gameObject.AddComponent<Button>();
-            button.targetGraphic = image; button.transition = Selectable.Transition.None;
-            var feedback = card.gameObject.AddComponent<HudButtonFeedback>();
-            feedback.Configure(image,Art("botao_normal"),Art("botao_selecionado"));
-            feedback.ConfigureSound(uiAudio,hoverSound);
-            button.onClick.AddListener(PlayClick);
-            button.onClick.AddListener(() => ShowTowerDetail(data));
-            var portrait = Rect(card,"Retrato",new Vector2(.035f,.17f),new Vector2(.17f,.83f)).gameObject.AddComponent<Image>();
-            portrait.sprite = data.levels[0].sprite;
-            if (portrait.sprite == null) portrait.sprite = data.towerPrefab.GetComponent<SpriteRenderer>()?.sprite;
-            portrait.preserveAspect = true; portrait.raycastTarget = false;
-            Label(card,data.displayName,new Vector2(.19f,.48f),new Vector2(.79f,.89f),30);
-            string target = data.hitsFlying ? "Aéreos e terrestres" : "Terrestres";
-            Label(card,target,new Vector2(.19f,.11f),new Vector2(.65f,.49f),21);
-            Label(card,$"{Mathf.Max(0,data.levels[0].cost)} moedas",new Vector2(.70f,.13f),new Vector2(.96f,.77f),24);
-        }
-        if (sorted.Count == 0) Label(content,"Nenhuma torre configurada no catálogo.",new Vector2(0,0),Vector2.one,26);
-    }
-    void ShowTowerDetail(TowerData data)
-    {
-        if (data == null || selectedPlot == null) return;
-        if (catalogView != null) catalogView.SetActive(false);
-        int cost = Mathf.Max(0,data.levels[0].cost);
-        string target = data.hitsFlying ? "Aéreos e terrestres" : "Somente terrestres";
-        Show(data.displayName.ToUpperInvariant(),$"Custo inicial: {cost} moedas · {target}\nMelhorias: {Mathf.Max(0,data.levels.Length-1)} níveis",true,
-            new Action($"Construir · {cost} moedas","construir","melhorar",()=> {
-                if (selectedPlot.Build(data)) Close();
-                else description.text = "Construção indisponível. Confira saldo e canteiro.";
-            },cost));
-        rows.gameObject.SetActive(true);
-        stats.gameObject.SetActive(true);
-        rows.anchorMin = new Vector2(.20f,.20f); rows.anchorMax = new Vector2(.80f,.34f);
-        stats.anchorMin = new Vector2(.12f,.40f); stats.anchorMax = new Vector2(.88f,.54f);
-        TowerLevel level = data.levels[0];
-        ShowSelectedRange(selectedPlot, level.range);
-        Stat(0,"dano",$"Dano\n{level.damage:0.#}");
-        Stat(1,"alcance",$"Alcance\n{level.range:0.#}");
-        Stat(2,"cadencia",$"Tiros/s\n{level.fireRate:0.#}");
-        Stat(3,"aereos",data.hitsFlying?"Aéreos\nSIM":"Aéreos\nNÃO");
-    }
     public static void ShowTowerActions(BuildPlot plot)
     {
         if (current == null || plot == null || plot.Placed == null) return;
         current.CancelBuildSelection();
-        current.selectedPlot = null;
         current.BeginDecisionPause();
         current.ShowUpgrade(plot);
     }
@@ -840,7 +762,6 @@ public class GameHUD : MonoBehaviour
     {
         Tower tower = plot.Placed;
         if (tower == null || tower.data == null || tower.data.levels == null) return;
-        if (catalogView != null) catalogView.SetActive(false);
         if (upgradeView != null) { upgradeView.SetActive(false); Destroy(upgradeView); }
         purchases.Clear();
         towerPanel = true;
@@ -1003,12 +924,6 @@ public class GameHUD : MonoBehaviour
         current.hoverPlot = null;
         if (current.rangeRenderer != null) current.rangeRenderer.enabled = false;
     }
-    void Stat(int column, string icon, string text)
-    {
-        float x=column*.25f;
-        Picture(stats,icon,"icone_"+icon,new Vector2(x,.2f),new Vector2(x+.07f,.8f),true);
-        Label(stats,text,new Vector2(x+.075f,0),new Vector2(x+.245f,1),18);
-    }
     void StateChanged(GameState state)
     {
         settingsButton.interactable = state == GameState.Playing || state == GameState.Paused;
@@ -1029,7 +944,6 @@ public class GameHUD : MonoBehaviour
         HideSelectedRange();
         towerPanel = false;
         purchases.Clear();
-        if (catalogView != null) catalogView.SetActive(false);
         if (upgradeView != null) upgradeView.SetActive(false);
         if (resultView != null) { resultView.SetActive(false); Destroy(resultView); }
         overlay.SetActive(true);

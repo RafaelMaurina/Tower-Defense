@@ -44,6 +44,15 @@
 
 # Visual Studio cache directory
 .vs/
+/.dotnet/
+/.vsconfig
+/Assets/_Recovery/
+/Assets/_Recovery.meta
+# Ferramentas locais de geracao de arte, nao utilizadas pelo jogo.
+/tools/ExtractHudPairs.ps1
+/tools/ExtractHudSprites.ps1
+/tools/build_hud_sprites.py
+/tools/hud-sources*.json
 
 # Gradle cache directory
 .gradle/
