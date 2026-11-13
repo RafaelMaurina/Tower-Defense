@@ -50,6 +50,25 @@ public static class TowerShotFx
         { "torre_canhao_abobora", new Spot(8, 25) },              // boca do canhao (esquerda); so visual
         { "torre_canhao_abobora_2", new Spot(8, 25) },
         { "torre_canhao_abobora_3", new Spot(8, 25) },
+        { "torre_canhao_abobora_sudoeste", new Spot(12, 30) },   // virando para o alvo (CannonAim): centro da boca
+        { "torre_canhao_abobora_sudeste", new Spot(51, 30) },
+        { "torre_canhao_abobora_sul", new Spot(32, 28) },
+        { "torre_canhao_abobora_noroeste", new Spot(8, 7) },
+        { "torre_canhao_abobora_norte", new Spot(32, 4) },
+        { "torre_canhao_abobora_nordeste", new Spot(56, 7) },
+        // niveis 2 e 3: tela de 68x68 com 3 px a mais na esquerda
+        { "torre_canhao_abobora_2_sudoeste", new Spot(15, 30) },
+        { "torre_canhao_abobora_2_sudeste", new Spot(54, 30) },
+        { "torre_canhao_abobora_2_sul", new Spot(35, 28) },
+        { "torre_canhao_abobora_2_noroeste", new Spot(11, 7) },
+        { "torre_canhao_abobora_2_norte", new Spot(35, 4) },
+        { "torre_canhao_abobora_2_nordeste", new Spot(59, 7) },
+        { "torre_canhao_abobora_3_sudoeste", new Spot(15, 30) },
+        { "torre_canhao_abobora_3_sudeste", new Spot(54, 30) },
+        { "torre_canhao_abobora_3_sul", new Spot(35, 28) },
+        { "torre_canhao_abobora_3_noroeste", new Spot(11, 7) },
+        { "torre_canhao_abobora_3_norte", new Spot(35, 4) },
+        { "torre_canhao_abobora_3_nordeste", new Spot(59, 7) },
         { "torre_espantalho", new Spot(12, 19, 51, 19) },         // palma da mao esquerda e da direita
         { "torre_espantalho_2", new Spot(12, 19, 51, 19) },
         { "torre_espantalho_3", new Spot(12, 19, 51, 19) },
