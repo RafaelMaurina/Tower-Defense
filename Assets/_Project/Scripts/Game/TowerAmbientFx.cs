@@ -35,13 +35,25 @@ public static class TowerAmbientFx
             case "torre_canhao_abobora":
             case "torre_canhao_abobora_2":
             case "torre_canhao_abobora_3":
+                // vira para o alvo trocando de sprite (desenhos do nivel em TowerLevel.facing);
+                // o vento na folha brigaria com essa troca, entao fica desligado
+                if (Get<CannonAim>(tower).Begin(tower, tower.Stats.facing))
+                {
+                    var sway1 = tower.GetComponent<PixelRegionSway>();
+                    if (sway1 != null) sway1.enabled = false;
+                    break;
+                }
+                Get<PixelRegionSway>(tower).enabled = true;
                 Get<PixelRegionSway>(tower).Setup(sprite, new[]
                 {
                     new PixelRegionSway.Region(33, 1, 13, 9, false),     // cabinho e folha
                 });
                 break;
             case "torre_uvas":
-                Get<MuzzleSmoke>(tower).muzzle = PixelSprites.Local(sprite, 58f, 35f);
+            case "torre_uvas_2":
+            case "torre_uvas_3":
+                if (TowerShotFx.TryGetSpot(sprite, out TowerShotFx.Spot spot))
+                    Get<MuzzleSmoke>(tower).muzzle = PixelSprites.Local(sprite, spot.a.x, spot.a.y);
                 break;
         }
     }

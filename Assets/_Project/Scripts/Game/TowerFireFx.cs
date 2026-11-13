@@ -8,7 +8,7 @@ using UnityEngine;
 /// boca, baforada de fumaca e poeira no pe.
 /// Tudo em passos de pixel inteiro (1/32 de unidade), sem escala nem rotacao.
 /// Liga sozinho: escuta Tower.OnFired, nao precisa estar em cena nem em prefab.
-public class TowerFireFx : MonoBehaviour
+public partial class TowerFireFx : MonoBehaviour
 {
     const float Pixel = 1f / 32f;
     const float StepTime = .05f;         // segundos de cada passo do recuo e de cada quadro do clarao
@@ -22,12 +22,13 @@ public class TowerFireFx : MonoBehaviour
     static readonly int[] CannonFlashAt = { 0, 0, 1, 2 };   // quadro do clarao em cada passo
     static readonly Vector2Int[] CannonFlashOffset = { new Vector2Int(0, 0), new Vector2Int(-3, 1), new Vector2Int(-5, 2) };
     static readonly Vector3 CannonKick = new Vector3(-1f, .25f, 0f).normalized;   // para onde o tiro sai (a boca e a esquerda)
+    Vector3 cannonOut = CannonKick;      // direcao do cano no tiro atual (muda com o CannonAim)
     static readonly WaitForSeconds CannonWait = new WaitForSeconds(CannonTick);
 
     static TowerFireFx runner;
     static Sprite[] flashFrames;
     static Sprite[] whiteFrames;
-    static Sprite[] cannonFlash;   // 3 quadros: ~13 px, ~9 px e ~5 px
+    static Sprite[] cannonFlash;   // 3 quadros: ~17 px, ~11 px e ~7 px
     static Sprite[] smokePuffs;    // [0..2] claro 4x4, 3x3, 2x2 e [3..5] cinza medio
     static Sprite[] earthPuffs;    // [0..1] 3x3 e [2..3] 2x2, em 2 cores de terra
 
@@ -43,6 +44,7 @@ public class TowerFireFx : MonoBehaviour
         cannonFlash = null;
         smokePuffs = null;
         earthPuffs = null;
+        ResetPoseCaches();
         Tower.OnFired -= HandleFired;
         Tower.OnFired += HandleFired;
     }
@@ -68,7 +70,10 @@ public class TowerFireFx : MonoBehaviour
 
         if (kind == TowerShotFx.Kind.Pumpkin)   // canhao: a boca fica sempre a esquerda, nao depende do alvo
         {
-            StartCoroutine(Recoil(tower, rest, CannonKick, CannonRecoil, true));
+            // canhao que vira (nivel 1): recuo e clarao seguem a direcao do cano
+            var aimer = tower.GetComponent<CannonAim>();
+            cannonOut = aimer != null && aimer.enabled ? aimer.Facing : CannonKick;
+            StartCoroutine(Recoil(tower, rest, cannonOut, CannonRecoil, true));
             StartCoroutine(CannonBlast(rest + TowerShotFx.Muzzle(tower, kind), rest, order, sr != null ? sr.sprite : null));
             return;
         }
@@ -80,11 +85,23 @@ public class TowerFireFx : MonoBehaviour
 
         Vector3 center = sr != null ? sr.bounds.center - (tower.transform.position - rest) : rest;
         StartCoroutine(Recoil(tower, rest, dir, NormalRecoil, false));
-        if (kind == TowerShotFx.Kind.Hive) return;   // colmeia: so o recuo, sem clarao
-        if (kind == TowerShotFx.Kind.Grapes)         // metralhadora: clarao branco na boca do cano
-            StartCoroutine(Flash(Snap(rest + TowerShotFx.Muzzle(tower, kind)), order, WhiteFrames()));
-        else
-            StartCoroutine(Flash(Snap(center + dir * FlashDistance), order, FlashFrames()));
+        if (kind == TowerShotFx.Kind.Hive)           // colmeia: sem clarao, a toca cospe a abelha
+        {
+            HiveSpit(tower, rest, dir, order);
+            return;
+        }
+        if (kind == TowerShotFx.Kind.Grapes)         // metralhadora: clarao branco na boca, cano que treme, bagaco
+        {
+            StartCoroutine(Flash(Snap(rest + TowerShotFx.Muzzle(tower, kind)), order, NextWhiteFrames()));
+            GrapeBarrelAndSeed(tower, rest, order);
+            return;
+        }
+        if (kind == TowerShotFx.Kind.Scarecrow)      // espantalho: tranco do braco e palha, sem clarao
+        {
+            ScarecrowKick(tower, rest, dir, aim, order);
+            return;
+        }
+        StartCoroutine(Flash(Snap(center + dir * FlashDistance), order, FlashFrames()));
     }
 
     // 'toward' aponta para onde o tiro sai; a torre vai para o lado contrario, um passo por item de
@@ -122,10 +139,12 @@ public class TowerFireFx : MonoBehaviour
         for (int i = 0; i < smokeN; i++)
         {
             smoke[i] = TakeFx("Fumaca", order + 2);
-            sx[i] = -1f;
-            sy[i] = 0f;
-            vx[i] = Random.Range(-4f, -2f);
-            vy[i] = Random.Range(.5f, 2.5f);
+            // a fumaca sai na direcao do cano (para cima/baixo, abre para os dois lados)
+            float side = cannonOut.x < -.3f ? -1f : cannonOut.x > .3f ? 1f : (i % 2 == 0 ? -1f : 1f);
+            sx[i] = side;
+            sy[i] = cannonOut.y < -.5f ? -1f : 0f;
+            vx[i] = side * Random.Range(2f, 4f) * (Mathf.Abs(cannonOut.x) > .3f ? 1f : .5f);
+            vy[i] = Random.Range(.5f, 2.5f) + (cannonOut.y > .5f ? 1.5f : 0f);
             delay[i] = i / 2;
             shade[i] = i % 3 == 2 ? 3 : 0;
         }
@@ -152,7 +171,10 @@ public class TowerFireFx : MonoBehaviour
             {
                 int f = CannonFlashAt[t];
                 flash.sprite = cannonFlash[f];
-                flash.transform.position = Snap(mouth + new Vector3(CannonFlashOffset[f].x, CannonFlashOffset[f].y, 0f) * Pixel);
+                // o clarao se afasta da boca na direcao do cano (para o oeste fica igual ao desenho original)
+                Vector2Int o = CannonFlashOffset[f];
+                Vector3 along = cannonOut * Mathf.Abs(o.x) + Vector3.up * o.y;
+                flash.transform.position = Snap(mouth + along * Pixel);
                 flash.enabled = true;
             }
             else flash.enabled = false;
@@ -281,8 +303,8 @@ public class TowerFireFx : MonoBehaviour
 
         // clarao da boca: estrela irregular, branco no miolo, amarelo e borda laranja
         float[] lobes = PixelBlast.Lobes(21, 10, .45f);
-        float[] radius = { 6.5f, 4.5f, 2.5f };
-        int[] size = { 14, 10, 6 };
+        float[] radius = { 8.5f, 5.5f, 3.5f };
+        int[] size = { 18, 12, 8 };
         cannonFlash = new Sprite[3];
         for (int k = 0; k < 3; k++)
         {

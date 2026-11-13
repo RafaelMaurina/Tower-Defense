@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// Ajustes visuais do projetil por tipo de torre: de onde sai, tamanho e arco.
@@ -5,7 +6,7 @@ using UnityEngine;
 /// (a colmeia troca para torre_colmeia_sem_abelhas, mas o pivo e o tamanho sao os mesmos).
 public static class TowerShotFx
 {
-    public enum Kind { None, Grapes, Hive, Pumpkin }
+    public enum Kind { None, Grapes, Hive, Pumpkin, Scarecrow }
 
     static Sprite grapeSprite, beeSprite;
 
@@ -24,24 +25,94 @@ public static class TowerShotFx
         if (n.StartsWith("torre_uvas")) return Kind.Grapes;
         if (n.StartsWith("torre_colmeia")) return Kind.Hive;
         if (n.StartsWith("torre_canhao_abobora")) return Kind.Pumpkin;
+        if (n.StartsWith("torre_espantalho")) return Kind.Scarecrow;
         return Kind.None;
     }
+
+    /// Pontos de cada sprite (x, y de cima, como no Piskel). O desenho muda entre os niveis, entao a tabela
+    /// e por nome do sprite, nao por nivel. 'a' e a boca (espantalho: mao esquerda) e 'b' a mao direita (uvas: b e o ponto de saida do bagaco).
+    public struct Spot
+    {
+        public Vector2 a, b;
+        public Spot(float ax, float ay, float bx = 0f, float by = 0f) { a = new Vector2(ax, ay); b = new Vector2(bx, by); }
+    }
+
+    static readonly string[] Variants = { "_vento", "_tranco", "_pose" };
+
+    static readonly Dictionary<string, Spot> Spots = new Dictionary<string, Spot>
+    {
+        { "torre_uvas", new Spot(52, 35, 48, 43) },               // 2 canos: entre as duas bocas; b = onde o bagaco sai, sob o cano
+        { "torre_uvas_2", new Spot(58, 36, 48, 44) },             // 4 canos: ponta do feixe
+        { "torre_uvas_3", new Spot(58, 36, 48, 44) },
+        { "torre_colmeia", new Spot(32, 32) },                    // centro do buraco da toca
+        { "torre_colmeia_2", new Spot(32, 32) },
+        { "torre_colmeia_3", new Spot(32, 32) },
+        { "torre_canhao_abobora", new Spot(8, 25) },              // boca do canhao (esquerda); so visual
+        { "torre_canhao_abobora_2", new Spot(8, 25) },
+        { "torre_canhao_abobora_3", new Spot(8, 25) },
+        { "torre_canhao_abobora_sudoeste", new Spot(12, 30) },   // virando para o alvo (CannonAim): centro da boca
+        { "torre_canhao_abobora_sudeste", new Spot(51, 30) },
+        { "torre_canhao_abobora_sul", new Spot(32, 28) },
+        { "torre_canhao_abobora_noroeste", new Spot(8, 7) },
+        { "torre_canhao_abobora_norte", new Spot(32, 4) },
+        { "torre_canhao_abobora_nordeste", new Spot(56, 7) },
+        // niveis 2 e 3: tela de 68x68 com 3 px a mais na esquerda
+        { "torre_canhao_abobora_2_sudoeste", new Spot(15, 30) },
+        { "torre_canhao_abobora_2_sudeste", new Spot(54, 30) },
+        { "torre_canhao_abobora_2_sul", new Spot(35, 28) },
+        { "torre_canhao_abobora_2_noroeste", new Spot(11, 7) },
+        { "torre_canhao_abobora_2_norte", new Spot(35, 4) },
+        { "torre_canhao_abobora_2_nordeste", new Spot(59, 7) },
+        { "torre_canhao_abobora_3_sudoeste", new Spot(15, 30) },
+        { "torre_canhao_abobora_3_sudeste", new Spot(54, 30) },
+        { "torre_canhao_abobora_3_sul", new Spot(35, 28) },
+        { "torre_canhao_abobora_3_noroeste", new Spot(11, 7) },
+        { "torre_canhao_abobora_3_norte", new Spot(35, 4) },
+        { "torre_canhao_abobora_3_nordeste", new Spot(59, 7) },
+        { "torre_espantalho", new Spot(12, 19, 51, 19) },         // palma da mao esquerda e da direita
+        { "torre_espantalho_2", new Spot(12, 19, 51, 19) },
+        { "torre_espantalho_3", new Spot(12, 19, 51, 19) },
+    };
+
+    public static bool TryGetSpot(Sprite s, out Spot spot)
+    {
+        spot = default;
+        if (s == null) return false;
+        string n = s.name;
+        foreach (string mark in Variants)   // quadros gerados em memoria (vento, tranco, pose) valem como o original
+        {
+            int i = n.IndexOf(mark);
+            if (i > 0) n = n.Substring(0, i);
+        }
+        return Spots.TryGetValue(n, out spot);
+    }
+
+    /// Espantalho: lado da mao que atira, -1 esquerda ou +1 direita, conforme o alvo.
+    public static int HandSide(Tower tower, Vector3 aim) => aim.x < tower.transform.position.x ? -1 : 1;
 
     /// Posicao local (relativa a torre) de onde o tiro sai. A uva nao vira: a boca fica sempre a direita.
     public static Vector3 Muzzle(Tower tower, Kind kind)
     {
         Sprite s = tower.GetComponent<SpriteRenderer>().sprite;
-        if (kind == Kind.Grapes) return PixelSprites.Snap(PixelSprites.Local(s, 58f, 35f));
-        if (kind == Kind.Hive) return PixelSprites.Snap(PixelSprites.Local(s, 32f, 26f));   // toca (buraco escuro)
-        if (kind == Kind.Pumpkin) return PixelSprites.Snap(PixelSprites.Local(s, 8f, 25f)); // boca do canhao (esquerda); so visual
-        return Vector3.zero;
+        if (!TryGetSpot(s, out Spot spot)) return Vector3.zero;
+        return PixelSprites.Snap(PixelSprites.Local(s, spot.a.x, spot.a.y));
     }
 
-    /// Ponto de onde o projetil nasce. A abobora nasce no centro (posicao logica); so o desenho sai da boca.
-    public static Vector3 Origin(Tower tower)
+    /// Mao do espantalho que atira (lado -1 ou +1), em posicao local.
+    public static Vector3 Hand(Tower tower, int side)
+    {
+        Sprite s = tower.GetComponent<SpriteRenderer>().sprite;
+        if (!TryGetSpot(s, out Spot spot)) return Vector3.zero;
+        Vector2 v = side < 0 ? spot.a : spot.b;
+        return PixelSprites.Snap(PixelSprites.Local(s, v.x, v.y));
+    }
+
+    /// Ponto de onde o projetil nasce (target: onde o alvo esta, so o espantalho usa). A abobora nasce no centro (posicao logica); so o desenho sai da boca.
+    public static Vector3 Origin(Tower tower, Vector3 target)
     {
         Kind k = KindOf(tower);
         if (k == Kind.Grapes || k == Kind.Hive) return tower.transform.position + Muzzle(tower, k);
+        if (k == Kind.Scarecrow) return tower.transform.position + Hand(tower, HandSide(tower, target));   // o milho sai da mao do lado do alvo
         return tower.transform.position;
     }
 

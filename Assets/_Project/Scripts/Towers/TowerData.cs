@@ -10,6 +10,10 @@ public struct TowerLevel
     public float range;       // em unidades de mundo
     public float fireRate;    // tiros por segundo
     public Sprite sprite;
+    // Opcional: a torre vira para o alvo trocando de sprite (CannonAim). 8 setores no sentido horario a
+    // partir do leste: leste, sudeste, sul, sudoeste, oeste, noroeste, norte, nordeste. Um desenho pode
+    // repetir em dois setores (o canhao usa o sudeste no leste e o sudoeste no oeste).
+    public Sprite[] facing;
 }
 
 /// Dados de uma torre, com 3 niveis. Joao le o custo daqui ao construir no canteiro.
