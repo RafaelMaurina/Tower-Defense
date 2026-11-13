@@ -13,25 +13,16 @@ MonoBehaviour:
   m_Name: Wave_Teste_Nivel_2_Verao
   m_EditorClassIdentifier: Assembly-CSharp::WaveData
   levelScene: Nivel_2_Verao
+  order: 1
   entries:
-  - enemy: {fileID: 11400000, guid: 019df4c946bda463fa4b05b3dad1bb5d, type: 2}
-    enemyPrefab: {fileID: 1329473050634788178, guid: d305d4ea7358b42f29e21d4e9bedb4f2, type: 3}
-    count: 5
-    spawnInterval: 1.5
-    pathIndex: -1
-  - enemy: {fileID: 11400000, guid: e90405cf85f224377bc8698614644c1a, type: 2}
-    enemyPrefab: {fileID: 6328205415321543820, guid: c4dcc808a6e174297bf237afcf7ee625, type: 3}
-    count: 3
-    spawnInterval: 1.5
-    pathIndex: -1
   - enemy: {fileID: 11400000, guid: fe799fb8b8b1f4a6391112dba83e5b09, type: 2}
     enemyPrefab: {fileID: 8250906917437966810, guid: a8f6821ddbd5148deb5e8dcae06dea7c, type: 3}
-    count: 4
+    count: 5
     spawnInterval: 1.5
-    pathIndex: -1
-  - enemy: {fileID: 11400000, guid: e7226e77e9fc04085bdab0f5bfa36f23, type: 2}
-    enemyPrefab: {fileID: 993138477808019525, guid: e5bd7a5834f8944cd9e5964c59c8baa4, type: 3}
-    count: 2
-    spawnInterval: 1.5
-    pathIndex: -1
-  pauseAfter: 4
+    pathIndex: 0
+  - enemy: {fileID: 11400000, guid: 6c49b98221d3343a3a0eb958c0c92fe6, type: 2}
+    enemyPrefab: {fileID: 3352824147595479034, guid: 30f98cdda0d14449dab6db21cc4d1111, type: 3}
+    count: 3
+    spawnInterval: 2
+    pathIndex: 0
+  pauseAfter: 5

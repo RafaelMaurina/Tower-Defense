@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94420fcabfa14ca78e60f3b77d79da2f, type: 3}
+  m_Name: Wave_Teste_Nivel_3_Outono_03
+  m_EditorClassIdentifier: Assembly-CSharp::WaveData
+  levelScene: Nivel_3_Outono
+  order: 3
+  entries:
+  - enemy: {fileID: 11400000, guid: 194ed23d0c5774f0196cb1910a062cc5, type: 2}
+    enemyPrefab: {fileID: 5711491336540663649, guid: 04851250a9d3647298c3e5e17becb49b, type: 3}
+    count: 5
+    spawnInterval: 1.5
+    pathIndex: 0
+  - enemy: {fileID: 11400000, guid: 6c49b98221d3343a3a0eb958c0c92fe6, type: 2}
+    enemyPrefab: {fileID: 3352824147595479034, guid: 30f98cdda0d14449dab6db21cc4d1111, type: 3}
+    count: 4
+    spawnInterval: 1.4
+    pathIndex: 1
+  - enemy: {fileID: 11400000, guid: 4816dad7c1344cf9a8c1929a65689101, type: 2}
+    enemyPrefab: {fileID: 951239957298514224, guid: 1fce261f981f49db9d808e299606a87c, type: 3}
+    count: 4
+    spawnInterval: 1.5
+    pathIndex: 0
+  - enemy: {fileID: 11400000, guid: e7226e77e9fc04085bdab0f5bfa36f23, type: 2}
+    enemyPrefab: {fileID: 993138477808019525, guid: e5bd7a5834f8944cd9e5964c59c8baa4, type: 3}
+    count: 2
+    spawnInterval: 2.5
+    pathIndex: 1
+  pauseAfter: 5

@@ -13,20 +13,21 @@ MonoBehaviour:
   m_Name: Wave_Bonus_Prova_Final
   m_EditorClassIdentifier: Assembly-CSharp::WaveData
   levelScene: Nivel_4_Campus
+  order: 1
   entries:
   - enemy: {fileID: 11400000, guid: 1ddb501067994703b5bfc17c52bb1834, type: 2}
     enemyPrefab: {fileID: 445989406553587258, guid: fe9da9436b2c446a9c76294d2be1ba45, type: 3}
     count: 4
     spawnInterval: 1.5
-    pathIndex: -1
+    pathIndex: 0
   - enemy: {fileID: 11400000, guid: 3f80f5f31a3f4e258c587cf205ad55a2, type: 2}
     enemyPrefab: {fileID: 411163459883138420, guid: f00f4c28ec6e4029ab34015b5552b097, type: 3}
     count: 4
     spawnInterval: 1.5
-    pathIndex: -1
+    pathIndex: 0
   - enemy: {fileID: 11400000, guid: 195c439ac0cf4730b6275e234dc56476, type: 2}
     enemyPrefab: {fileID: 175490127688983361, guid: 9952d9342cfc49d4bacf4765d41e05b8, type: 3}
     count: 1
     spawnInterval: 0
-    pathIndex: -1
+    pathIndex: 0
   pauseAfter: 4

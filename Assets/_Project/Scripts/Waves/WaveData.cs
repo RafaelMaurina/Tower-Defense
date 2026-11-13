@@ -17,6 +17,7 @@ public class WaveData : ScriptableObject
 {
     [Tooltip("Nome da cena do nivel que usa estas ondas, por exemplo Nivel_1_Primavera.")]
     public string levelScene;
+    [Min(1)] public int order = 1;
     public WaveEntry[] entries;
     [Min(0f)] public float pauseAfter = 5f;
 }

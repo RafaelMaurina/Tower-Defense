@@ -95,6 +95,16 @@ public static class MontarNiveis
             macieiras = P(1,9), laranjeiras = P(26,4),
             galinheiro = new Vector2Int(9,1), galinha = new Vector2Int(8,2), galo = new Vector2Int(13,1),
             pasto = new Vector2(18.5f, 10.5f) },
+        // #76: arena funcional; a arte propria do campus continua na #50.
+        new Nivel { id = 4, nome = "Campus", estacao = 3, cultura = "tile_abobora",
+            caminhos = new[] { P(-1,11, 6,11, 6,5, 14,5, 14,11, 22,11, 22,6, 25,6) },
+            celeiro = new RectInt(26,5,4,4),
+            canteiros = P(4,12, 5,8, 7,6, 10,4, 13,7, 15,10, 18,12, 21,9, 23,7, 24,4),
+            plantacao = P(2,2, 4,2), poco = new Vector2Int(17,7),
+            cogumelos = P(2,8), milho = P(26,1,27,1),
+            macieiras = P(1,13), laranjeiras = P(25,12),
+            galinheiro = new Vector2Int(9,1), galinha = new Vector2Int(8,2), galo = new Vector2Int(13,1),
+            pasto = new Vector2(2,6) },
     };
 
     [MenuItem("Defesa da Colheita/Gerar niveis")]

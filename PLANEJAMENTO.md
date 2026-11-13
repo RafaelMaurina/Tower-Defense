@@ -149,3 +149,10 @@ Cada tarefa e uma **issue** com dono, rotulo de area (`arte-audio`, `combate`, `
 ## 8. Fora do escopo
 
 Realidade virtual, multiplayer, salvamento em nuvem, 4a estacao (so se sobrar tempo e a arte estiver pronta).
+
+
+## 9. Integração de ondas e bônus (#32 / #76)
+
+Decisão: a campanha termina ao vencer Outono e desbloqueia permanentemente o bônus opcional no menu. A cena é `Nivel_4_Campus`, gerada com um caminho, base e canteiros; a arte atual é provisória até #50. Bônus usa partida nova e ranking separado da campanha, mantendo a mesma fórmula. A seleção completa de fases será uma etapa posterior.
+
+As estações passam a três ondas com ordem explícita em WaveData.order. Raposa aparece no Verão; Gafanhoto e Pato no Outono. Os arquivos Enemy_Rato/Inimigo_Rato correspondem ao Pato. Referências, distribuição, limites da validação e roteiro de testes em [Docs/ONDAS_E_BONUS.md](Docs/ONDAS_E_BONUS.md). Balanceamento final e Play permanecem pendentes de teste; não equivalem à validação da build Windows #46.

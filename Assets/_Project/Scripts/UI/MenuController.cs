@@ -40,6 +40,8 @@ public class MenuController : MonoBehaviour
     Transform menuRoot;
     GameObject mainMenuContent;
     GameObject difficultyMenu;
+    string selectedLevel;
+    bool loading;
     GameDifficulty difficulty = GameDifficulty.Easy;
 
     void Start()
@@ -79,6 +81,23 @@ public class MenuController : MonoBehaviour
             new Vector2(.30f, .19f), new Vector2(.70f, .31f), ShowInfo);
         CreateSpriteButton(mainMenuContent.transform, "Sair", exitNormalSprite, exitSelectedSprite,
             new Vector2(.30f, .02f), new Vector2(.70f, .14f), ExitGame);
+        var bonus = CreateSpriteButton(mainMenuContent.transform, "A Prova Final",
+            Resources.Load<Sprite>("hud/botao_normal"), Resources.Load<Sprite>("hud/botao_selecionado"),
+            new Vector2(.73f,.20f), new Vector2(.96f,.30f), () => {
+                if (!CampaignProgress.BonusUnlocked || loading) return;
+                selectedLevel = CampaignProgress.BonusScene;
+                OpenDifficultyMenu();
+            });
+        bonus.GetComponent<Button>().interactable = CampaignProgress.BonusUnlocked;
+        bonus.color = CampaignProgress.BonusUnlocked ? Color.white : new Color(.6f,.6f,.6f);
+        var bonusTitle = MakeText(bonus.transform, "A Prova Final", new Vector2(.08f,.1f), new Vector2(.92f,.9f),28,Color.white);
+        bonusTitle.raycastTarget = false;
+        MakeText(mainMenuContent.transform, CampaignProgress.BonusUnlocked ? "Bônus desbloqueado · campus à noite" : "Vença o Outono para desbloquear",
+            new Vector2(.72f,.13f),new Vector2(.97f,.20f),20,Color.white).raycastTarget = false;
+        var bonusRanking = MakeText(mainMenuContent.transform, "Ranking do bônus",new Vector2(.73f,.07f),new Vector2(.96f,.13f),24,Color.white);
+        var bonusRankingButton = bonusRanking.gameObject.AddComponent<Button>();
+        bonusRankingButton.targetGraphic = bonusRanking;
+        bonusRankingButton.onClick.AddListener(() => ShowRankingFor(true));
         // O fundo é filho direto do Canvas e deve ficar atrás do conteúdo principal.
         mainMenuContent.transform.SetAsLastSibling();
     }
@@ -103,6 +122,8 @@ public class MenuController : MonoBehaviour
 
     void StartGame()
     {
+        if (loading) return;
+        selectedLevel = firstLevel;
         // Jogar sempre exige confirmar uma dificuldade antes de carregar a fase.
         OpenDifficultyMenu();
     }
@@ -110,7 +131,7 @@ public class MenuController : MonoBehaviour
     IEnumerator LoadGameAfterClick()
     {
         yield return new WaitForSecondsRealtime(0.12f);
-        SceneManager.LoadScene(firstLevel);
+        SceneManager.LoadScene(selectedLevel);
     }
 
     void ExitGame() => StartCoroutine(ExitAfterClick());
@@ -221,6 +242,15 @@ public class MenuController : MonoBehaviour
 
     void SelectDifficulty(GameDifficulty selectedDifficulty)
     {
+        if (loading) return;
+        if (selectedLevel == CampaignProgress.BonusScene && !CampaignProgress.BonusUnlocked) return;
+        if (!Application.CanStreamedLevelBeLoaded(selectedLevel))
+        {
+            CloseDifficultyMenu();
+            InfoPanel.Show("Fase indisponível. No editor, use Defesa da Colheita > Gerar niveis antes de jogar ou gerar a build.", title: "Fase indisponível");
+            return;
+        }
+        loading = true;
         difficulty = selectedDifficulty;
         GameManager.SetDifficulty(difficulty);
         CloseDifficultyMenu();
@@ -242,10 +272,12 @@ public class MenuController : MonoBehaviour
         new[] { "Rafael (@RafaelMaurina), arte e áudio", "Fabio (@fabioov), combate", "João (@Joao-Althaus), jogo e interface" },
         "Informações");
 
-    void ShowRanking()
+    void ShowRanking() => ShowRankingFor(false);
+
+    void ShowRankingFor(bool bonus)
     {
-        var entries = LocalRanking.GetEntries();
-        string message = "RANKING LOCAL";
+        var entries = LocalRanking.GetEntries(bonus);
+        string message = bonus ? "BÔNUS · A PROVA FINAL" : "RANKING DA CAMPANHA";
         for (int i = 0; i < entries.Count; i++) message += $"\n{i + 1}. {entries[i].score} pontos, {entries[i].difficulty}, {entries[i].date}";
         if (entries.Count == 0) message += "\nAinda não há partidas concluídas.";
         InfoPanel.Show(message, title: "Ranking");

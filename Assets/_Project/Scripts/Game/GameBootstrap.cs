@@ -38,6 +38,10 @@ public class GameBootstrap : MonoBehaviour
         string currentScene = SceneManager.GetActiveScene().name;
         WaveData[] levelWaves = System.Array.FindAll(waves ?? new WaveData[0], wave =>
             wave != null && wave.levelScene == currentScene);
+        System.Array.Sort(levelWaves, (a, b) => {
+            int order = a.order.CompareTo(b.order);
+            return order != 0 ? order : string.CompareOrdinal(a.name, b.name);
+        });
         spawner.Configure(levelWaves);
 
         foreach (BuildPlot plot in GetComponentsInChildren<BuildPlot>(true))
@@ -49,11 +53,15 @@ public class GameBootstrap : MonoBehaviour
         ApplyDifficulty();
     }
 
+    bool CurrentIsBonus() => SceneManager.GetActiveScene().name == CampaignProgress.BonusScene;
+
     void ApplyDifficulty()
     {
         Light2D light = FindAnyObjectByType<Light2D>();
         if (light == null) return;
-        switch (GameManager.Difficulty)
+        // O campus acontece sempre a noite, independentemente da dificuldade escolhida.
+        var lighting = CurrentIsBonus() ? GameDifficulty.Hard : GameManager.Difficulty;
+        switch (lighting)
         {
             case GameDifficulty.Easy:
                 light.color = new Color(1f, .95f, .78f);
