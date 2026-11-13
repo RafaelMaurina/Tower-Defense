@@ -19,16 +19,43 @@ MonoBehaviour:
     range: 3
     fireRate: 0.5
     sprite: {fileID: 21300000, guid: 752ebd83a6874106a242cfba8ec02ec9, type: 3}
+    facing:
+    - {fileID: 21300000, guid: 744d6c89bf7249929ead0bc37844edd9, type: 3}
+    - {fileID: 21300000, guid: 744d6c89bf7249929ead0bc37844edd9, type: 3}
+    - {fileID: 21300000, guid: 463402bb92f244d0be2f4e9d80c0bb11, type: 3}
+    - {fileID: 21300000, guid: 8e9f2596fab54a0d92dd75ee198b8060, type: 3}
+    - {fileID: 21300000, guid: 8e9f2596fab54a0d92dd75ee198b8060, type: 3}
+    - {fileID: 21300000, guid: 896ca123ae36425e99defdb1d0cc5230, type: 3}
+    - {fileID: 21300000, guid: 2c41b1574d06438882750fd29f0b4979, type: 3}
+    - {fileID: 21300000, guid: cfc01cfac670411eba4c30a2609396a9, type: 3}
   - cost: 90
     damage: 32
     range: 3.3
     fireRate: 0.6
     sprite: {fileID: 21300000, guid: b52a1afc91d54f55ae63767a6c0e719f, type: 3}
+    facing:
+    - {fileID: 21300000, guid: 155571a6c72c489d97e81284f722a7cc, type: 3}
+    - {fileID: 21300000, guid: 155571a6c72c489d97e81284f722a7cc, type: 3}
+    - {fileID: 21300000, guid: 99a71dd708df46e7bbb233edfe375dfb, type: 3}
+    - {fileID: 21300000, guid: a50aa87aa74549b1b3c2d914106d03e9, type: 3}
+    - {fileID: 21300000, guid: a50aa87aa74549b1b3c2d914106d03e9, type: 3}
+    - {fileID: 21300000, guid: d1324ffc22cd4d46b36d55e14c6a24b0, type: 3}
+    - {fileID: 21300000, guid: 0ccf25d00153460db698585b35124f44, type: 3}
+    - {fileID: 21300000, guid: 352548316aec4e8b853b0f794711bb12, type: 3}
   - cost: 130
     damage: 50
     range: 3.7
     fireRate: 0.7
     sprite: {fileID: 21300000, guid: 38a1bc226d4d432ea40847f9bec77c86, type: 3}
+    facing:
+    - {fileID: 21300000, guid: 740f2e6e3958462da28a678ec80e877e, type: 3}
+    - {fileID: 21300000, guid: 740f2e6e3958462da28a678ec80e877e, type: 3}
+    - {fileID: 21300000, guid: 7c25edf16b314442a99c93a50ac893f7, type: 3}
+    - {fileID: 21300000, guid: d020056c8ece432488a8aff0a0156669, type: 3}
+    - {fileID: 21300000, guid: d020056c8ece432488a8aff0a0156669, type: 3}
+    - {fileID: 21300000, guid: 45c85234042542038bbe5a545c325a62, type: 3}
+    - {fileID: 21300000, guid: e6cceb1a2da842e8adfbed46be537b6b, type: 3}
+    - {fileID: 21300000, guid: 2d1db2eb35eb46dc800c522d95aaf4fa, type: 3}
   hitsFlying: 0
   projectile: {fileID: 320124585178600264, guid: 111e074bfe2f8434584f618a5572172b, type: 3}
   towerPrefab: {fileID: 7351880071982371511, guid: f12ffd272c8c9407490d2829d8ddb6f2, type: 3}
