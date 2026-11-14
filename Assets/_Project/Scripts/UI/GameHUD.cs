@@ -47,7 +47,9 @@ public class GameHUD : MonoBehaviour
     BuildPlot[] buildPlots;
     BuildPlot pendingBuildPlot;
     TowerData buildSelection, hoveredCard;
-    SpriteRenderer buildGhost, buildRadius, plotMarker;
+    SpriteRenderer buildGhost, buildRadius;
+    BuildPlot hiddenToolsPlot;
+    readonly Dictionary<BuildPlot, PlotFx> plotFx = new Dictionary<BuildPlot, PlotFx>();
     Text buildHint;
     bool draggingCard;
     readonly List<RaycastResult> buildRaycastHits = new List<RaycastResult>(16);
@@ -212,7 +214,6 @@ public class GameHUD : MonoBehaviour
         if (rangeRenderer != null) Destroy(rangeRenderer.gameObject);
         if (buildGhost != null) Destroy(buildGhost.gameObject);
         if (buildRadius != null) Destroy(buildRadius.gameObject);
-        if (plotMarker != null) Destroy(plotMarker.gameObject);
         if (current == this) current = null;
     }
     void OnDestroy()
@@ -225,7 +226,11 @@ public class GameHUD : MonoBehaviour
         UpdateWaveControls();
         if (bottomBarArea != null)
         {
-            bool visible = bottomCardFeedback.Count > 0 && !IsOverlayOpen && GameManager.State == GameState.Playing;
+            // a barra so aparece na espera entre rodadas; durante a onda, so ao clicar num canteiro
+            bool waiting = waveSpawner == null || !waveSpawner.IsWaveActive;
+            bool visible = bottomCardFeedback.Count > 0 && !IsOverlayOpen && GameManager.State == GameState.Playing &&
+                (waiting || pendingBuildPlot != null);
+            if (!waiting && pendingBuildPlot == null && buildSelection != null && !draggingCard) CancelBuildSelection();
             if (bottomBarArea.gameObject.activeSelf != visible) bottomBarArea.gameObject.SetActive(visible);
         }
         if (Keyboard.current == null) return;
@@ -531,24 +536,143 @@ public class GameHUD : MonoBehaviour
     {
         if (buildGhost != null) buildGhost.enabled=false;
         if (buildRadius != null) buildRadius.enabled=false;
-        if (plotMarker != null) plotMarker.enabled=false;
     }
+    // Dica de que o canteiro vazio e clicavel, discreta: contorno branco de 1 px so no canteiro sob o
+    // mouse ou selecionado, e um brilhinho raro na espera entre rodadas.
+    sealed class PlotFx
+    {
+        public readonly List<SpriteRenderer> outline = new List<SpriteRenderer>();
+        public SpriteRenderer glint;
+        public float offset;
+    }
+
+    const float GlintEvery = 4.5f;
+    static Sprite glintSmall, glintBig;
+
+    void UpdatePlotOutlines()
+    {
+        if (buildPlots == null) return;
+        bool canBuild = !IsOverlayOpen && GameManager.State == GameState.Playing;
+        bool waiting = waveSpawner == null || !waveSpawner.IsWaveActive;
+        BuildPlot hover = canBuild && !draggingCard ? PlotUnderPointer() : null;
+        float now = Time.unscaledTime;
+        foreach (var plot in buildPlots)
+        {
+            if (plot == null) continue;
+            if (!plotFx.TryGetValue(plot, out PlotFx fx))
+            {
+                fx = MakePlotFx(plot);
+                plotFx[plot] = fx;
+            }
+            bool show = canBuild && plot.Placed == null;
+
+            bool strong = show && (plot == pendingBuildPlot || plot == hover);
+            foreach (var o in fx.outline) if (o != null) o.enabled = strong;
+
+            if (fx.glint != null)
+            {
+                float cycle = (now + fx.offset) % GlintEvery;
+                bool on = show && waiting && cycle < .6f;
+                fx.glint.enabled = on;
+                if (on) fx.glint.sprite = cycle > .2f && cycle < .4f ? glintBig : glintSmall;
+            }
+        }
+    }
+
+    PlotFx MakePlotFx(BuildPlot plot)
+    {
+        var fx = new PlotFx { offset = UnityEngine.Random.Range(0f, GlintEvery) };
+        var sources = new List<SpriteRenderer>();
+        var plotRenderer = plot.GetComponent<SpriteRenderer>();
+        if (plotRenderer != null) sources.Add(plotRenderer);
+        if (plot.ferramentas != null) sources.AddRange(plot.ferramentas.GetComponentsInChildren<SpriteRenderer>(true));
+        Bounds bounds = default;
+        bool any = false;
+        foreach (var r in sources)
+        {
+            if (r.sprite == null) continue;
+            if (!any) { bounds = r.bounds; any = true; }
+            else bounds.Encapsulate(r.bounds);
+        }
+        if (!any) return fx;
+
+        // contorno que segue o desenho: 4 silhuetas lisas deslocadas 1 px, uma para cada lado, atras do original
+        Vector2[] dirs = { Vector2.left, Vector2.right, Vector2.up, Vector2.down };
+        foreach (var src in sources)
+        {
+            if (src.sprite == null) continue;
+            foreach (var d in dirs)
+            {
+                var go = new GameObject("Contorno");
+                go.transform.SetParent(src.transform, false);
+                Vector3 scale = src.transform.lossyScale;
+                go.transform.localPosition = new Vector3(d.x / 32f / scale.x, d.y / 32f / scale.y, 0f);
+                var r = go.AddComponent<SpriteRenderer>();
+                r.sprite = Silhouette(src.sprite);
+                r.sortingLayerID = src.sortingLayerID;
+                r.sortingOrder = src.sortingOrder - 1;
+                r.color = new Color(1f, .97f, .88f, 1f);   // branco quente
+                r.enabled = false;
+                fx.outline.Add(r);
+            }
+        }
+
+        if (glintSmall == null) MakeGlintSprites();
+        var star = new GameObject("Brilhinho");
+        star.transform.position = PixelSprites.Snap(new Vector3(bounds.center.x + .28f, bounds.center.y + .3f, 0f));
+        fx.glint = star.AddComponent<SpriteRenderer>();
+        fx.glint.sprite = glintSmall;
+        fx.glint.sortingOrder = DrawOrder.ForY(plot.transform.position.y) + 3;
+        fx.glint.enabled = false;
+        return fx;
+    }
+
+    // Silhueta lisa (branca) do sprite: o contorno ganha a cor pura, sem herdar o escuro do desenho.
+    static readonly Dictionary<Sprite, Sprite> silhouettes = new Dictionary<Sprite, Sprite>();
+    static Sprite Silhouette(Sprite source)
+    {
+        if (silhouettes.TryGetValue(source, out Sprite made) && made != null) return made;
+        Color32[] px = PixelSprites.Read(source, out int w, out int h);
+        if (px == null) return source;
+        for (int i = 0; i < px.Length; i++)
+            px[i] = px[i].a > 40 ? new Color32(255, 255, 255, 255) : new Color32(0, 0, 0, 0);
+        made = PixelSprites.MakeLike(source, px, w, h, "_silhueta");
+        silhouettes[source] = made;
+        return made;
+    }
+
+    static void MakeGlintSprites()
+    {
+        var o = new Color32(0, 0, 0, 0);
+        Color32 c = new Color32(255, 250, 215, 255), e = new Color32(255, 235, 150, 255);
+        var small = new Color32[9];
+        for (int i = 0; i < 9; i++) small[i] = o;
+        small[4] = c; small[1] = e; small[3] = e; small[5] = e; small[7] = e;
+        glintSmall = PixelSprites.Make(small, 3, 3, new Vector2(.5f, .5f), 32f, "brilho_1");
+        var big = new Color32[25];
+        for (int i = 0; i < 25; i++) big[i] = o;
+        foreach (int i in new[] { 2, 7, 10, 11, 13, 14, 17, 22 }) big[i] = e;
+        big[12] = c;
+        glintBig = PixelSprites.Make(big, 5, 5, new Vector2(.5f, .5f), 32f, "brilho_2");
+    }
+
+    // O carrinho some enquanto a previa da torre aparece no canteiro, como acontece ao construir.
+    void RestorePlotTools()
+    {
+        if (hiddenToolsPlot == null) return;
+        if (hiddenToolsPlot.Placed == null && hiddenToolsPlot.ferramentas != null) hiddenToolsPlot.ferramentas.SetActive(true);
+        hiddenToolsPlot = null;
+    }
+
     void LateUpdate()
     {
+        RestorePlotTools();
         HideBuildPreview();
+        UpdatePlotOutlines();
         if (IsOverlayOpen || GameManager.State != GameState.Playing) { hoveredCard=null; return; }
         if (Mouse.current == null || Camera.main == null) return;
         if (Mouse.current.rightButton.wasPressedThisFrame) { CancelBuildSelection(); return; }
         if (pendingBuildPlot != null && pendingBuildPlot.Placed != null) pendingBuildPlot=null;
-        if (pendingBuildPlot != null)
-        {
-            if (plotMarker == null) plotMarker=BuildVisual("Canteiro selecionado",RangeSprite());
-            plotMarker.transform.position=pendingBuildPlot.transform.position;
-            plotMarker.transform.localScale=Vector3.one*.7f;
-            plotMarker.color=new Color(.3f,1f,1f,.9f);
-            plotMarker.sortingOrder=DrawOrder.ForY(pendingBuildPlot.transform.position.y)+5;
-            plotMarker.enabled=true;
-        }
         TowerData data=hoveredCard != null && pendingBuildPlot != null && !draggingCard ? hoveredCard : buildSelection;
         if (data == null) return;
         var plot=draggingCard ? PlotUnderPointer() : pendingBuildPlot != null ? pendingBuildPlot : PlotUnderPointer();
@@ -556,6 +680,7 @@ public class GameHUD : MonoBehaviour
         if (plot == null && overUi && !draggingCard) return;
         Vector3 position=plot != null ? plot.transform.position+new Vector3(0,-.35f,0) : Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
         position.z=0;
+        if (plot != null && plot.Placed == null && plot.ferramentas != null) { plot.ferramentas.SetActive(false); hiddenToolsPlot=plot; }
         bool valid=plot != null && plot.Placed == null && plot.Accepts(data) && GameManager.Money>=Mathf.Max(0,data.levels[0].cost);
         var prefabSprite=data.towerPrefab.GetComponent<SpriteRenderer>();
         if (buildGhost == null) buildGhost=BuildVisual("Prévia da torre",null);
@@ -564,7 +689,7 @@ public class GameHUD : MonoBehaviour
         buildGhost.transform.localScale=data.towerPrefab.transform.localScale;
         buildGhost.sortingLayerID=prefabSprite != null ? prefabSprite.sortingLayerID : 0;
         buildGhost.sortingOrder=DrawOrder.ForY(position.y)+5;
-        buildGhost.color=valid ? new Color(.75f,1f,.75f,.7f) : new Color(1f,.4f,.4f,.65f);
+        buildGhost.color=valid ? new Color(1f,1f,1f,.8f) : new Color(1f,.45f,.45f,.75f);
         buildGhost.enabled=true;
         if (buildRadius == null) buildRadius=BuildVisual("Alcance da prévia",RangeSprite());
         buildRadius.transform.position=position;
@@ -894,7 +1019,7 @@ public class GameHUD : MonoBehaviour
             rangeRenderer = new GameObject("Alcance da torre").AddComponent<SpriteRenderer>();
             rangeRenderer.sprite = RangeSprite();
         }
-        rangeRenderer.transform.position = plot.transform.position;
+        rangeRenderer.transform.position = plot.transform.position + new Vector3(0f, -.35f, 0f);   // pe da torre, de onde o alcance e medido
         rangeRenderer.transform.localScale = Vector3.one * radius;
         rangeRenderer.sortingOrder = DrawOrder.ForY(plot.transform.position.y) - 1;
         rangeRenderer.color = selected ? new Color(1f, .87f, .39f, .86f) : new Color(.7f, .92f, 1f, .6f);
