@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
-/// Clique em um canteiro abre a escolha de torre ou as acoes da torre colocada.
+/// Canteiros vazios usam o HUD inferior; torres construidas abrem suas acoes.
 [RequireComponent(typeof(Collider2D))]
 public class BuildPlot : MonoBehaviour
 {
@@ -34,14 +34,17 @@ public class BuildPlot : MonoBehaviour
             GameManager.State != GameState.Playing) return;
 
         if (placed != null) GameHUD.ShowTowerActions(this);
-        else GameHUD.ShowTowerChoices(this, availableTowers);
+        else GameHUD.SelectBuildPlot(this);
     }
 
     public void SetAvailableTowers(TowerData[] catalog) => availableTowers = catalog;
 
+    public bool Accepts(TowerData data) => data != null && availableTowers != null &&
+        System.Array.IndexOf(availableTowers, data) >= 0;
+
     public bool Build(TowerData data)
     {
-        if (placed != null || data == null || data.towerPrefab == null || data.levels == null || data.levels.Length == 0)
+        if (placed != null || !Accepts(data) || data.towerPrefab == null || data.levels == null || data.levels.Length == 0)
             return false;
 
         Tower prefabTower = data.towerPrefab.GetComponent<Tower>();

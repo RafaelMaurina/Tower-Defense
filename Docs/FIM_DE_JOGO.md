@@ -1,8 +1,8 @@
 # Telas de fim de jogo
 
-As telas de vitória e derrota usam o mapa da partida ao fundo, com escurecimento suave. As artes novas ficam em `Assets/_Project/Resources/hud/fianis_submenu` (nome solicitado), com exterior transparente, importação Sprite Single, Point, sem compressão nem mipmaps e PPU 32.
+As telas de vitória e derrota usam o mapa da partida ao fundo, com escurecimento suave. As artes novas ficam em `Assets/_Project/Resources/hud/finais_submenu`, com exterior transparente, importação Sprite Single, Point, sem compressão nem mipmaps e PPU 32.
 
-`GameHUD.Result` monta um painel com proporção fixa 1,65:1, estatísticas à esquerda, torre de maior dano à direita e os botões existentes Recomeçar, Menu e Voltar embaixo. Os textos e valores são dinâmicos; somente Vitória/Derrota estão desenhados na moldura. Voltar mantém o comportamento anterior de retornar ao menu, sem retomar uma partida encerrada.
+`GameHUD.Result` monta um painel com proporção fixa 1,65:1, estatísticas à esquerda, torre de maior dano à direita e os botões existentes Recomeçar e Menu centralizados embaixo. Os textos e valores são dinâmicos; somente Vitória/Derrota estão desenhados na moldura. O botão Voltar foi removido por duplicar a ação de Menu.
 
 `GameResult.topDamageSprite` é uma referência visual não serializada, capturada quando a torre assume a liderança de dano. A arte permanece disponível mesmo se ela for vendida. O ranking mantém seu formato de persistência atual. Uma partida sem dano registrado mostra uma mensagem no lugar do retrato.
 
@@ -19,4 +19,4 @@ Geradas pela ferramenta integrada de imagens, com as quatro referências forneci
 
 ## Conferência
 
-Concluir uma partida em vitória e outra em derrota. Conferir pontuação, rodada, contagem de inimigos, nome/sprite/dano da torre e estados dos três botões. Conferir também derrota sem torre causando dano e torre líder vendida antes do fim. Testar Full HD e janela menor; as proporções do painel são preservadas. Recomeçar reinicia o nível; Menu e Voltar retornam ao menu principal.
+Concluir uma partida em vitória e outra em derrota. Conferir pontuação, rodada, contagem de inimigos, nome/sprite/dano da torre e estados dos dois botões. Conferir também derrota sem torre causando dano e torre líder vendida antes do fim. Testar Full HD e janela menor; as proporções do painel são preservadas. Recomeçar reinicia o nível; Menu retorna ao menu principal.
