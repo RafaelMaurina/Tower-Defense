@@ -44,4 +44,4 @@ O fundo foi reutilizado diretamente do anexo. As cartas foram conferidas visualm
 
 ## HUD atual
 
-A interface usa hud_conjunto_contraste.png com nomes brancos e preços dinâmicos. Largura, altura e deslocamento inferior são configuráveis no GameHUD; as cartas individuais ficam disponíveis como alternativas. O indicador visual de canteiro selecionado foi retirado do GameHUD para não duplicar a implementação da equipe. As prévias de torre e alcance foram preservadas. Revalidar cobertura do mapa em Play após os ajustes de tamanho.
+A interface usa hud_conjunto_contraste.png com nomes brancos e preços dinâmicos. Largura, altura e deslocamento inferior são configuráveis no GameHUD; as cartas individuais e o fundo separado foram retirados do Resources em 15/11, porque o jogo usa só o conjunto e tudo em Resources entra na build (as prévias continuam em Docs/Arte). O indicador visual de canteiro selecionado foi retirado do GameHUD para não duplicar a implementação da equipe. As prévias de torre e alcance foram preservadas. Revalidar cobertura do mapa em Play após os ajustes de tamanho.
