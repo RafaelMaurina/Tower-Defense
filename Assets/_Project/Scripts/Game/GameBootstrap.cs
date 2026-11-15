@@ -46,6 +46,9 @@ public class GameBootstrap : MonoBehaviour
         if (FindAnyObjectByType<GameHUD>() == null)
             new GameObject("GameHUD").AddComponent<GameHUD>();
 
+        Camera gameCamera = Camera.main;
+        if (gameCamera != null && gameCamera.GetComponent<CameraZoom>() == null) gameCamera.gameObject.AddComponent<CameraZoom>();
+
         ApplyDifficulty();
     }
 
