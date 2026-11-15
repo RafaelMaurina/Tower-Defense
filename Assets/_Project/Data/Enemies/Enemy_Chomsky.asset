@@ -18,7 +18,7 @@ MonoBehaviour:
   reward: 100
   baseDamage: 999
   flying: 0
-  centerOffset: {x: 0, y: 0.7}
+  centerOffset: {x: 0, y: 1.45}
   jumpInterval: 0
   jumpDistance: 0
   jumpDuration: 0.3
@@ -63,5 +63,9 @@ MonoBehaviour:
     shieldLayers: 0
     shieldPerLayer: 0
     healPerSecond: 5
-  frames: []
+  frames:
+  - {fileID: 21300000, guid: 44f2777454a6448ea84f8b4e39c11f27, type: 3}
+  - {fileID: 21300000, guid: 17ec9ac561aa45318de0fc2c22fe1b7d, type: 3}
+  - {fileID: 21300000, guid: f32ad54f3ee84775af6bbc5711ee77a4, type: 3}
+  - {fileID: 21300000, guid: 1df7f82083884571a0fe2c2c6b8bf747, type: 3}
   framesPerSecond: 8

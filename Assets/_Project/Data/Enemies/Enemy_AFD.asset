@@ -18,7 +18,7 @@ MonoBehaviour:
   reward: 10
   baseDamage: 1
   flying: 0
-  centerOffset: {x: 0, y: 0.35}
+  centerOffset: {x: 0, y: 1.45}
   jumpInterval: 0
   jumpDistance: 0
   jumpDuration: 0.3
@@ -26,5 +26,9 @@ MonoBehaviour:
   zigzagPeriod: 1.6
   splitOnFirstDamage: 0
   splitOffset: 0
-  frames: []
+  frames:
+  - {fileID: 21300000, guid: fd46287fc3a843edb733db39f34ca46f, type: 3}
+  - {fileID: 21300000, guid: 20d6064fe0a64b9c8fe7f995a625f9dc, type: 3}
+  - {fileID: 21300000, guid: dbc603ef65634925ba0aa3f495198fe4, type: 3}
+  - {fileID: 21300000, guid: 2a84ac7f18134aa3be7ecefb537b692a, type: 3}
   framesPerSecond: 8
