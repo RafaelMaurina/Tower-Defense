@@ -395,8 +395,9 @@ public class GameHUD : MonoBehaviour
         ApplyBottomHudLayout();
         foreach (Transform child in root.transform)
             if (child != bottomBarArea) hudLayer.Add(child.gameObject);
+        // junto dos botoes do canto superior direito, a esquerda da pausa (mesmo passo de .0615 entre eles)
         hudToggleButton = TopControl(root.transform, "Esconder HUD", "HUD", "esconder_hud", "v2/square_button",
-            new Vector2(.012f,.018f), new Vector2(.044f,.075f), ToggleHud);
+            new Vector2(.7685f,.917f), new Vector2(.8005f,.974f), ToggleHud);
         overlay = Rect(root.transform, "Submenu", Vector2.zero, Vector2.one).gameObject;
         var dim = overlay.AddComponent<Image>(); dim.color = new Color(.06f,.035f,.015f,.72f);
         var panel = Picture(overlay.transform, "Moldura da pausa", "moldura_pausa", new Vector2(.23f,.13f), new Vector2(.77f,.87f));
@@ -526,7 +527,8 @@ public class GameHUD : MonoBehaviour
     }
     public static void SelectBuildPlot(BuildPlot plot)
     {
-        if (current == null || plot == null || plot.Placed != null || IsOverlayOpen || GameManager.State != GameState.Playing) return;
+        // com o HUD escondido a barra de torres nao aparece, entao o clique no canteiro e ignorado
+        if (current == null || plot == null || plot.Placed != null || IsOverlayOpen || current.hudHidden || GameManager.State != GameState.Playing) return;
         current.pendingBuildPlot=plot;
         current.HideSelectedRange();
         if (current.buildSelection != null) current.TryBuildSelected(plot);
