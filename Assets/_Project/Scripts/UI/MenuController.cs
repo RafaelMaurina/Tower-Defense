@@ -81,23 +81,6 @@ public class MenuController : MonoBehaviour
             new Vector2(.30f, .19f), new Vector2(.70f, .31f), ShowInfo);
         CreateSpriteButton(mainMenuContent.transform, "Sair", exitNormalSprite, exitSelectedSprite,
             new Vector2(.30f, .02f), new Vector2(.70f, .14f), ExitGame);
-        var bonus = CreateSpriteButton(mainMenuContent.transform, "A Prova Final",
-            Resources.Load<Sprite>("hud/botao_normal"), Resources.Load<Sprite>("hud/botao_selecionado"),
-            new Vector2(.73f,.20f), new Vector2(.96f,.30f), () => {
-                if (!CampaignProgress.BonusUnlocked || loading) return;
-                selectedLevel = CampaignProgress.BonusScene;
-                OpenDifficultyMenu();
-            });
-        bonus.GetComponent<Button>().interactable = CampaignProgress.BonusUnlocked;
-        bonus.color = CampaignProgress.BonusUnlocked ? Color.white : new Color(.6f,.6f,.6f);
-        var bonusTitle = MakeText(bonus.transform, "A Prova Final", new Vector2(.08f,.1f), new Vector2(.92f,.9f),28,Color.white);
-        bonusTitle.raycastTarget = false;
-        MakeText(mainMenuContent.transform, CampaignProgress.BonusUnlocked ? "Bônus desbloqueado · campus à noite" : "Vença o Outono para desbloquear",
-            new Vector2(.72f,.13f),new Vector2(.97f,.20f),20,Color.white).raycastTarget = false;
-        var bonusRanking = MakeText(mainMenuContent.transform, "Ranking do bônus",new Vector2(.73f,.07f),new Vector2(.96f,.13f),24,Color.white);
-        var bonusRankingButton = bonusRanking.gameObject.AddComponent<Button>();
-        bonusRankingButton.targetGraphic = bonusRanking;
-        bonusRankingButton.onClick.AddListener(() => ShowRankingFor(true));
         // O fundo é filho direto do Canvas e deve ficar atrás do conteúdo principal.
         mainMenuContent.transform.SetAsLastSibling();
     }

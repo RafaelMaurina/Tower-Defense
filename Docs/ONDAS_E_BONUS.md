@@ -21,12 +21,12 @@ Quantidades e intervalos são uma primeira proposta, não balanceamento final ap
 ### #76 — fluxo e progresso
 
 - Vencer o Outono salva `DefesaDaColheita.BonusUnlocked.v1` em PlayerPrefs e termina a campanha com a tela de vitória habitual. Derrota e conclusão de outras cenas não liberam o bônus.
-- O menu oferece **A Prova Final**, bloqueado até esse desbloqueio. Depois, o jogador confirma a dificuldade na tela existente e inicia uma partida nova no bônus. A entrada checa novamente o desbloqueio e a disponibilidade da cena.
+- A entrada **A Prova Final**, o aviso de desbloqueio e o link de ranking do bônus foram retirados do menu principal a pedido do João. O acesso será incluído na futura seleção de níveis; até lá, o bônus pode ser testado abrindo Nivel_4_Campus no editor. O desbloqueio salvo e a validação de entrada continuam implementados.
 - Nome definitivo de integração: `Nivel_4_Campus`, igual no gerador, no progresso e em `Wave_Bonus_Prova_Final.levelScene`. O gerador registra essa cena no Build Settings e conecta catálogo de torres/ondas, Caminho_A, canteiros e base.
 - O campus usa iluminação noturna em qualquer dificuldade. A geometria é funcional, mas reaproveita arte da fazenda: **não conclui o acabamento da #50**.
 - Bônus opcional, fora da transição automática após Outono. Recomeçar reinicia o mesmo nível com saldo normal e preserva o desbloqueio. Voltar ao menu também o preserva.
 - A onda bônus mantém 4 AFD, 4 AFN e 1 Chomsky, pelo caminho A. Invocados e cópias continuam contabilizados pelo WaveSpawner existente.
-- Ranking do bônus separado em `DefesaDaColheita.Ranking.Bonus.v1`, dez entradas, acessível por “Ranking do bônus”. Campanha mantém a chave anterior e seus dados. Ambos usam a fórmula de pontuação existente.
+- Ranking do bônus separado em `DefesaDaColheita.Ranking.Bonus.v1`, dez entradas, sem atalho no menu enquanto a seleção de níveis não estiver pronta. Campanha mantém a chave anterior e seus dados. Ambos usam a fórmula de pontuação existente.
 
 ## Para a equipe continuar
 
@@ -42,7 +42,7 @@ Teste em Play ainda pendente; a última tentativa de abrir Unity nesta máquina 
 
 1. Abrir o Unity e aguardar a geração automática. Se necessário usar **Defesa da Colheita > Gerar niveis** (sem apagar/refazer). Confirmar Menu + quatro níveis no Build Settings. A atualização de catálogos também roda quando somente o campus estava faltando.
 2. Jogar três ondas por estação, manual e auto-start, incluindo pausa/velocidade; conferir raposa no Verão e pato/gafanhoto nos dois caminhos do Outono.
-3. Com progresso limpo, bônus bloqueado. Derrota não deve desbloquear. Vencer Outono deve mostrar vitória; ao voltar ao menu, bônus disponível. Fechar/reabrir o jogo deve manter esse estado.
+3. Com progresso limpo, CampaignProgress.BonusUnlocked deve ser falso. Derrota não deve desbloquear. Vencer Outono deve mostrar vitória e salvar o desbloqueio. Fechar/reabrir o jogo deve manter esse estado. O acesso pelo menu fica pendente da seleção de níveis.
 4. Entrar no bônus, conferir AFD, divisão do AFN e boss com três fases; a vitória só ocorre quando todos terminarem. Boss na base mantém dano 999 (derrota).
 5. Testar Recomeçar e retorno ao menu na vitória e derrota do bônus; conferir que os rankings ficam separados e o desbloqueio não é perdido.
 6. Fazer os ajustes de economia/dificuldade com jogo real antes da build final Windows e do teste em outra máquina (#46).
