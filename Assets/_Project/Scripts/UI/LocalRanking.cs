@@ -20,10 +20,12 @@ class RankingSaveData { public List<RankingEntry> entries = new List<RankingEntr
 public static class LocalRanking
 {
     const string Key = "DefesaDaColheita.Ranking.v1";
+    const string BonusKey = "DefesaDaColheita.Ranking.Bonus.v1";
     const int Limit = 10;
     public static void Record(GameResult result)
     {
-        var data = LoadData();
+        string key = result.bonus ? BonusKey : Key;
+        var data = LoadData(key);
         data.entries.Add(new RankingEntry
         {
             difficulty = result.difficulty.ToString(),
@@ -36,13 +38,13 @@ public static class LocalRanking
         });
         data.entries.Sort((a, b) => b.score.CompareTo(a.score));
         if (data.entries.Count > Limit) data.entries.RemoveRange(Limit, data.entries.Count - Limit);
-        PlayerPrefs.SetString(Key, JsonUtility.ToJson(data));
+        PlayerPrefs.SetString(key, JsonUtility.ToJson(data));
         PlayerPrefs.Save();
     }
-    public static IReadOnlyList<RankingEntry> GetEntries() => LoadData().entries;
-    static RankingSaveData LoadData()
+    public static IReadOnlyList<RankingEntry> GetEntries(bool bonus = false) => LoadData(bonus ? BonusKey : Key).entries;
+    static RankingSaveData LoadData(string key)
     {
-        string json = PlayerPrefs.GetString(Key, "");
+        string json = PlayerPrefs.GetString(key, "");
         if (string.IsNullOrEmpty(json)) return new RankingSaveData();
         try { var data = JsonUtility.FromJson<RankingSaveData>(json); return data ?? new RankingSaveData(); }
         catch (Exception) { return new RankingSaveData(); }

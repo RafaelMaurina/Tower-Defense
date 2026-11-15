@@ -26,5 +26,6 @@ static class GerarNiveisAoAbrir
 
         UnityEngine.Debug.Log("Niveis nao encontrados neste computador. Gerando...");
         MontarNiveis.Gerar();
+        MontarNiveis.AtualizarCatalogos();
     }
 }

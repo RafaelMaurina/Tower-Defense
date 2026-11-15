@@ -20,6 +20,7 @@ public struct GameResult
     public float topDamage;
     [NonSerialized] public Sprite topDamageSprite;
     public GameDifficulty difficulty;
+    public bool bonus;
 }
 
 /// Estado, economia e resumo da partida. HUD e sistemas observam os eventos abaixo.
@@ -138,7 +139,9 @@ public class GameManager : MonoBehaviour
 
     public void CompleteLevel()
     {
+        if (state != GameState.Playing) return;
         string current = SceneManager.GetActiveScene().name;
+        CampaignProgress.Complete(current);
         string next = current == "Nivel_1_Primavera" ? "Nivel_2_Verao" : current == "Nivel_2_Verao" ? "Nivel_3_Outono" : null;
         if (next == null) CompleteGame();
         else SceneManager.LoadScene(next);
@@ -255,7 +258,8 @@ public class GameManager : MonoBehaviour
             topDamageTower = topDamageTower,
             topDamage = topDamage,
             topDamageSprite = topDamageSprite,
-            difficulty = Difficulty
+            difficulty = Difficulty,
+            bonus = activeLevelScene == CampaignProgress.BonusScene
         };
         LocalRanking.Record(result);
         SetState(won ? GameState.Victory : GameState.Defeat);
