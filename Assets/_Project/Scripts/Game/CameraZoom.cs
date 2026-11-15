@@ -2,21 +2,20 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering.Universal;
 
-/// Zoom da camera da partida com a roda do mouse, em passos inteiros para a Pixel Perfect Camera
-/// manter o pixel nitido. O enquadramento inicial (mapa inteiro) e o limite: nao da para afastar
-/// alem dele nem arrastar a camera para fora do mapa. Com zoom, mover com botao do meio
-/// arrastando ou WASD/setas. Funciona tambem com o jogo pausado (tempo nao escalado).
+/// Zoom da camera da partida com a roda do mouse, continuo e suavizado. O enquadramento inicial
+/// (mapa inteiro) e o limite: nao da para afastar alem dele nem arrastar a camera para fora do mapa.
+/// Com zoom, mover com botao do meio arrastando ou WASD/setas. Funciona tambem com o jogo pausado
+/// (tempo nao escalado). A Pixel Perfect Camera trava o zoom em passos inteiros, entao ela fica
+/// desligada enquanto ampliado e volta a ligar ao retornar a 1x.
 [RequireComponent(typeof(Camera))]
 public class CameraZoom : MonoBehaviour
 {
-    // 1x, 1,5x, 2x e 3x: com a base 960x540 e a tela em 1920x1080 todos dao escala inteira.
-    static readonly float[] Steps = { 1f, 1.5f, 2f, 3f };
-    const float ScrollCooldown = .12f, KeyPanSpeed = 14f;
+    const float MaxZoom = 3f, WheelStrength = .16f, Smoothing = 10f, KeyPanSpeed = 14f;
 
     Camera cam;
     PixelPerfectCamera pixelPerfect;
-    int baseRefX, baseRefY, step;
-    float baseSize, nextScroll;
+    float baseSize, targetZoom = 1f, currentZoom = 1f;
+    Vector2 focusNdc;
     Vector3 homePosition;
     Vector2 homeHalf;
 
@@ -26,7 +25,6 @@ public class CameraZoom : MonoBehaviour
     {
         cam = GetComponent<Camera>();
         pixelPerfect = GetComponent<PixelPerfectCamera>();
-        if (pixelPerfect != null) { baseRefX = pixelPerfect.refResolutionX; baseRefY = pixelPerfect.refResolutionY; }
         baseSize = cam.orthographicSize;
         homePosition = transform.position;
         Zoom = 1f;
@@ -40,34 +38,42 @@ public class CameraZoom : MonoBehaviour
         if (GameHUD.IsOverlayOpen || GameManager.State == GameState.Victory || GameManager.State == GameState.Defeat) return;
         if (homeHalf == Vector2.zero) homeHalf = new Vector2(baseSize * cam.aspect, baseSize);
         HandleScroll();
+        AnimateZoom();
         HandlePan();
     }
 
     void HandleScroll()
     {
-        if (Mouse.current == null || Time.unscaledTime < nextScroll) return;
+        if (Mouse.current == null) return;
         float scroll = Mouse.current.scroll.ReadValue().y;
         if (Mathf.Abs(scroll) < .01f) return;
-        int target = Mathf.Clamp(step + (scroll > 0f ? 1 : -1), 0, Steps.Length - 1);
-        if (target == step) return;
-        nextScroll = Time.unscaledTime + ScrollCooldown;
+        // roda comum entrega +-120 (ou +-1); trackpad entrega valores pequenos e continuos
+        float notches = Mathf.Abs(scroll) >= 10f ? scroll / 120f : scroll;
+        targetZoom = Mathf.Clamp(targetZoom * Mathf.Exp(Mathf.Clamp(notches, -3f, 3f) * WheelStrength), 1f, MaxZoom);
+        Vector2 screen = Mouse.current.position.ReadValue();
+        focusNdc = new Vector2(Mathf.Clamp(screen.x / Screen.width * 2f - 1f, -1f, 1f),
+            Mathf.Clamp(screen.y / Screen.height * 2f - 1f, -1f, 1f));
+    }
+
+    void AnimateZoom()
+    {
+        if (Mathf.Approximately(currentZoom, targetZoom)) return;
+        float previous = currentZoom;
+        currentZoom = Mathf.Lerp(currentZoom, targetZoom, 1f - Mathf.Exp(-Smoothing * Time.unscaledDeltaTime));
+        if (Mathf.Abs(currentZoom - targetZoom) < .002f) currentZoom = targetZoom;
+        Zoom = currentZoom;
 
         // mantem o ponto do mapa sob o cursor no mesmo lugar da tela
-        Vector2 screen = Mouse.current.position.ReadValue();
-        Vector2 ndc = new Vector2(screen.x / Screen.width * 2f - 1f, screen.y / Screen.height * 2f - 1f);
-        Vector2 before = Half(Steps[step]);
-        Vector2 focus = (Vector2)transform.position + Vector2.Scale(ndc, before);
-
-        step = target;
-        Zoom = Steps[step];
-        Apply();
-        Vector2 after = Half(Zoom);
-        Place(focus - Vector2.Scale(ndc, after));
+        Vector2 focus = (Vector2)transform.position + Vector2.Scale(focusNdc, Half(previous));
+        bool magnified = currentZoom > 1f;
+        if (pixelPerfect != null) pixelPerfect.enabled = !magnified;
+        if (magnified || pixelPerfect == null) cam.orthographicSize = baseSize / currentZoom;
+        Place(focus - Vector2.Scale(focusNdc, Half(currentZoom)));
     }
 
     void HandlePan()
     {
-        if (step == 0) { Place(homePosition); return; }
+        if (currentZoom <= 1f) { Place(homePosition); return; }
         Vector2 move = Vector2.zero;
         if (Keyboard.current != null)
         {
@@ -86,16 +92,6 @@ public class CameraZoom : MonoBehaviour
     }
 
     Vector2 Half(float zoom) => new Vector2(baseSize * cam.aspect, baseSize) / zoom;
-
-    void Apply()
-    {
-        if (pixelPerfect != null)
-        {
-            pixelPerfect.refResolutionX = Mathf.RoundToInt(baseRefX / Zoom);
-            pixelPerfect.refResolutionY = Mathf.RoundToInt(baseRefY / Zoom);
-        }
-        else cam.orthographicSize = baseSize / Zoom;
-    }
 
     void Place(Vector2 position)
     {
