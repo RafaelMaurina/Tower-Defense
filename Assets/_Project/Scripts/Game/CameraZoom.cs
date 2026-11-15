@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 using UnityEngine.Rendering.Universal;
 
 /// Zoom da camera da partida com a roda do mouse, continuo e suavizado. O enquadramento inicial
@@ -18,6 +19,8 @@ public class CameraZoom : MonoBehaviour
     Vector2 focusNdc;
     Vector3 homePosition;
     Vector2 homeHalf;
+    Text label;
+    float shownZoom;
 
     public static float Zoom { get; private set; } = 1f;
 
@@ -28,6 +31,38 @@ public class CameraZoom : MonoBehaviour
         baseSize = cam.orthographicSize;
         homePosition = transform.position;
         Zoom = 1f;
+        CreateLabel();
+    }
+
+    // Indicador discreto no canto inferior direito, com o fator de zoom atual.
+    void CreateLabel()
+    {
+        var canvasObject = new GameObject("Zoom (indicador)", typeof(Canvas));
+        canvasObject.transform.SetParent(transform, false);
+        var canvas = canvasObject.GetComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 49;
+        var textObject = new GameObject("Texto", typeof(RectTransform), typeof(Text));
+        textObject.transform.SetParent(canvasObject.transform, false);
+        var rect = (RectTransform)textObject.transform;
+        rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(1f, 0f);
+        rect.anchoredPosition = new Vector2(-24f, 20f);
+        rect.sizeDelta = new Vector2(220f, 44f);
+        label = textObject.GetComponent<Text>();
+        UiTypography.Apply(label, 26);
+        label.alignment = TextAnchor.LowerRight;
+        label.color = new Color32(255, 239, 196, 200);
+        label.raycastTarget = false;
+        var shadow = textObject.AddComponent<Shadow>();
+        shadow.effectColor = new Color32(49, 25, 12, 230);
+        shadow.effectDistance = new Vector2(1, -2);
+        UpdateLabel();
+    }
+
+    void UpdateLabel()
+    {
+        shownZoom = currentZoom;
+        label.text = "Zoom " + currentZoom.ToString("0.0", System.Globalization.CultureInfo.GetCultureInfo("pt-BR")) + "x";
     }
 
     void OnDestroy() => Zoom = 1f;
@@ -40,6 +75,7 @@ public class CameraZoom : MonoBehaviour
         HandleScroll();
         AnimateZoom();
         HandlePan();
+        if (label != null && !Mathf.Approximately(shownZoom, currentZoom)) UpdateLabel();
     }
 
     void HandleScroll()
