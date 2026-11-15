@@ -64,6 +64,10 @@ public class GameHUD : MonoBehaviour
     BuildPlot hiddenToolsPlot;
     readonly Dictionary<BuildPlot, PlotFx> plotFx = new Dictionary<BuildPlot, PlotFx>();
     Text buildHint;
+    // Esconder HUD: so o cenario aparece; o botao (e a tecla H) continua para voltar.
+    readonly List<GameObject> hudLayer = new List<GameObject>();
+    Button hudToggleButton;
+    bool hudHidden;
     bool draggingCard;
     readonly List<RaycastResult> buildRaycastHits = new List<RaycastResult>(16);
     PointerEventData buildPointer;
@@ -242,12 +246,13 @@ public class GameHUD : MonoBehaviour
         {
             // a barra so aparece na espera entre rodadas; durante a onda, so ao clicar num canteiro
             bool waiting = waveSpawner == null || !waveSpawner.IsWaveActive;
-            bool visible = bottomCardFeedback.Count > 0 && !IsOverlayOpen && GameManager.State == GameState.Playing &&
+            bool visible = !hudHidden && bottomCardFeedback.Count > 0 && !IsOverlayOpen && GameManager.State == GameState.Playing &&
                 (waiting || pendingBuildPlot != null);
             if (!waiting && pendingBuildPlot == null && buildSelection != null && !draggingCard) CancelBuildSelection();
             if (bottomBarArea.gameObject.activeSelf != visible) bottomBarArea.gameObject.SetActive(visible);
         }
         if (Keyboard.current == null) return;
+        if (Keyboard.current.hKey.wasPressedThisFrame && !IsOverlayOpen && GameManager.State == GameState.Playing) ToggleHud();
         if (overlay.activeSelf && EventSystem.current != null && EventSystem.current.currentSelectedGameObject == null &&
             (Keyboard.current.tabKey.wasPressedThisFrame || Keyboard.current.downArrowKey.wasPressedThisFrame || Keyboard.current.upArrowKey.wasPressedThisFrame))
         {
@@ -388,6 +393,10 @@ public class GameHUD : MonoBehaviour
         // Centro em x=0.5, no mesmo eixo do celeiro da moldura superior.
         bottomBarArea = Rect(root.transform,"HUD inferior de torres",Vector2.zero,Vector2.one);
         ApplyBottomHudLayout();
+        foreach (Transform child in root.transform)
+            if (child != bottomBarArea) hudLayer.Add(child.gameObject);
+        hudToggleButton = TopControl(root.transform, "Esconder HUD", "HUD", "esconder_hud", "v2/square_button",
+            new Vector2(.012f,.018f), new Vector2(.044f,.075f), ToggleHud);
         overlay = Rect(root.transform, "Submenu", Vector2.zero, Vector2.one).gameObject;
         var dim = overlay.AddComponent<Image>(); dim.color = new Color(.06f,.035f,.015f,.72f);
         var panel = Picture(overlay.transform, "Moldura da pausa", "moldura_pausa", new Vector2(.23f,.13f), new Vector2(.77f,.87f));
@@ -398,6 +407,16 @@ public class GameHUD : MonoBehaviour
         rows = Rect(panel.transform,"Opcoes",new Vector2(.16f,.16f),new Vector2(.84f,.53f));
         MakeButton(panel.transform, new Action("Voltar", "voltar", "voltar", Back), new Vector2(.34f,.055f), new Vector2(.66f,.15f));
         overlay.SetActive(false);
+    }
+    void ToggleHud()
+    {
+        hudHidden = !hudHidden;
+        foreach (var item in hudLayer) if (item != null) item.SetActive(!hudHidden);
+        if (hudHidden) { CancelBuildSelection(); pendingBuildPlot = null; HideSelectedRange(); }
+        // com o HUD escondido o botao fica discreto, so para lembrar onde voltar
+        var group = hudToggleButton.GetComponent<CanvasGroup>();
+        if (group == null) group = hudToggleButton.gameObject.AddComponent<CanvasGroup>();
+        group.alpha = hudHidden ? .4f : 1f;
     }
     void CreateBottomTowerBar()
     {
