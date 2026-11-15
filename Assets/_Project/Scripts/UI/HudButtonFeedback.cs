@@ -15,6 +15,14 @@ public class HudButtonFeedback : MonoBehaviour, IPointerEnterHandler, IPointerEx
     AudioClip hoverClip;
     bool hovered, keyboardSelected, pressed;
     bool toggled;
+    bool overlayFeedback;
+    Image[] overlayBorders;
+
+    public void ConfigureOverlay(Image image, params Image[] borders)
+    {
+        target = image; button = GetComponent<Button>();
+        overlayFeedback = true; overlayBorders = borders; Refresh();
+    }
 
     public void SetToggleState(bool active) { toggled = active; Refresh(); }
 
@@ -44,6 +52,13 @@ public class HudButtonFeedback : MonoBehaviour, IPointerEnterHandler, IPointerEx
     {
         if (button == null) return;
         bool active = button.interactable && (hovered || keyboardSelected || toggled);
+        if (overlayFeedback)
+        {
+            target.color = active ? (pressed ? new Color(.1f,.25f,.05f,.28f) : new Color(.6f,1f,.35f,.16f)) : Color.clear;
+            Color edge = toggled ? new Color(.65f,1f,.38f,1f) : new Color(1f,.87f,.5f,.9f);
+            foreach (var border in overlayBorders) { border.enabled = active; border.color = edge; }
+            return;
+        }
         if (graphics != null)
         {
             Color color = !button.interactable ? Color.gray : active ? new Color32(255,205,76,255) : Color.white;
