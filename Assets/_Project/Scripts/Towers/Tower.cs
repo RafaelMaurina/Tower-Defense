@@ -15,6 +15,8 @@ public class Tower : MonoBehaviour
     public static event System.Action<Tower, Vector3> OnFired;
     /// Avisa quando o sprite da torre e definido ou trocado (as animacoes de ambiente escutam).
     public static event System.Action<Tower, Sprite> OnSpriteChanged;
+    /// Avisa quando a torre sobe de nivel (so ao melhorar, nao ao construir). Usado pelo UpgradeFx.
+    public static event System.Action<Tower> OnUpgraded;
 
     float cooldown;
     readonly System.Collections.Generic.List<Guardian> guardians = new System.Collections.Generic.List<Guardian>();
@@ -75,6 +77,7 @@ public class Tower : MonoBehaviour
         Level++;
         ApplySprite();
         EnsureGuardians();
+        OnUpgraded?.Invoke(this);
         return true;
     }
 
