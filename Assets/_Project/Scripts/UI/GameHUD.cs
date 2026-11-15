@@ -9,6 +9,19 @@ using UnityEngine.UI;
 /// Interface de colheita: valores dinamicos, pausa, construcao e resumo da partida.
 public class GameHUD : MonoBehaviour
 {
+    [Header("Tamanho do HUD inferior (fração da tela)")]
+    [SerializeField, Range(.2f, .9f)] float bottomHudWidth = .65f;
+    [SerializeField, Range(.1f, .35f)] float bottomHudHeight = .25f;
+    [Tooltip("Valores negativos deixam a base decorativa sair pela borda inferior da tela.")]
+    [SerializeField, Range(-.1f, .1f)] float bottomHudBottom = -.02f;
+
+    void ApplyBottomHudLayout()
+    {
+        if (bottomBarArea == null) return;
+        bottomBarArea.anchorMin = new Vector2(.5f - bottomHudWidth * .5f, bottomHudBottom);
+        bottomBarArea.anchorMax = new Vector2(.5f + bottomHudWidth * .5f, bottomHudBottom + bottomHudHeight);
+    }
+
     sealed class Action
     {
         public string text, art, icon, detail;
@@ -227,6 +240,7 @@ public class GameHUD : MonoBehaviour
     }
     void Update()
     {
+        ApplyBottomHudLayout();
         UpdateWaveControls();
         if (bottomBarArea != null)
         {
@@ -260,7 +274,7 @@ public class GameHUD : MonoBehaviour
     Image Picture(Transform parent, string name, string art, Vector2 min, Vector2 max, bool aspect = false)
     {
         var image = Rect(parent, name, min, max).gameObject.AddComponent<Image>();
-        image.sprite = Art(art); image.preserveAspect = aspect; image.raycastTarget = false;
+        image.sprite = string.IsNullOrEmpty(art) ? null : Art(art); image.preserveAspect = aspect; image.raycastTarget = false;
         image.color = image.sprite != null ? Color.white : new Color(.28f, .14f, .07f, 1);
         return image;
     }
@@ -377,7 +391,8 @@ public class GameHUD : MonoBehaviour
         autoWaveText = autoWaveButton.GetComponentInChildren<Text>();
 
         // Centro em x=0.5, no mesmo eixo do celeiro da moldura superior.
-        bottomBarArea = Rect(root.transform,"HUD inferior de torres",new Vector2(.28f,.006f),new Vector2(.72f,.165f));
+        bottomBarArea = Rect(root.transform,"HUD inferior de torres",Vector2.zero,Vector2.one);
+        ApplyBottomHudLayout();
         foreach (Transform child in root.transform)
             if (child != bottomBarArea) hudLayer.Add(child.gameObject);
         hudToggleButton = TopControl(root.transform, "Esconder HUD", "HUD", "esconder_hud", "v2/square_button",
@@ -419,29 +434,33 @@ public class GameHUD : MonoBehaviour
         var board = Rect(bottomBarArea,"Barra de cartas",Vector2.zero,Vector2.one);
         var fit = board.gameObject.AddComponent<AspectRatioFitter>();
         fit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
-        fit.aspectRatio = 5f;
-        var background = Picture(board,"Moldura","inferior_barra_torres",Vector2.zero,Vector2.one);
+        fit.aspectRatio = 2172f / 724f;
+        var background = Picture(board,"Moldura","hud_inferior/hud_conjunto_contraste",Vector2.zero,Vector2.one,true);
         background.raycastTarget = false;
         buildHint = Label(bottomBarArea,"",new Vector2(-.10f,1.01f),new Vector2(1.10f,1.15f),20);
         buildHint.resizeTextForBestFit = true;
         buildHint.resizeTextMinSize = 14;
-        float step = .90f / towers.Count;
         for (int i=0;i<towers.Count;i++)
         {
             var data = towers[i];
-            var slot = Rect(board,data.displayName,new Vector2(.05f+i*step+.004f,.13f),
-                new Vector2(.05f+(i+1)*step-.004f,.85f));
-            var card = Rect(slot,"Carta proporcional",Vector2.zero,Vector2.one);
-            var cardFit = card.gameObject.AddComponent<AspectRatioFitter>();
-            cardFit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
-            cardFit.aspectRatio = 754f/1165f;
-            var plate = Picture(card,"Carta","inferior_carta_torre",Vector2.zero,Vector2.one,true);
+            int column = TowerCardIndex(data);
+            if (column < 0) continue;
+            // Regioes da arte conjunta; o preco pode mudar sem trocar o nome da coluna.
+            float x = .063f + column * .177f;
+            var card = Rect(board,data.displayName,new Vector2(x,.10f),new Vector2(x+.171f,.80f));
+            var plate = card.gameObject.AddComponent<Image>();
+            plate.color = Color.clear;
             plate.raycastTarget = true;
             var button = card.gameObject.AddComponent<Button>();
             button.targetGraphic = plate;
             button.transition = Selectable.Transition.None;
             var feedback = card.gameObject.AddComponent<HudButtonFeedback>();
-            feedback.Configure(plate,Art("inferior_carta_torre"),Art("inferior_carta_torre"));
+            var edges = new Image[4];
+            edges[0] = Picture(card,"Realce esquerdo","",Vector2.zero,new Vector2(.012f,1));
+            edges[1] = Picture(card,"Realce direito","",new Vector2(.988f,0),Vector2.one);
+            edges[2] = Picture(card,"Realce inferior","",Vector2.zero,new Vector2(1,.008f));
+            edges[3] = Picture(card,"Realce superior","",new Vector2(0,.992f),Vector2.one);
+            feedback.ConfigureOverlay(plate,edges);
             feedback.ConfigureSound(uiAudio,hoverSound);
             bottomCardFeedback.Add(feedback);
             bottomTowers.Add(data);
@@ -459,28 +478,31 @@ public class GameHUD : MonoBehaviour
                 var plot=PlotUnderPointer();
                 if (plot != null) TryBuildSelected(plot);
             });
-            string cardName = TowerDisplayName(data);
-            if (cardName == "Metralhadora de Uvas") cardName = "Metralhadora\nde Uvas";
-            else if (cardName == "Canhao de Abobora" || cardName == "Canhão de Abóbora") cardName = "Canhão de\nAbóbora";
-            else if (cardName == "Tufao") cardName = "Tufão";
-            var title = Label(card,cardName,new Vector2(.095f,.79f),new Vector2(.905f,.955f),22,false);
-            title.color = new Color32(55,30,14,255);
-            title.resizeTextForBestFit = true;
-            title.resizeTextMinSize = 10;
-            title.resizeTextMaxSize = 22;
-            var portrait = Rect(card,"Torre nível 1",new Vector2(.18f,.25f),new Vector2(.82f,.76f)).gameObject.AddComponent<Image>();
+            var portrait = Rect(card,"Torre nível 1",new Vector2(.17f,.25f),new Vector2(.83f,.69f)).gameObject.AddComponent<Image>();
             portrait.sprite = data.levels[0].sprite != null ? data.levels[0].sprite :
                 data.towerPrefab.GetComponent<SpriteRenderer>()?.sprite;
             portrait.preserveAspect = true;
             portrait.raycastTarget = false;
-            Picture(card,"Moeda","icone_moedas",new Vector2(.19f,.045f),new Vector2(.38f,.195f),true);
+            Picture(card,"Moeda","icone_moedas",new Vector2(.15f,.055f),new Vector2(.33f,.18f),true);
             int cost = Mathf.Max(0,data.levels[0].cost);
-            var price = Label(card,cost.ToString(),new Vector2(.40f,.04f),new Vector2(.83f,.20f),25,false);
+            var price = Label(card,cost.ToString(),new Vector2(.37f,.04f),new Vector2(.85f,.19f),25,false);
             price.resizeTextForBestFit = true;
-            price.resizeTextMinSize = 14;
+            price.resizeTextMinSize = 10;
             price.resizeTextMaxSize = 25;
             bottomCosts.Add(cost);
             bottomPrices.Add(price);
+        }
+    }
+    static int TowerCardIndex(TowerData data)
+    {
+        switch (TowerDisplayName(data))
+        {
+            case "Espantalho": return 0;
+            case "Metralhadora de Uvas": return 1;
+            case "Tufão": return 2;
+            case "Colmeia": return 3;
+            case "Canhão de Abóbora": return 4;
+            default: return -1;
         }
     }
     static string TowerDisplayName(TowerData data)
