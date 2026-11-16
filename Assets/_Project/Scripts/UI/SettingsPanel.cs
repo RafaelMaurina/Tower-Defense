@@ -39,7 +39,9 @@ public class SettingsPanel : MonoBehaviour
         panel.onClosed = onClosed;
         if (below != null)
         {
-            panel.blocked = below.GetComponent<CanvasGroup>() ?? below.AddComponent<CanvasGroup>();
+            // sem "??": em Object da Unity ele nao enxerga o nulo falso e nao chamaria o AddComponent
+            panel.blocked = below.GetComponent<CanvasGroup>();
+            if (panel.blocked == null) panel.blocked = below.AddComponent<CanvasGroup>();
             panel.blocked.interactable = false;
             panel.blocked.blocksRaycasts = false;
         }
