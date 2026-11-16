@@ -491,6 +491,7 @@ public static class MontarNiveis
                     }
                 }
 
+        estacaoAtual = nv.estacao;
         // props de pivo no pe apoiam na base da casa; o poco (2x2, PPU 32) centra entre as duas casas
         Sprite_(grupo, Est_(nv, "Props/prop_poco"), new Vector3(nv.poco.x + 1f, nv.poco.y, 0f), -1);
         // casa da fazenda no alto do cenario, maior que o celeiro (PPU 8: uns 7,3 x 5,4 casas); encostada no canto, o que
@@ -533,9 +534,9 @@ public static class MontarNiveis
         var vaca = Sprite_(grupo, "Props/prop_vaca_marrom_em_pe", pasto + new Vector3(-.25f, .25f, 0f), -1).AddComponent<AnimalWander>();
         vaca.walkFrames = new Sprite[4];
         for (int i = 0; i < 4; i++)
-            vaca.walkFrames[i] = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Props/prop_vaca_marrom_anda_" + (i + 1) + ".png");
-        vaca.grazeFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Props/prop_vaca_marrom_pasta.png");
-        vaca.chewFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Props/prop_vaca_marrom_pasta_2.png");
+            vaca.walkFrames[i] = Bicho_("prop_vaca_marrom_anda_" + (i + 1));
+        vaca.grazeFrame = Bicho_("prop_vaca_marrom_pasta");
+        vaca.chewFrame = Bicho_("prop_vaca_marrom_pasta_2");
         vaca.facesLeft = true;
         vaca.radius = .3f;
         vaca.speed = .35f;
@@ -659,7 +660,22 @@ public static class MontarNiveis
     static Vector3 Centro(Vector2Int c) => new Vector3(c.x + 0.5f, c.y + 0.5f, 0f);
 
     /// ordem &lt; 0 = objeto em pe, ordenado pela altura na tela.
-    static Sprite Bicho_(string nome) => AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Props/" + nome + ".png");
+    static Sprite Bicho_(string nome) => AssetDatabase.LoadAssetAtPath<Sprite>(SPR + Pasta_("Props/" + nome) + ".png");
+
+    // Estacao da fase em construcao. Bichos e coisas do pasto com sombra de grama de verao e de outono ficam em
+    // Props/Estacao2 e Props/Estacao3 (mesmo nome do arquivo); sem o arquivo da estacao, vale o da primavera.
+    static int estacaoAtual = 1;
+
+    static string Pasta_(string caminho)
+    {
+        if (estacaoAtual > 1)
+        {
+            int barra = caminho.LastIndexOf('/');
+            string alternativo = caminho.Substring(0, barra) + "/Estacao" + estacaoAtual + caminho.Substring(barra);
+            if (AssetDatabase.LoadAssetAtPath<Sprite>(SPR + alternativo + ".png") != null) return alternativo;
+        }
+        return caminho;
+    }
 
     /// Clicar no bicho mostra a palavra e toca Resources/sons/<id>, se existir (ver AnimalSound).
     static AnimalSound Som_(GameObject bicho, string id, string palavra)
@@ -673,8 +689,8 @@ public static class MontarNiveis
     static ChickenWander Ave_(Transform pai, string caminho, Vector3 pos, bool olhaParaEsquerda)
     {
         var ave = Sprite_(pai, caminho, pos, -1).AddComponent<ChickenWander>();
-        ave.stepFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + caminho + "_passo.png");
-        ave.peckFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + caminho + "_bicando.png");
+        ave.stepFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + Pasta_(caminho + "_passo") + ".png");
+        ave.peckFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + Pasta_(caminho + "_bicando") + ".png");
         ave.facesLeft = olhaParaEsquerda;
         return ave;
     }
@@ -694,7 +710,7 @@ public static class MontarNiveis
         go.transform.SetParent(pai);
         go.transform.position = pos;
         var sr = go.AddComponent<SpriteRenderer>();
-        sr.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + caminho + ".png");
+        sr.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + Pasta_(caminho) + ".png");
         if (sr.sprite == null) Debug.LogWarning("Sprite nao encontrado: " + caminho);
         // mais embaixo na tela = mais perto da camera = desenha por cima
         sr.sortingOrder = ordem >= 0 ? ordem : 100 + Mathf.RoundToInt((H - pos.y) * 10f);
