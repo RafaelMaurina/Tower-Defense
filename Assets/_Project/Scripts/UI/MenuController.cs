@@ -520,17 +520,12 @@ public class MenuController : MonoBehaviour
 
         AddImage(screen.transform, "Moldura do ranking", rankingFrameSprite,
             new Vector2(.12f, .19f), new Vector2(.88f, .97f), Color.white, true);
-        CreateTmpText(screen.transform, "Título RANKING", "RANKING",
-            new Vector2(.32f, .835f), new Vector2(.68f, .925f), 56);
 
         AddImage(screen.transform, "Cabeçalho da tabela", rankingHeaderSprite,
             new Vector2(.275f, .705f), new Vector2(.725f, .785f), Color.white, true);
         string[] headers = { "POS.", "PONTUAÇÃO", "DIFICULDADE", "DATA" };
         float[] left = { .280f, .334f, .454f, .599f };
         float[] right = { .331f, .451f, .597f, .720f };
-        for (int i = 0; i < headers.Length; i++)
-            CreateTmpText(screen.transform, "Cabeçalho " + headers[i], headers[i],
-                new Vector2(left[i], .715f), new Vector2(right[i], .775f), 25);
 
         var entries = LocalRanking.GetEntries(bonus);
         const int maxRows = 10;
@@ -555,8 +550,6 @@ public class MenuController : MonoBehaviour
                     Sprite medal = i == 0 ? rankingGoldMedalSprite : i == 1 ? rankingSilverMedalSprite : rankingBronzeMedalSprite;
                     AddImage(screen.transform, "Medalha posição " + (i + 1), medal,
                         new Vector2(.287f, yMin + .001f), new Vector2(.324f, yMax - .001f), Color.white, true);
-                    CreateTmpText(screen.transform, "Número da medalha " + (i + 1), (i + 1).ToString(),
-                        new Vector2(.296f, yMin + rowHeight * .43f), new Vector2(.315f, yMin + rowHeight * .73f), 30);
                     continue;
                 }
                 CreateTmpText(screen.transform, "Dado " + (i + 1) + " " + headers[col], values[col],
