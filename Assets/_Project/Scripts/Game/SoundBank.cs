@@ -47,7 +47,7 @@ public static class SoundBank
         AudioClip clip = list[Random.Range(0, list.Count)];
         if (clip == null) return;
         Camera cam = Camera.main;
-        AudioSource.PlayClipAtPoint(clip, cam != null ? cam.transform.position : Vector3.zero, volume);
+        AudioSource.PlayClipAtPoint(clip, cam != null ? cam.transform.position : Vector3.zero, volume * GameSettings.Sfx);
     }
 }
 
