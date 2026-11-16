@@ -108,7 +108,7 @@ public class MenuController : MonoBehaviour
             Resources.Load<Sprite>("Informacoes/informacoes_github_selecionado"),
             Resources.Load<Sprite>("Informacoes/icone_paleta"),
             Resources.Load<Sprite>("hud/melhorar_submenu/icone_dano"),
-            Resources.Load<Sprite>("Informacoes/icone_interface"));
+            Resources.Load<Sprite>("Informacoes/informacoes_icone_programacao"));
 
         if (backgroundSprite != null) AddImage(root, "Fundo da fazenda", backgroundSprite, Vector2.zero, Vector2.one, Color.white, true);
         else AddImage(root, "Fundo de reserva", null, Vector2.zero, Vector2.one, new Color32(115, 183, 205, 255), false);
@@ -831,6 +831,19 @@ public class InfoPanel : MonoBehaviour
         });
     }
 
+    static Image AddImage(Transform parent, string name, Sprite sprite, Vector2 min, Vector2 max, Color color, bool preserveAspect)
+    {
+        var go = new GameObject(name, typeof(RectTransform), typeof(Image));
+        go.transform.SetParent(parent, false);
+        var rect = go.GetComponent<RectTransform>();
+        rect.anchorMin = min; rect.anchorMax = max;
+        rect.offsetMin = Vector2.zero; rect.offsetMax = Vector2.zero;
+        var image = go.GetComponent<Image>();
+        image.sprite = sprite; image.color = color;
+        image.preserveAspect = preserveAspect; image.raycastTarget = false;
+        return image;
+    }
+
     static TextMeshProUGUI MakeInfoTmpText(Transform parent, string objectName, string value,
         Vector2 min, Vector2 max, float fontSize)
     {
@@ -854,7 +867,7 @@ public class InfoPanel : MonoBehaviour
         text.fontSizeMin = fontSize * .8f;
         text.fontSizeMax = fontSize;
         text.enableAutoSizing = true;
-        text.enableWordWrapping = true;
+        text.textWrappingMode = TextWrappingModes.Normal;
         text.alignment = TextAlignmentOptions.Center;
         text.color = new Color32(255, 246, 213, 255);
         text.raycastTarget = false;
