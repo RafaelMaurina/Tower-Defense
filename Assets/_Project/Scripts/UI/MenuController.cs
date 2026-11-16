@@ -102,7 +102,13 @@ public class MenuController : MonoBehaviour
         var contentRect = mainMenuContent.GetComponent<RectTransform>();
         contentRect.anchorMin = Vector2.zero; contentRect.anchorMax = Vector2.one;
         contentRect.offsetMin = Vector2.zero; contentRect.offsetMax = Vector2.zero;
-        InfoPanel.Configure(submenuPanelSprite, backButtonSprite, backButtonSelectedSprite, repositoryButtonSprite, mainMenuContent);
+        InfoPanel.Configure(submenuPanelSprite, backButtonSprite, backButtonSelectedSprite, repositoryButtonSprite, mainMenuContent,
+            Resources.Load<Sprite>("Informacoes/informacoes_moldura_principal"),
+            Resources.Load<Sprite>("Informacoes/informacoes_placa_equipe"),
+            Resources.Load<Sprite>("Informacoes/informacoes_github_selecionado"),
+            Resources.Load<Sprite>("Informacoes/icone_paleta"),
+            Resources.Load<Sprite>("hud/melhorar_submenu/icone_dano"),
+            Resources.Load<Sprite>("Informacoes/icone_interface"));
 
         if (backgroundSprite != null) AddImage(root, "Fundo da fazenda", backgroundSprite, Vector2.zero, Vector2.one, Color.white, true);
         else AddImage(root, "Fundo de reserva", null, Vector2.zero, Vector2.one, new Color32(115, 183, 205, 255), false);
@@ -499,11 +505,15 @@ public class MenuController : MonoBehaviour
         else if (mainMenuContent != null) mainMenuContent.SetActive(true);
     }
 
-    void ShowInfo() => InfoPanel.Show(
-        "Projeto desenvolvido como trabalho final da disciplina de Computação Gráfica.",
-        "https://github.com/RafaelMaurina/Tower-Defense",
-        new[] { "Rafael (@RafaelMaurina), arte e áudio", "Fabio (@fabioov), combate", "João (@Joao-Althaus), jogo e interface" },
-        "Informações");
+    void ShowInfo() => InfoPanel.ShowInformation(
+        "Projeto desenvolvido para a disciplina de Computação Gráfica da Universidade de Passo Fundo - UPF.",
+        new[]
+        {
+            "Rafael (@RafaelMaurina) — Arte e áudio",
+            "Fabio (@fabioov) — Sistema de combate",
+            "João (@Joao-Althaus) — Jogabilidade e Interface"
+        },
+        "https://github.com/RafaelMaurina/Tower-Defense");
 
     void ShowRanking() => ShowRankingFor(false);
 
@@ -734,19 +744,163 @@ public class PhaseCardHoverScale : MonoBehaviour, IPointerEnterHandler, IPointer
 
 public class InfoPanel : MonoBehaviour
 {
+    static TMP_FontAsset infoFontAsset;
     static Sprite panelSprite;
     static Sprite backSprite;
     static Sprite backSelectedSprite;
     static Sprite repositorySprite;
+    static Sprite informationFrameSprite;
+    static Sprite teamPlaqueSprite;
+    static Sprite repositorySelectedSprite;
+    static Sprite artistIconSprite;
+    static Sprite combatIconSprite;
+    static Sprite gameplayIconSprite;
     static GameObject mainMenuContent;
 
-    public static void Configure(Sprite submenuPanel, Sprite backButton, Sprite backButtonSelected, Sprite repositoryButton, GameObject content)
+    public static void Configure(Sprite submenuPanel, Sprite backButton, Sprite backButtonSelected, Sprite repositoryButton, GameObject content,
+        Sprite informationFrame, Sprite teamPlaque, Sprite repositorySelected, Sprite artistIcon, Sprite combatIcon, Sprite gameplayIcon)
     {
         panelSprite = submenuPanel;
         backSprite = backButton;
         backSelectedSprite = backButtonSelected;
-        repositorySprite = repositoryButton;
+        repositorySprite = repositoryButton != null
+            ? repositoryButton
+            : Resources.Load<Sprite>("Informacoes/informacoes_github_normal");
         mainMenuContent = content;
+        informationFrameSprite = informationFrame;
+        teamPlaqueSprite = teamPlaque;
+        repositorySelectedSprite = repositorySelected;
+        artistIconSprite = artistIcon;
+        combatIconSprite = combatIcon;
+        gameplayIconSprite = gameplayIcon;
+    }
+
+    public static void ShowInformation(string presentation, string[] creditLines, string repositoryUrl)
+    {
+        var canvas = Object.FindAnyObjectByType<Canvas>();
+        if (canvas == null) return;
+        if (mainMenuContent != null) mainMenuContent.SetActive(false);
+
+        var screen = new GameObject("Tela Informações", typeof(RectTransform));
+        screen.transform.SetParent(canvas.transform, false);
+        var screenRect = screen.GetComponent<RectTransform>();
+        screenRect.anchorMin = Vector2.zero; screenRect.anchorMax = Vector2.one;
+        screenRect.offsetMin = Vector2.zero; screenRect.offsetMax = Vector2.zero;
+
+        if (informationFrameSprite != null)
+            AddImage(screen.transform, "Moldura Informações", informationFrameSprite,
+                new Vector2(.12f, .12f), new Vector2(.88f, .99f), Color.white, true);
+
+        MakeInfoTmpText(screen.transform, "Apresentação acadêmica", presentation,
+            new Vector2(.24f, .73f), new Vector2(.76f, .80f), 28);
+
+        if (teamPlaqueSprite != null)
+            AddImage(screen.transform, "Placa da equipe", teamPlaqueSprite,
+                new Vector2(.35f, .60f), new Vector2(.65f, .72f), Color.white, true);
+        MakeInfoTmpText(screen.transform, "Título da equipe", "EQUIPE DE DESENVOLVIMENTO",
+            new Vector2(.36f, .615f), new Vector2(.64f, .705f), 28);
+
+        Sprite[] icons = { artistIconSprite, combatIconSprite, gameplayIconSprite };
+        float[] rowBottoms = { .52f, .43f, .34f };
+        for (int i = 0; i < Mathf.Min(creditLines.Length, rowBottoms.Length); i++)
+        {
+            float bottom = rowBottoms[i];
+            if (icons[i] != null)
+                AddImage(screen.transform, "Ícone crédito " + (i + 1), icons[i],
+                    new Vector2(.305f, bottom + .003f), new Vector2(.355f, bottom + .067f), Color.white, true);
+            MakeInfoTmpText(screen.transform, "Crédito " + (i + 1), creditLines[i],
+                new Vector2(.365f, bottom), new Vector2(.70f, bottom + .07f), 28);
+        }
+
+        if (repositorySprite != null)
+        {
+            var repositoryButton = AddSpriteSwapButton(screen.transform, "GitHub do projeto", repositorySprite,
+                repositorySelectedSprite, new Vector2(.40f, .22f), new Vector2(.60f, .33f),
+                () => Application.OpenURL(repositoryUrl));
+            if (EventSystem.current != null)
+                EventSystem.current.SetSelectedGameObject(repositoryButton.gameObject);
+        }
+
+        AddInformationBackButton(screen.transform, () =>
+        {
+            Object.Destroy(screen);
+            if (mainMenuContent != null) mainMenuContent.SetActive(true);
+            var mainInfoButton = mainMenuContent != null
+                ? mainMenuContent.transform.Find("Informações")?.GetComponent<Button>()
+                : null;
+            if (EventSystem.current != null)
+                EventSystem.current.SetSelectedGameObject(mainInfoButton != null ? mainInfoButton.gameObject : null);
+        });
+    }
+
+    static TextMeshProUGUI MakeInfoTmpText(Transform parent, string objectName, string value,
+        Vector2 min, Vector2 max, float fontSize)
+    {
+        var go = new GameObject(objectName, typeof(RectTransform), typeof(TextMeshProUGUI));
+        go.transform.SetParent(parent, false);
+        var rect = go.GetComponent<RectTransform>();
+        rect.anchorMin = min; rect.anchorMax = max;
+        rect.offsetMin = Vector2.zero; rect.offsetMax = Vector2.zero;
+        var text = go.GetComponent<TextMeshProUGUI>();
+        if (infoFontAsset == null)
+            infoFontAsset = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
+        if (infoFontAsset != null)
+        {
+            text.font = infoFontAsset;
+            text.fontSharedMaterial = infoFontAsset.material;
+            text.outlineWidth = .16f;
+            text.outlineColor = new Color32(54, 27, 13, 255);
+        }
+        text.text = value;
+        text.fontSize = fontSize;
+        text.fontSizeMin = fontSize * .8f;
+        text.fontSizeMax = fontSize;
+        text.enableAutoSizing = true;
+        text.enableWordWrapping = true;
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = new Color32(255, 246, 213, 255);
+        text.raycastTarget = false;
+        return text;
+    }
+
+    static Button AddSpriteSwapButton(Transform parent, string name, Sprite normal, Sprite selected,
+        Vector2 min, Vector2 max, UnityEngine.Events.UnityAction action)
+    {
+        var buttonObject = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
+        buttonObject.transform.SetParent(parent, false);
+        var rect = buttonObject.GetComponent<RectTransform>();
+        rect.anchorMin = min; rect.anchorMax = max;
+        rect.offsetMin = Vector2.zero; rect.offsetMax = Vector2.zero;
+        var image = buttonObject.GetComponent<Image>();
+        image.sprite = normal; image.preserveAspect = true; image.raycastTarget = true;
+        var button = buttonObject.GetComponent<Button>();
+        button.targetGraphic = image;
+        button.transition = Selectable.Transition.SpriteSwap;
+        button.navigation = new Navigation { mode = Navigation.Mode.Automatic };
+        var state = button.spriteState;
+        state.highlightedSprite = selected;
+        state.selectedSprite = selected;
+        state.pressedSprite = selected;
+        button.spriteState = state;
+        button.onClick.AddListener(action);
+        return button;
+    }
+
+    static void AddInformationBackButton(Transform parent, UnityEngine.Events.UnityAction action)
+    {
+        if (backSprite != null)
+        {
+            AddSpriteSwapButton(parent, "Voltar", backSprite,
+                backSelectedSprite != null ? backSelectedSprite : backSprite,
+                new Vector2(.40f, .015f), new Vector2(.60f, .115f), action);
+            return;
+        }
+        var label = MakeInfoTmpText(parent, "Voltar", "VOLTAR",
+            new Vector2(.40f, .015f), new Vector2(.60f, .115f), 30);
+        var button = label.gameObject.AddComponent<Button>();
+        button.targetGraphic = label;
+        button.navigation = new Navigation { mode = Navigation.Mode.Automatic };
+        button.onClick.AddListener(action);
     }
 
     public static void Show(string message, string repositoryUrl = null, string[] creditLines = null, string title = "Informações")
