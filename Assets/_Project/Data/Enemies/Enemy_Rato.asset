@@ -22,7 +22,7 @@ MonoBehaviour:
   jumpInterval: 0
   jumpDistance: 0
   jumpDuration: 0.3
-  zigzagAmplitude: 0.8
+  zigzagAmplitude: 0.25
   zigzagPeriod: 1.6
   frames:
   - {fileID: 21300000, guid: f117f4b285df40398d20f60a3181466c, type: 3}

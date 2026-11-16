@@ -44,9 +44,9 @@ public static class TowerShotFx
         { "torre_uvas", new Spot(52, 35, 48, 43) },               // 2 canos: entre as duas bocas; b = onde o bagaco sai, sob o cano
         { "torre_uvas_2", new Spot(58, 36, 48, 44) },             // 4 canos: ponta do feixe
         { "torre_uvas_3", new Spot(58, 36, 48, 44) },
-        { "torre_colmeia", new Spot(32, 32) },                    // centro do buraco da toca
-        { "torre_colmeia_2", new Spot(32, 32) },
-        { "torre_colmeia_3", new Spot(32, 32) },
+        { "torre_colmeia", new Spot(28, 38) },                    // janela com mel da casinha
+        { "torre_colmeia_2", new Spot(29, 38) },
+        { "torre_colmeia_3", new Spot(29, 38) },
         { "torre_canhao_abobora", new Spot(8, 25) },              // boca do canhao (esquerda); so visual
         { "torre_canhao_abobora_2", new Spot(8, 25) },
         { "torre_canhao_abobora_3", new Spot(8, 25) },

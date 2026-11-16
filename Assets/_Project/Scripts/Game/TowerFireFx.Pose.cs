@@ -140,7 +140,6 @@ public partial class TowerFireFx
     {
         var sr = tower.GetComponent<SpriteRenderer>();
         if (sr == null || sr.sprite == null) return;
-        SwapPose(tower, holePoses, OpenHole, StepTime * 1.5f);
         StartCoroutine(Bees(rest + TowerShotFx.Muzzle(tower, TowerShotFx.Kind.Hive), dir, order));
     }
 
