@@ -147,9 +147,9 @@ public class MenuController : MonoBehaviour
         if (rankingFrameSprite == null) rankingFrameSprite = Resources.Load<Sprite>("Ranking/ranking_moldura_principal");
         if (rankingHeaderSprite == null) rankingHeaderSprite = Resources.Load<Sprite>("Ranking/ranking_cabecalho");
         if (rankingRowSprite == null) rankingRowSprite = Resources.Load<Sprite>("Ranking/ranking_linha_padrao");
-        if (rankingFirstSprite == null) rankingFirstSprite = Resources.Load<Sprite>("Ranking/ranking_linha_1");
-        if (rankingSecondSprite == null) rankingSecondSprite = Resources.Load<Sprite>("Ranking/ranking_linha_2");
-        if (rankingThirdSprite == null) rankingThirdSprite = Resources.Load<Sprite>("Ranking/ranking_linha_3");
+        if (rankingFirstSprite == null) rankingFirstSprite = Resources.Load<Sprite>("Ranking/ranking_linha_ouro");
+        if (rankingSecondSprite == null) rankingSecondSprite = Resources.Load<Sprite>("Ranking/ranking_linha_prata");
+        if (rankingThirdSprite == null) rankingThirdSprite = Resources.Load<Sprite>("Ranking/ranking_linha_bronze");
         if (rankingGoldMedalSprite == null) rankingGoldMedalSprite = Resources.Load<Sprite>("Ranking/ranking_medalha_ouro");
         if (rankingSilverMedalSprite == null) rankingSilverMedalSprite = Resources.Load<Sprite>("Ranking/ranking_medalha_prata");
         if (rankingBronzeMedalSprite == null) rankingBronzeMedalSprite = Resources.Load<Sprite>("Ranking/ranking_medalha_bronze");
@@ -537,8 +537,8 @@ public class MenuController : MonoBehaviour
         float startY = .687f;
         for (int i = 0; i < Mathf.Min(maxRows, entries.Count); i++)
         {
-            float rowHeight = i < 3 ? .058f : .040f;
-            float yMax = startY - Mathf.Min(i, 3) * .058f - Mathf.Max(0, i - 3) * .040f;
+            const float rowHeight = .048f;
+            float yMax = startY - i * rowHeight;
             float yMin = yMax - rowHeight;
             Sprite row = i == 0 ? rankingFirstSprite : i == 1 ? rankingSecondSprite
                 : i == 2 ? rankingThirdSprite : rankingRowSprite;
@@ -546,7 +546,8 @@ public class MenuController : MonoBehaviour
                 new Vector2(.275f, yMin), new Vector2(.725f, yMax),
                 i >= 3 && i % 2 == 1 ? new Color32(216, 202, 174, 255) : Color.white, false);
             RankingEntry entry = entries[i];
-            string[] values = { (i + 1).ToString("00"), entry.score.ToString(), entry.difficulty, entry.date };
+            string position = i < 3 ? (i + 1).ToString() : (i + 1) + ".";
+            string[] values = { position, entry.score.ToString(), entry.difficulty, entry.date };
             for (int col = 0; col < values.Length; col++)
             {
                 if (col == 0 && i < 3)
