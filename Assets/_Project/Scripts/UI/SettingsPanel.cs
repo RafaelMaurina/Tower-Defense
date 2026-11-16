@@ -26,14 +26,23 @@ public class SettingsPanel : MonoBehaviour
     AudioSource testSource;
     AudioClip testClip;
     System.Action onClosed;
-    bool building;
+    CanvasGroup blocked;       // tela de baixo (pausa/menu): fica sem clique nem teclado enquanto o painel esta aberto
+    bool building, closed;
+    int altEnterFrame = -10;
 
-    public static void Open(System.Action onClosed = null)
+    /// `below` e a tela que fica por baixo (pausa ou menu principal); ela e bloqueada ate o painel fechar.
+    public static void Open(GameObject below = null, System.Action onClosed = null)
     {
         if (instance != null) return;
         var go = new GameObject("Configurações", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         var panel = go.AddComponent<SettingsPanel>();
         panel.onClosed = onClosed;
+        if (below != null)
+        {
+            panel.blocked = below.GetComponent<CanvasGroup>() ?? below.AddComponent<CanvasGroup>();
+            panel.blocked.interactable = false;
+            panel.blocked.blocksRaycasts = false;
+        }
         instance = panel;
         panel.Build();
     }
@@ -42,17 +51,35 @@ public class SettingsPanel : MonoBehaviour
 
     void CloseSelf()
     {
+        if (closed) return;
+        closed = true;
         closedFrame = Time.frameCount;
         instance = null;
+        GameSettings.Persist();
+        if (blocked != null) { blocked.interactable = true; blocked.blocksRaycasts = true; }
+        if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
         onClosed?.Invoke();
-        Destroy(gameObject);
+        // some da tela na hora, mas o objeto fica um instante para o som de teste do Voltar nao cortar
+        GetComponent<Canvas>().enabled = false;
+        Destroy(gameObject, testClip != null ? testClip.length + .1f : 0f);
     }
 
     void OnDestroy() { if (instance == this) instance = null; }
 
     void Update()
     {
-        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) CloseSelf();
+        if (closed) return;
+        Keyboard k = Keyboard.current;
+        if (k == null) return;
+        if (k.escapeKey.wasPressedThisFrame) { CloseSelf(); return; }
+        // Alt+Enter troca o modo de tela por fora do GameSettings: le o modo real dois quadros depois
+        if ((k.altKey.isPressed && (k.enterKey.wasPressedThisFrame || k.numpadEnterKey.wasPressedThisFrame))) altEnterFrame = Time.frameCount;
+        if (altEnterFrame > 0 && Time.frameCount >= altEnterFrame + 2)
+        {
+            altEnterFrame = -10;
+            GameSettings.SyncFullScreen();
+            Refresh();
+        }
     }
 
     // ------------------------------------------------------------------ montagem
@@ -93,7 +120,7 @@ public class SettingsPanel : MonoBehaviour
         muteLabel = AddButton(frame.transform, "", .30f, .70f, .385f, .475f, ToggleMute);
 
         resolutions = GameSettings.AvailableResolutions();
-        resolutionIndex = Mathf.Max(0, resolutions.IndexOf(GameSettings.CurrentResolution()));
+        resolutionIndex = Mathf.Max(0, resolutions.IndexOf(GameSettings.CurrentResolution()));   // a salva entra na lista (AvailableResolutions)
         AddButton(frame.transform, "<", .13f, .21f, .27f, .355f, () => StepResolution(-1));
         AddButton(frame.transform, ">", .79f, .87f, .27f, .355f, () => StepResolution(1));
         resolutionLabel = MakeText(frame.transform, "", .22f, .78f, .27f, .355f, 36);
@@ -103,6 +130,7 @@ public class SettingsPanel : MonoBehaviour
 
         building = false;
         Refresh();
+        if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(musicSlider.gameObject);
     }
 
     Slider AddSliderRow(Transform parent, string title, float top, float value, out Text valueText, UnityEngine.Events.UnityAction<float> onChange)
@@ -130,7 +158,7 @@ public class SettingsPanel : MonoBehaviour
         slider.minValue = 0; slider.maxValue = 100;
         slider.SetValueWithoutNotify(Mathf.Round(value * 100f));
         slider.onValueChanged.AddListener(v => { if (!building) { onChange(v / 100f); Refresh(); } });
-        root.gameObject.AddComponent<SliderRelease>().onRelease = PlayTest;
+        root.gameObject.AddComponent<SliderRelease>().onRelease = () => { GameSettings.Persist(); PlayTest(); };
         return slider;
     }
 
@@ -147,7 +175,7 @@ public class SettingsPanel : MonoBehaviour
             button.transition = Selectable.Transition.SpriteSwap;
             button.spriteState = new SpriteState { highlightedSprite = selected, selectedSprite = selected, pressedSprite = selected };
         }
-        button.onClick.AddListener(() => { PlayTest(); action(); });
+        button.onClick.AddListener(() => { action(); PlayTest(); });   // primeiro a acao: o teste ja usa o mudo novo
         Text caption = MakeText(rect, label, .06f, .94f, .12f, .88f, 32);
         caption.resizeTextForBestFit = true; caption.resizeTextMinSize = 20; caption.resizeTextMaxSize = 34;
         return caption;

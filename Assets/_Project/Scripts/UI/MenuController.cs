@@ -100,7 +100,7 @@ public class MenuController : MonoBehaviour
         bonusRankingButton.onClick.AddListener(() => ShowRankingFor(true));
         var settings = CreateSpriteButton(mainMenuContent.transform, "Configurações",
             Resources.Load<Sprite>("hud/botao_normal"), Resources.Load<Sprite>("hud/botao_selecionado"),
-            new Vector2(.04f,.02f), new Vector2(.27f,.12f), () => { if (!loading) SettingsPanel.Open(); });
+            new Vector2(.04f,.02f), new Vector2(.27f,.12f), () => { if (!loading) SettingsPanel.Open(mainMenuContent); });
         MakeText(settings.transform, "Configurações", new Vector2(.08f,.1f), new Vector2(.92f,.9f), 28, Color.white).raycastTarget = false;
         // O fundo é filho direto do Canvas e deve ficar atrás do conteúdo principal.
         mainMenuContent.transform.SetAsLastSibling();

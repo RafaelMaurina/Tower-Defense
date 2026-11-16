@@ -259,7 +259,7 @@ public class GameHUD : MonoBehaviour
         }
         if (Keyboard.current == null) return;
         if (Keyboard.current.hKey.wasPressedThisFrame && !IsOverlayOpen && GameManager.State == GameState.Playing) ToggleHud();
-        if (overlay.activeSelf && EventSystem.current != null && EventSystem.current.currentSelectedGameObject == null &&
+        if (overlay.activeSelf && !SettingsPanel.IsOpenOrJustClosed && EventSystem.current != null && EventSystem.current.currentSelectedGameObject == null &&
             (Keyboard.current.tabKey.wasPressedThisFrame || Keyboard.current.downArrowKey.wasPressedThisFrame || Keyboard.current.upArrowKey.wasPressedThisFrame))
         {
             foreach (Button option in overlay.GetComponentsInChildren<Button>())
@@ -1288,7 +1288,7 @@ public class GameHUD : MonoBehaviour
             Show("JOGO PAUSADO","A colheita pode esperar um pouquinho.\nRetome a defesa quando estiver pronto.",false,
                 new Action("Continuar","continuar","continuar",()=>GameManager.Instance?.TogglePause()),
                 new Action("Recomeçar nível","recomecar","voltar",()=>GameManager.Instance?.RestartCurrentLevel()),
-                new Action("Configurações","construir",null,()=>SettingsPanel.Open()),
+                new Action("Configurações","construir",null,()=>SettingsPanel.Open(overlay)),
                 new Action("Voltar ao menu","menu","voltar",ToMenu));
         }
         else if (state == GameState.Playing) Close();

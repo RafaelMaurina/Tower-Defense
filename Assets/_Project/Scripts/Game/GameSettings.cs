@@ -11,17 +11,19 @@ public static class GameSettings
     const string MusicKey = "cfg_musica", SfxKey = "cfg_efeitos", MuteKey = "cfg_mudo",
         WidthKey = "cfg_res_w", HeightKey = "cfg_res_h", FullKey = "cfg_tela_cheia";
     public const float DefaultMusic = .6f, DefaultSfx = .8f;
+    const float WindowLimit = .85f;   // fracao maxima do monitor que a janela ocupa
 
     public static event System.Action OnChanged;
 
     static float music = DefaultMusic, sfx = DefaultSfx;
     static bool muted, fullScreen = true;
-    static Vector2Int resolution;   // (0,0) = resolucao do monitor
+    static Vector2Int resolution;   // (0,0) = resolucao da area de trabalho
 
     /// 0..1
-    public static float MusicVolume { get => music; set { music = Mathf.Clamp01(value); Save(); } }
+    /// Os volumes so mudam em memoria (o slider dispara a cada passo); chame Persist() ao soltar o slider.
+    public static float MusicVolume { get => music; set { music = Mathf.Clamp01(value); OnChanged?.Invoke(); } }
     /// 0..1
-    public static float SfxVolume { get => sfx; set { sfx = Mathf.Clamp01(value); Save(); } }
+    public static float SfxVolume { get => sfx; set { sfx = Mathf.Clamp01(value); OnChanged?.Invoke(); } }
     public static bool Muted { get => muted; set { muted = value; Save(); } }
     public static bool FullScreen => fullScreen;
     public static Vector2Int Resolution => resolution;
@@ -42,7 +44,8 @@ public static class GameSettings
         ApplyScreen();
     }
 
-    static void Save()
+    /// Grava tudo em PlayerPrefs (volumes: chamar ao soltar o slider ou fechar o painel).
+    public static void Persist()
     {
         PlayerPrefs.SetFloat(MusicKey, music);
         PlayerPrefs.SetFloat(SfxKey, sfx);
@@ -51,7 +54,27 @@ public static class GameSettings
         PlayerPrefs.SetInt(WidthKey, resolution.x);
         PlayerPrefs.SetInt(HeightKey, resolution.y);
         PlayerPrefs.Save();
+    }
+
+    static void Save()
+    {
+        Persist();
         OnChanged?.Invoke();
+    }
+
+    /// Alt+Enter troca o modo de tela por fora do GameSettings: le o modo real e guarda.
+    public static void SyncFullScreen()
+    {
+        if (Screen.fullScreen == fullScreen) return;
+        fullScreen = Screen.fullScreen;
+        Save();
+    }
+
+    /// Resolucao da area de trabalho (a do monitor).
+    static Vector2Int Desktop()
+    {
+        Resolution d = Screen.currentResolution;
+        return new Vector2Int(d.width, d.height);
     }
 
     /// Resolucoes que o monitor aceita (sem repetir por taxa de atualizacao), da menor para a maior.
@@ -63,7 +86,9 @@ public static class GameSettings
             var size = new Vector2Int(r.width, r.height);
             if (r.width >= 800 && r.height >= 450 && !list.Contains(size)) list.Add(size);
         }
-        if (list.Count == 0) list.Add(new Vector2Int(Screen.currentResolution.width, Screen.currentResolution.height));
+        // a salva pode nao estar na lista (monitor trocado): entra para o painel nao mostrar outra
+        if (resolution.x > 0 && resolution.y > 0 && !list.Contains(resolution)) list.Add(resolution);
+        if (list.Count == 0) list.Add(Desktop());
         list.Sort((a, b) => a.x != b.x ? a.x.CompareTo(b.x) : a.y.CompareTo(b.y));
         return list;
     }
@@ -72,8 +97,7 @@ public static class GameSettings
     public static Vector2Int CurrentResolution()
     {
         if (resolution.x > 0 && resolution.y > 0) return resolution;
-        List<Vector2Int> all = AvailableResolutions();
-        return all[all.Count - 1];
+        return Desktop();
     }
 
     public static void SetResolution(Vector2Int size)
@@ -93,6 +117,13 @@ public static class GameSettings
     static void ApplyScreen()
     {
         Vector2Int size = CurrentResolution();
+        if (!fullScreen)
+        {
+            // janela nunca ocupa o monitor todo: senao a barra de titulo sai da tela
+            Vector2Int desk = Desktop();
+            float scale = Mathf.Min(1f, Mathf.Min(WindowLimit * desk.x / size.x, WindowLimit * desk.y / size.y));
+            size = new Vector2Int(Mathf.RoundToInt(size.x * scale), Mathf.RoundToInt(size.y * scale));
+        }
         Screen.SetResolution(size.x, size.y, fullScreen ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed);
     }
 }
