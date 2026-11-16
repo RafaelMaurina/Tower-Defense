@@ -103,7 +103,7 @@ public class HudButtonFeedback : MonoBehaviour, IPointerEnterHandler, IPointerEx
             : pressed ? new Color(.85f, .85f, .85f, 1f)
             : active && selected == normal ? new Color(.83f, 1f, .78f, 1f) : Color.white;
     }
-    public void OnPointerEnter(PointerEventData e) { hovered = true; if (button != null && button.interactable && audioSource != null && hoverClip != null) audioSource.PlayOneShot(hoverClip); Refresh(); }
+    public void OnPointerEnter(PointerEventData e) { hovered = true; if (button != null && button.interactable && audioSource != null && hoverClip != null) audioSource.PlayOneShot(hoverClip, GameSettings.Sfx); Refresh(); }
     public void OnPointerExit(PointerEventData e) { hovered = pressed = false; Refresh(); }
     public void OnPointerDown(PointerEventData e) { keyboardSelected = false; pressed = true; Refresh(); }
     public void OnPointerUp(PointerEventData e) { pressed = false; Refresh(); }

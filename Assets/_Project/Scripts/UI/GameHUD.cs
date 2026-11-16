@@ -204,8 +204,8 @@ public class GameHUD : MonoBehaviour
         clip.SetData(samples, 0);
         return clip;
     }
-    void PlayHover() { if (uiAudio != null && hoverSound != null) uiAudio.PlayOneShot(hoverSound); }
-    void PlayClick() { if (uiAudio != null && clickSound != null) uiAudio.PlayOneShot(clickSound); }
+    void PlayHover() { if (uiAudio != null && hoverSound != null) uiAudio.PlayOneShot(hoverSound, GameSettings.Sfx); }
+    void PlayClick() { if (uiAudio != null && clickSound != null) uiAudio.PlayOneShot(clickSound, GameSettings.Sfx); }
     void OnEnable()
     {
         GameManager.OnMoneyChanged += UpdateMoney;
@@ -266,6 +266,7 @@ public class GameHUD : MonoBehaviour
                 if (option.interactable) { EventSystem.current.SetSelectedGameObject(option.gameObject); break; }
         }
         if (!Keyboard.current.escapeKey.wasPressedThisFrame) return;
+        if (SettingsPanel.IsOpenOrJustClosed) return;   // o Esc e do painel de configuracoes
         if (!IsOverlayOpen && (buildSelection != null || pendingBuildPlot != null)) { CancelBuildSelection(); return; }
         if (towerPanel && overlay.activeSelf) Back();
         else if (GameManager.State == GameState.Victory || GameManager.State == GameState.Defeat) return;
@@ -1287,6 +1288,7 @@ public class GameHUD : MonoBehaviour
             Show("JOGO PAUSADO","A colheita pode esperar um pouquinho.\nRetome a defesa quando estiver pronto.",false,
                 new Action("Continuar","continuar","continuar",()=>GameManager.Instance?.TogglePause()),
                 new Action("Recomeçar nível","recomecar","voltar",()=>GameManager.Instance?.RestartCurrentLevel()),
+                new Action("Configurações","construir",null,()=>SettingsPanel.Open()),
                 new Action("Voltar ao menu","menu","voltar",ToMenu));
         }
         else if (state == GameState.Playing) Close();
