@@ -41,9 +41,29 @@ public static class TowerShotFx
 
     static readonly Dictionary<string, Spot> Spots = new Dictionary<string, Spot>
     {
-        { "torre_uvas", new Spot(52, 35, 48, 43) },               // 2 canos: entre as duas bocas; b = onde o bagaco sai, sob o cano
-        { "torre_uvas_2", new Spot(58, 36, 48, 44) },             // 4 canos: ponta do feixe
-        { "torre_uvas_3", new Spot(58, 36, 48, 44) },
+        // metralhadora de uvas (vira para o alvo, 6 desenhos por nivel; o desenho de repouso e o sudeste):
+        // a = ponta do cano; b = onde o bagaco sai, perto da boca e sob o cano
+        { "torre_uvas_sudeste", new Spot(60, 34, 56, 42) },
+        { "torre_uvas", new Spot(60, 34, 56, 42) },
+        { "torre_uvas_sul", new Spot(34, 43, 34, 51) },
+        { "torre_uvas_sudoeste", new Spot(2, 34, 6, 42) },
+        { "torre_uvas_noroeste", new Spot(4, 12, 8, 20) },
+        { "torre_uvas_norte", new Spot(26, 6, 26, 14) },
+        { "torre_uvas_nordeste", new Spot(55, 10, 51, 18) },
+        { "torre_uvas_2_sudeste", new Spot(58, 36, 54, 44) },
+        { "torre_uvas_2", new Spot(58, 36, 54, 44) },
+        { "torre_uvas_2_sul", new Spot(34, 47, 34, 55) },
+        { "torre_uvas_2_sudoeste", new Spot(4, 36, 8, 44) },
+        { "torre_uvas_2_noroeste", new Spot(6, 10, 10, 18) },
+        { "torre_uvas_2_norte", new Spot(26, 2, 26, 10) },
+        { "torre_uvas_2_nordeste", new Spot(53, 8, 49, 16) },
+        { "torre_uvas_3_sudeste", new Spot(58, 36, 54, 44) },
+        { "torre_uvas_3", new Spot(58, 36, 54, 44) },
+        { "torre_uvas_3_sul", new Spot(34, 47, 34, 55) },
+        { "torre_uvas_3_sudoeste", new Spot(4, 36, 8, 44) },
+        { "torre_uvas_3_noroeste", new Spot(6, 10, 10, 18) },
+        { "torre_uvas_3_norte", new Spot(26, 2, 26, 10) },
+        { "torre_uvas_3_nordeste", new Spot(53, 8, 49, 16) },
         { "torre_colmeia", new Spot(28, 38) },                    // janela com mel da casinha
         { "torre_colmeia_2", new Spot(29, 38) },
         { "torre_colmeia_3", new Spot(29, 38) },
