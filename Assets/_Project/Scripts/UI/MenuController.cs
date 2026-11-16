@@ -522,17 +522,17 @@ public class MenuController : MonoBehaviour
             new Vector2(.12f, .19f), new Vector2(.88f, .97f), Color.white, true);
 
         AddImage(screen.transform, "Cabeçalho da tabela", rankingHeaderSprite,
-            new Vector2(.275f, .705f), new Vector2(.725f, .785f), Color.white, true);
+            new Vector2(.275f, .72f), new Vector2(.725f, .79f), Color.white, true);
         string[] headers = { "POS.", "PONTUAÇÃO", "DIFICULDADE", "DATA" };
         float[] left = { .280f, .334f, .454f, .599f };
         float[] right = { .331f, .451f, .597f, .720f };
 
         var entries = LocalRanking.GetEntries(bonus);
         const int maxRows = 10;
-        float startY = .687f;
+        const float rowHeight = .040f;
+        float startY = .695f;
         for (int i = 0; i < Mathf.Min(maxRows, entries.Count); i++)
         {
-            const float rowHeight = .048f;
             float yMax = startY - i * rowHeight;
             float yMin = yMax - rowHeight;
             Sprite row = i == 0 ? rankingFirstSprite : i == 1 ? rankingSecondSprite
