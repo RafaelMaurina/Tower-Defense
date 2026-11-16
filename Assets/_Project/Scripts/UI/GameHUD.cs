@@ -576,7 +576,8 @@ public class GameHUD : MonoBehaviour
         var rect = new Rect(sprite.rect.x + x0, sprite.rect.y + y0, x1 - x0 + 1, y1 - y0 + 1);
         Sprite cropped = Sprite.Create(sprite.texture, rect, new Vector2(.5f, .5f), sprite.pixelsPerUnit, 0, SpriteMeshType.FullRect);
         cropped.name = sprite.name + "_retrato";
-        generatedSprites.Add(cropped);
+        // fica no cache pelo jogo todo: nao entra em generatedSprites, que e destruida quando a fase acaba
+        // (o HUD da fase seguinte reaproveita o cache e ficaria com quadrado branco)
         portraits[sprite] = cropped;
         return cropped;
     }
