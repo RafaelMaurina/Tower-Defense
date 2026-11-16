@@ -42,6 +42,17 @@ public class MuzzleSmoke : MonoBehaviour
         }
     }
 
+    // a torre que vira de desenho (metralhadora de uvas) muda a boca a cada direcao
+    Sprite lastSprite;
+
+    void LateUpdate()
+    {
+        if (owner == null || owner.sprite == lastSprite) return;
+        lastSprite = owner.sprite;
+        if (TowerShotFx.TryGetSpot(lastSprite, out TowerShotFx.Spot spot))
+            muzzle = PixelSprites.Local(lastSprite, spot.a.x, spot.a.y);
+    }
+
     void Update()
     {
         spawn -= Time.deltaTime;

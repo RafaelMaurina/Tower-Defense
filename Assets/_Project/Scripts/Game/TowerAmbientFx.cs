@@ -52,6 +52,9 @@ public static class TowerAmbientFx
             case "torre_uvas":
             case "torre_uvas_2":
             case "torre_uvas_3":
+                // vira para o alvo trocando de sprite (TowerLevel.facing), como o canhao; a fumacinha da boca
+                // acompanha o desenho de cada direcao (MuzzleSmoke)
+                Get<CannonAim>(tower).Begin(tower, tower.Stats.facing);
                 if (TowerShotFx.TryGetSpot(sprite, out TowerShotFx.Spot spot))
                     Get<MuzzleSmoke>(tower).muzzle = PixelSprites.Local(sprite, spot.a.x, spot.a.y);
                 break;
