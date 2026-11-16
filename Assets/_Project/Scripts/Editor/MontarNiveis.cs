@@ -518,8 +518,8 @@ public static class MontarNiveis
         {
             Sprite_(grupo, Est_(nv, "Props/prop_galinheiro"), new Vector3(nv.galinheiro.x + 1f, nv.galinheiro.y, 0f), -1);
             // galinha e galo ciscam em volta de onde nascem; a galinha olha para a esquerda no desenho
-            Som_(Ave_(grupo, "Props/prop_galinha", new Vector3(nv.galinha.x + 0.5f, nv.galinha.y + 0.1f, 0f), true).gameObject, "galinha", "COCO").flee = true;
-            var cantoDoGalo = Som_(Ave_(grupo, "Props/prop_galo", new Vector3(nv.galo.x + 0.5f, nv.galo.y + 0.1f, 0f), false).gameObject, "galo", "COCORICO");
+            Som_(Ave_(grupo, Est_(nv, "Props/prop_galinha"), new Vector3(nv.galinha.x + 0.5f, nv.galinha.y + 0.1f, 0f), true).gameObject, "galinha", "COCO").flee = true;
+            var cantoDoGalo = Som_(Ave_(grupo, Est_(nv, "Props/prop_galo"), new Vector3(nv.galo.x + 0.5f, nv.galo.y + 0.1f, 0f), false).gameObject, "galo", "COCORICO");
             cantoDoGalo.flee = true;
             cantoDoGalo.crowsOnWave = true;   // canta no comeco de cada onda
         }
