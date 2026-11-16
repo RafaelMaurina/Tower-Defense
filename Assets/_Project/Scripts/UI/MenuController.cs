@@ -3,7 +3,9 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.EventSystems;
+using TMPro;
 using System.Collections;
+using System.Collections.Generic;
 
 /// Menu estatico montado com os sprites finais do pacote de arte.
 public class MenuController : MonoBehaviour
@@ -14,6 +16,20 @@ public class MenuController : MonoBehaviour
     [Header("Sprites dos botões")]
     [SerializeField] Sprite playNormalSprite;
     [SerializeField] Sprite playSelectedSprite;
+    [Header("Seleção de fases")]
+    [SerializeField] Sprite phaseMainFrameSprite;
+    [SerializeField] Sprite summerCardFrameSprite;
+    [SerializeField] Sprite springCardFrameSprite;
+    [SerializeField] Sprite autumnCardFrameSprite;
+    [SerializeField] Sprite bonusCardFrameSprite;
+    [SerializeField] Sprite phaseSelectionOutlineSprite;
+    [SerializeField] Sprite summerPreviewSprite;
+    [SerializeField] Sprite springPreviewSprite;
+    [SerializeField] Sprite autumnPreviewSprite;
+    [SerializeField] Sprite bonusPreviewSprite;
+    [SerializeField] Sprite bonusLockedPreviewSprite;
+    [SerializeField] Sprite bonusLockSprite;
+    bool springPreviewIsProvisional;
     [Header("Indicadores de dificuldade")]
     [SerializeField] Sprite difficultyEasyBadge;
     [SerializeField] Sprite difficultyEasyBadgeSelected;
@@ -32,20 +48,40 @@ public class MenuController : MonoBehaviour
     [SerializeField] Sprite infoSelectedSprite;
     [SerializeField] Sprite exitNormalSprite;
     [SerializeField] Sprite exitSelectedSprite;
+    [Header("Arte do ranking")]
+    [SerializeField] Sprite rankingFrameSprite;
+    [SerializeField] Sprite rankingHeaderSprite;
+    [SerializeField] Sprite rankingRowSprite;
+    [SerializeField] Sprite rankingFirstSprite;
+    [SerializeField] Sprite rankingSecondSprite;
+    [SerializeField] Sprite rankingThirdSprite;
+    [SerializeField] Sprite rankingGoldMedalSprite;
+    [SerializeField] Sprite rankingSilverMedalSprite;
+    [SerializeField] Sprite rankingBronzeMedalSprite;
     [Header("Áudio da interface (sem música)")]
     [SerializeField] AudioClip hoverSound;
     [SerializeField] AudioClip clickSound;
-    [SerializeField] string firstLevel = "Nivel_1_Primavera";
 
     Transform menuRoot;
     GameObject mainMenuContent;
     GameObject difficultyMenu;
+    GameObject phaseSelectionMenu;
+    readonly List<PhaseCard> phaseCards = new List<PhaseCard>();
+    PhaseCard selectedPhaseCard;
     string selectedLevel;
     bool loading;
     GameDifficulty difficulty = GameDifficulty.Easy;
 
+    class PhaseCard
+    {
+        public string scene;
+        public Button button;
+        public Image outline;
+    }
+
     void Start()
     {
+        LoadPhaseArtFromResources();
         // Sons leves gerados em runtime até a equipe adicionar os efeitos finais.
         if (hoverSound == null) hoverSound = CreateUiTone("Menu Hover", 0.11f, 760f, 1120f, 0.22f);
         if (clickSound == null) clickSound = CreateUiTone("Menu Click", 0.10f, 260f, 520f, 0.30f);
@@ -85,6 +121,39 @@ public class MenuController : MonoBehaviour
         mainMenuContent.transform.SetAsLastSibling();
     }
 
+    void LoadPhaseArtFromResources()
+    {
+        if (phaseMainFrameSprite == null) phaseMainFrameSprite = Resources.Load<Sprite>("MenuPhase/selecao_moldura_principal");
+        if (summerCardFrameSprite == null) summerCardFrameSprite = Resources.Load<Sprite>("MenuPhase/fase_verao_moldura");
+        if (springCardFrameSprite == null) springCardFrameSprite = Resources.Load<Sprite>("MenuPhase/fase_primavera_moldura");
+        if (autumnCardFrameSprite == null) autumnCardFrameSprite = Resources.Load<Sprite>("MenuPhase/fase_outono_moldura");
+        if (bonusCardFrameSprite == null) bonusCardFrameSprite = Resources.Load<Sprite>("MenuPhase/fase_bonus_moldura");
+        if (phaseSelectionOutlineSprite == null) phaseSelectionOutlineSprite = Resources.Load<Sprite>("MenuPhase/fase_contorno_selecionado");
+        if (summerPreviewSprite == null) summerPreviewSprite = Resources.Load<Sprite>("MenuPhase/fase_verao_preview");
+        if (springPreviewSprite == null)
+        {
+            springPreviewSprite = Resources.Load<Sprite>("MenuPhase/fase_primavera_preview");
+            if (springPreviewSprite == null)
+            {
+                springPreviewSprite = Resources.Load<Sprite>("MenuPhase/fase_primavera_preview_provisoria");
+                springPreviewIsProvisional = springPreviewSprite != null;
+            }
+        }
+        if (autumnPreviewSprite == null) autumnPreviewSprite = Resources.Load<Sprite>("MenuPhase/fase_outono_preview");
+        if (bonusPreviewSprite == null) bonusPreviewSprite = Resources.Load<Sprite>("MenuPhase/fase_bonus_preview");
+        if (bonusLockedPreviewSprite == null) bonusLockedPreviewSprite = Resources.Load<Sprite>("MenuPhase/fase_bonus_preview_bloqueada");
+        if (bonusLockSprite == null) bonusLockSprite = Resources.Load<Sprite>("MenuPhase/fase_cadeado");
+        if (rankingFrameSprite == null) rankingFrameSprite = Resources.Load<Sprite>("Ranking/ranking_moldura_principal");
+        if (rankingHeaderSprite == null) rankingHeaderSprite = Resources.Load<Sprite>("Ranking/ranking_cabecalho");
+        if (rankingRowSprite == null) rankingRowSprite = Resources.Load<Sprite>("Ranking/ranking_linha_padrao");
+        if (rankingFirstSprite == null) rankingFirstSprite = Resources.Load<Sprite>("Ranking/ranking_linha_1");
+        if (rankingSecondSprite == null) rankingSecondSprite = Resources.Load<Sprite>("Ranking/ranking_linha_2");
+        if (rankingThirdSprite == null) rankingThirdSprite = Resources.Load<Sprite>("Ranking/ranking_linha_3");
+        if (rankingGoldMedalSprite == null) rankingGoldMedalSprite = Resources.Load<Sprite>("Ranking/ranking_medalha_ouro");
+        if (rankingSilverMedalSprite == null) rankingSilverMedalSprite = Resources.Load<Sprite>("Ranking/ranking_medalha_prata");
+        if (rankingBronzeMedalSprite == null) rankingBronzeMedalSprite = Resources.Load<Sprite>("Ranking/ranking_medalha_bronze");
+    }
+
     static AudioClip CreateUiTone(string clipName, float duration, float startFrequency, float endFrequency, float volume)
     {
         const int sampleRate = 44100;
@@ -106,9 +175,187 @@ public class MenuController : MonoBehaviour
     void StartGame()
     {
         if (loading) return;
-        selectedLevel = firstLevel;
-        // Jogar sempre exige confirmar uma dificuldade antes de carregar a fase.
+        OpenPhaseSelection();
+    }
+
+    void OpenPhaseSelection()
+    {
+        if (phaseSelectionMenu != null) return;
+        if (mainMenuContent != null) mainMenuContent.SetActive(false);
+
+        phaseSelectionMenu = new GameObject("Seleção de fases", typeof(RectTransform));
+        phaseSelectionMenu.transform.SetParent(menuRoot, false);
+        var rootRect = phaseSelectionMenu.GetComponent<RectTransform>();
+        rootRect.anchorMin = Vector2.zero; rootRect.anchorMax = Vector2.one;
+        rootRect.offsetMin = Vector2.zero; rootRect.offsetMax = Vector2.zero;
+
+        var panelImage = AddImage(phaseSelectionMenu.transform, "Moldura principal da seleção",
+            phaseMainFrameSprite != null ? phaseMainFrameSprite : submenuPanelSprite,
+            new Vector2(.10f, .10f), new Vector2(.90f, .98f), Color.white, false);
+        panelImage.raycastTarget = false;
+
+        if (phaseMainFrameSprite == null)
+        {
+            var heading = MakeText(phaseSelectionMenu.transform, "SELECIONE A FASE",
+                new Vector2(.30f, .83f), new Vector2(.70f, .93f), 48, new Color32(255, 248, 215, 255));
+            InfoPanel.StyleSubmenuHeading(heading);
+        }
+
+        phaseCards.Clear();
+        AddPhaseCard("VERÃO", "Nivel_2_Verao", summerPreviewSprite, summerCardFrameSprite, false, false,
+            new Vector2(.21f, .52f), new Vector2(.49f, .80f));
+        AddPhaseCard("PRIMAVERA", "Nivel_1_Primavera", springPreviewSprite, springCardFrameSprite, false,
+            springPreviewIsProvisional,
+            new Vector2(.51f, .52f), new Vector2(.79f, .80f));
+        AddPhaseCard("OUTONO", "Nivel_3_Outono", autumnPreviewSprite, autumnCardFrameSprite, false, false,
+            new Vector2(.21f, .22f), new Vector2(.49f, .50f));
+        bool bonusLocked = !CampaignProgress.BonusUnlocked;
+        Sprite bonusCardPreview = bonusLocked ? bonusLockedPreviewSprite : bonusPreviewSprite;
+        if (bonusCardPreview == null) bonusCardPreview = bonusPreviewSprite;
+        AddPhaseCard("BÔNUS", CampaignProgress.BonusScene, bonusCardPreview, bonusCardFrameSprite,
+            bonusLocked, true, new Vector2(.51f, .22f), new Vector2(.79f, .50f));
+
+        CreateSpriteButton(phaseSelectionMenu.transform, "Voltar", backButtonSprite, backButtonSelectedSprite,
+            new Vector2(.39f, .005f), new Vector2(.61f, .09f), ClosePhaseSelection);
+        phaseSelectionMenu.transform.SetAsLastSibling();
+
+        if (EventSystem.current != null && phaseCards.Count > 0)
+            EventSystem.current.SetSelectedGameObject(phaseCards[0].button.gameObject);
+    }
+
+    void AddPhaseCard(string label, string scene, Sprite preview, Sprite frame, bool locked, bool provisional,
+        Vector2 min, Vector2 max)
+    {
+        var cardObject = new GameObject("Fase " + label, typeof(RectTransform), typeof(Image), typeof(Button));
+        cardObject.transform.SetParent(phaseSelectionMenu.transform, false);
+        var rect = cardObject.GetComponent<RectTransform>();
+        rect.anchorMin = min; rect.anchorMax = max; rect.offsetMin = Vector2.zero; rect.offsetMax = Vector2.zero;
+        var background = cardObject.GetComponent<Image>();
+        background.color = Color.clear;
+        background.sprite = null;
+        background.type = Image.Type.Simple;
+        background.preserveAspect = false;
+        background.raycastTarget = true;
+
+        var button = cardObject.GetComponent<Button>();
+        button.targetGraphic = background;
+        button.transition = Selectable.Transition.None;
+        button.navigation = new Navigation { mode = Navigation.Mode.Automatic };
+        cardObject.AddComponent<PhaseCardHoverScale>();
+
+        var previewImage = AddImage(cardObject.transform,
+            preview != null ? "Imagem " + label : "Área de prévia " + label,
+            preview, new Vector2(.08f, .20f), new Vector2(.92f, .86f),
+            preview != null ? Color.white : PhaseColor(label), true);
+        previewImage.raycastTarget = false;
+
+        var card = new PhaseCard { scene = scene, button = button };
+        if (locked)
+        {
+            var tint = AddImage(cardObject.transform, "Escurecimento de fase bloqueada", null,
+                new Vector2(.08f, .20f), new Vector2(.92f, .86f), new Color(0.23f, 0.24f, 0.24f, .78f), false);
+            tint.raycastTarget = false;
+            if (bonusLockSprite != null)
+                AddImage(cardObject.transform, "Cadeado da fase bônus", bonusLockSprite,
+                    new Vector2(.42f, .37f), new Vector2(.58f, .67f), Color.white, true);
+            else
+                CreateLockIcon(cardObject.transform);
+            button.interactable = false;
+        }
+        else
+        {
+            button.onClick.AddListener(() => SelectPhase(card));
+            var audio = cardObject.AddComponent<AudioSource>(); audio.playOnAwake = false; audio.spatialBlend = 0;
+            if (clickSound != null) button.onClick.AddListener(() => audio.PlayOneShot(clickSound));
+            cardObject.AddComponent<MenuButtonHoverSound>().Initialize(audio, hoverSound);
+        }
+
+        if (provisional)
+        {
+            var provisionalText = MakeText(cardObject.transform, "PRÉVIA PROVISÓRIA",
+                new Vector2(.18f, .72f), new Vector2(.82f, .80f), 17, new Color32(255, 244, 220, 255));
+            provisionalText.raycastTarget = false;
+            var provisionalOutline = provisionalText.gameObject.AddComponent<Outline>();
+            provisionalOutline.effectColor = new Color32(43, 31, 22, 255);
+            provisionalOutline.effectDistance = new Vector2(1.5f, -1.5f);
+        }
+
+        var frameImage = AddImage(cardObject.transform, "Moldura " + label, frame,
+            Vector2.zero, Vector2.one, Color.white, false);
+        frameImage.raycastTarget = false;
+
+        var outline = AddImage(cardObject.transform, "Contorno verde de seleção",
+            phaseSelectionOutlineSprite, Vector2.zero, Vector2.one, Color.white, false);
+        outline.raycastTarget = false;
+        if (phaseSelectionOutlineSprite == null) outline.color = Color.clear;
+        outline.gameObject.SetActive(false);
+        card.outline = outline;
+        phaseCards.Add(card);
+    }
+
+    static Color PhaseColor(string label)
+    {
+        if (label == "VERÃO") return new Color32(126, 168, 69, 255);
+        if (label == "PRIMAVERA") return new Color32(63, 155, 100, 255);
+        if (label == "OUTONO") return new Color32(174, 137, 55, 255);
+        return new Color32(87, 83, 73, 255);
+    }
+
+    void SelectPhase(PhaseCard card)
+    {
+        if (card == null || card.scene == CampaignProgress.BonusScene && !CampaignProgress.BonusUnlocked) return;
+        if (selectedPhaseCard == card)
+        {
+            ConfirmSelectedPhase();
+            return;
+        }
+        selectedPhaseCard = card;
+        for (int i = 0; i < phaseCards.Count; i++)
+            phaseCards[i].outline.gameObject.SetActive(phaseCards[i] == card);
+    }
+
+    void ConfirmSelectedPhase()
+    {
+        if (selectedPhaseCard == null || loading) return;
+        selectedLevel = selectedPhaseCard.scene;
+        if (selectedLevel == CampaignProgress.BonusScene && !CampaignProgress.BonusUnlocked) return;
+        if (phaseSelectionMenu != null) phaseSelectionMenu.SetActive(false);
         OpenDifficultyMenu();
+    }
+
+    void ClosePhaseSelection()
+    {
+        if (phaseSelectionMenu != null) Destroy(phaseSelectionMenu);
+        phaseSelectionMenu = null;
+        selectedPhaseCard = null;
+        phaseCards.Clear();
+        if (mainMenuContent != null) mainMenuContent.SetActive(true);
+    }
+
+    static void CreateLockIcon(Transform parent)
+    {
+        var shackle = new GameObject("Arco do cadeado", typeof(RectTransform), typeof(Image));
+        shackle.transform.SetParent(parent, false);
+        var archRect = shackle.GetComponent<RectTransform>();
+        archRect.anchorMin = new Vector2(.425f, .52f); archRect.anchorMax = new Vector2(.575f, .72f);
+        archRect.offsetMin = Vector2.zero; archRect.offsetMax = Vector2.zero;
+        shackle.GetComponent<Image>().color = new Color32(255, 190, 54, 255);
+        var opening = new GameObject("Abertura do cadeado", typeof(RectTransform), typeof(Image));
+        opening.transform.SetParent(parent, false);
+        var openingRect = opening.GetComponent<RectTransform>();
+        openingRect.anchorMin = new Vector2(.46f, .53f); openingRect.anchorMax = new Vector2(.54f, .64f);
+        openingRect.offsetMin = Vector2.zero; openingRect.offsetMax = Vector2.zero;
+        opening.GetComponent<Image>().color = new Color32(62, 64, 62, 255);
+        opening.GetComponent<Image>().raycastTarget = false;
+        var body = new GameObject("Corpo do cadeado", typeof(RectTransform), typeof(Image));
+        body.transform.SetParent(parent, false);
+        var bodyRect = body.GetComponent<RectTransform>();
+        bodyRect.anchorMin = new Vector2(.385f, .32f); bodyRect.anchorMax = new Vector2(.615f, .57f);
+        bodyRect.offsetMin = Vector2.zero; bodyRect.offsetMax = Vector2.zero;
+        body.GetComponent<Image>().color = new Color32(242, 158, 34, 255);
+        var keyhole = MakeText(body.transform, "●", new Vector2(.35f, .22f), new Vector2(.65f, .75f), 24,
+            new Color32(73, 43, 25, 255));
+        keyhole.raycastTarget = false;
     }
 
     IEnumerator LoadGameAfterClick()
@@ -246,7 +493,8 @@ public class MenuController : MonoBehaviour
         if (difficultyMenu == null) return;
         Destroy(difficultyMenu);
         difficultyMenu = null;
-        if (mainMenuContent != null) mainMenuContent.SetActive(true);
+        if (phaseSelectionMenu != null) phaseSelectionMenu.SetActive(true);
+        else if (mainMenuContent != null) mainMenuContent.SetActive(true);
     }
 
     void ShowInfo() => InfoPanel.Show(
@@ -259,11 +507,97 @@ public class MenuController : MonoBehaviour
 
     void ShowRankingFor(bool bonus)
     {
+        OpenRankingScreen(bonus);
+    }
+
+    void OpenRankingScreen(bool bonus)
+    {
+        if (mainMenuContent != null) mainMenuContent.SetActive(false);
+        var screen = new GameObject("Tela Ranking", typeof(RectTransform));
+        screen.transform.SetParent(menuRoot, false);
+        SetFullRect(screen.GetComponent<RectTransform>());
+
+        AddImage(screen.transform, "Moldura do ranking", rankingFrameSprite,
+            new Vector2(.12f, .19f), new Vector2(.88f, .97f), Color.white, true);
+        CreateTmpText(screen.transform, "Título RANKING", "RANKING",
+            new Vector2(.32f, .835f), new Vector2(.68f, .925f), 56);
+
+        AddImage(screen.transform, "Cabeçalho da tabela", rankingHeaderSprite,
+            new Vector2(.275f, .705f), new Vector2(.725f, .785f), Color.white, true);
+        string[] headers = { "POS.", "PONTUAÇÃO", "DIFICULDADE", "DATA" };
+        float[] left = { .280f, .334f, .454f, .599f };
+        float[] right = { .331f, .451f, .597f, .720f };
+        for (int i = 0; i < headers.Length; i++)
+            CreateTmpText(screen.transform, "Cabeçalho " + headers[i], headers[i],
+                new Vector2(left[i], .715f), new Vector2(right[i], .775f), 25);
+
         var entries = LocalRanking.GetEntries(bonus);
-        string message = bonus ? "BÔNUS · A PROVA FINAL" : "RANKING DA CAMPANHA";
-        for (int i = 0; i < entries.Count; i++) message += $"\n{i + 1}. {entries[i].score} pontos, {entries[i].difficulty}, {entries[i].date}";
-        if (entries.Count == 0) message += "\nAinda não há partidas concluídas.";
-        InfoPanel.Show(message, title: "Ranking");
+        const int maxRows = 10;
+        float startY = .687f;
+        for (int i = 0; i < Mathf.Min(maxRows, entries.Count); i++)
+        {
+            float rowHeight = i < 3 ? .058f : .040f;
+            float yMax = startY - Mathf.Min(i, 3) * .058f - Mathf.Max(0, i - 3) * .040f;
+            float yMin = yMax - rowHeight;
+            Sprite row = i == 0 ? rankingFirstSprite : i == 1 ? rankingSecondSprite
+                : i == 2 ? rankingThirdSprite : rankingRowSprite;
+            AddImage(screen.transform, "Fundo posição " + (i + 1), row,
+                new Vector2(.275f, yMin), new Vector2(.725f, yMax),
+                i >= 3 && i % 2 == 1 ? new Color32(216, 202, 174, 255) : Color.white, false);
+            RankingEntry entry = entries[i];
+            string[] values = { (i + 1).ToString("00"), entry.score.ToString(), entry.difficulty, entry.date };
+            for (int col = 0; col < values.Length; col++)
+            {
+                if (col == 0 && i < 3)
+                {
+                    Sprite medal = i == 0 ? rankingGoldMedalSprite : i == 1 ? rankingSilverMedalSprite : rankingBronzeMedalSprite;
+                    AddImage(screen.transform, "Medalha posição " + (i + 1), medal,
+                        new Vector2(.287f, yMin + .001f), new Vector2(.324f, yMax - .001f), Color.white, true);
+                    CreateTmpText(screen.transform, "Número da medalha " + (i + 1), (i + 1).ToString(),
+                        new Vector2(.296f, yMin + rowHeight * .43f), new Vector2(.315f, yMin + rowHeight * .73f), 30);
+                    continue;
+                }
+                CreateTmpText(screen.transform, "Dado " + (i + 1) + " " + headers[col], values[col],
+                    new Vector2(left[col], yMin + .002f), new Vector2(right[col], yMax - .002f), 25);
+            }
+        }
+        if (entries.Count == 0)
+            CreateTmpText(screen.transform, "Ranking vazio", "AINDA NÃO HÁ PARTIDAS CONCLUÍDAS",
+                new Vector2(.25f, .43f), new Vector2(.75f, .53f), 30);
+
+        CreateSpriteButton(screen.transform, "Voltar", backButtonSprite, backButtonSelectedSprite,
+            new Vector2(.40f, .08f), new Vector2(.60f, .18f), () =>
+            {
+                Destroy(screen);
+                if (mainMenuContent != null) mainMenuContent.SetActive(true);
+            });
+    }
+
+    static void SetFullRect(RectTransform rect)
+    {
+        rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero; rect.offsetMax = Vector2.zero;
+    }
+
+    static TextMeshProUGUI CreateTmpText(Transform parent, string objectName, string value,
+        Vector2 min, Vector2 max, float fontSize)
+    {
+        var go = new GameObject(objectName, typeof(RectTransform), typeof(TextMeshProUGUI));
+        go.transform.SetParent(parent, false);
+        var rect = go.GetComponent<RectTransform>();
+        rect.anchorMin = min; rect.anchorMax = max; rect.offsetMin = Vector2.zero; rect.offsetMax = Vector2.zero;
+        var text = go.GetComponent<TextMeshProUGUI>();
+        text.text = value;
+        text.fontSize = fontSize;
+        text.fontSizeMin = fontSize * .75f;
+        text.fontSizeMax = fontSize;
+        text.enableAutoSizing = true;
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = new Color32(255, 246, 213, 255);
+        text.outlineWidth = .18f;
+        text.outlineColor = new Color32(54, 27, 13, 255);
+        text.raycastTarget = false;
+        return text;
     }
 
     public static void LoadMenu() => SceneManager.LoadScene("Menu");
@@ -344,6 +678,41 @@ public class MenuButtonVisualState : MonoBehaviour, IPointerEnterHandler, IPoint
     void RefreshSprite()
     {
         if (image != null) image.sprite = pointerInside || pointerDown ? highlightedSprite : normalSprite;
+    }
+}
+
+/// Aumenta suavemente o card enquanto o ponteiro estiver sobre ele.
+public class PhaseCardHoverScale : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+{
+    const float HoverScale = 1.06f;
+    const float SmoothTime = 0.11f;
+
+    Vector3 normalScale;
+    Vector3 targetScale;
+    Vector3 scaleVelocity;
+
+    void Awake()
+    {
+        normalScale = transform.localScale;
+        targetScale = normalScale;
+    }
+
+    public void OnPointerEnter(PointerEventData eventData) => targetScale = normalScale * HoverScale;
+
+    public void OnPointerExit(PointerEventData eventData) => targetScale = normalScale;
+
+    void Update()
+    {
+        transform.localScale = Vector3.SmoothDamp(transform.localScale, targetScale,
+            ref scaleVelocity, SmoothTime, Mathf.Infinity, Time.unscaledDeltaTime);
+    }
+
+    void OnDisable()
+    {
+        if (transform == null) return;
+        transform.localScale = normalScale;
+        targetScale = normalScale;
+        scaleVelocity = Vector3.zero;
     }
 }
 
