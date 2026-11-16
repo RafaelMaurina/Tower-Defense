@@ -33,7 +33,7 @@ public class GameHUD : MonoBehaviour
     }
     sealed class Purchase { public Button button; public int cost; }
     static GameHUD current;
-    static Sprite rangeSprite;
+    static readonly Dictionary<int, Sprite> rangeSprites = new Dictionary<int, Sprite>();
     readonly Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>();
     readonly List<Sprite> generatedSprites = new List<Sprite>();
     readonly List<Purchase> purchases = new List<Purchase>();
@@ -64,6 +64,11 @@ public class GameHUD : MonoBehaviour
     BuildPlot hiddenToolsPlot;
     readonly Dictionary<BuildPlot, PlotFx> plotFx = new Dictionary<BuildPlot, PlotFx>();
     Text buildHint;
+    RectTransform statsPanel;
+    Text statsName, statsTarget;
+    readonly Text[] statsValues = new Text[3];
+    TowerData statsShown;
+    Sprite cardFillSprite, cardRingSprite;
     // Esconder HUD: so o cenario aparece; o botao (e a tecla H) continua para voltar.
     readonly List<GameObject> hudLayer = new List<GameObject>();
     Button hudToggleButton;
@@ -250,6 +255,7 @@ public class GameHUD : MonoBehaviour
                 (waiting || pendingBuildPlot != null);
             if (!waiting && pendingBuildPlot == null && buildSelection != null && !draggingCard) CancelBuildSelection();
             if (bottomBarArea.gameObject.activeSelf != visible) bottomBarArea.gameObject.SetActive(visible);
+            UpdateStatsPanel(visible);
         }
         if (Keyboard.current == null) return;
         if (Keyboard.current.hKey.wasPressedThisFrame && !IsOverlayOpen && GameManager.State == GameState.Playing) ToggleHud();
@@ -438,9 +444,12 @@ public class GameHUD : MonoBehaviour
         fit.aspectRatio = 2172f / 724f;
         var background = Picture(board,"Moldura","hud_inferior/hud_conjunto_contraste",Vector2.zero,Vector2.one,true);
         background.raycastTarget = false;
-        buildHint = Label(bottomBarArea,"",new Vector2(-.10f,1.01f),new Vector2(1.10f,1.15f),20);
+        buildHint = Label(bottomBarArea,"",new Vector2(-.10f,1.32f),new Vector2(1.10f,1.46f),20);
         buildHint.resizeTextForBestFit = true;
         buildHint.resizeTextMinSize = 14;
+        CreateStatsPanel(board);
+        cardFillSprite = ChamferSprite("realce_carta_placa", true, 6, 2);
+        cardRingSprite = ChamferSprite("realce_carta_janela", true, 2, 2);
         for (int i=0;i<towers.Count;i++)
         {
             var data = towers[i];
@@ -456,12 +465,15 @@ public class GameHUD : MonoBehaviour
             button.targetGraphic = plate;
             button.transition = Selectable.Transition.None;
             var feedback = card.gameObject.AddComponent<HudButtonFeedback>();
-            var edges = new Image[4];
-            edges[0] = Picture(card,"Realce esquerdo","",Vector2.zero,new Vector2(.012f,1));
-            edges[1] = Picture(card,"Realce direito","",new Vector2(.988f,0),Vector2.one);
-            edges[2] = Picture(card,"Realce inferior","",Vector2.zero,new Vector2(1,.008f));
-            edges[3] = Picture(card,"Realce superior","",new Vector2(0,.992f),Vector2.one);
-            feedback.ConfigureOverlay(plate,edges);
+            // realce: brilho dourado so nas tres partes da arte (placa do nome, janela e placa do preco) e um
+            // contorno na janela; coordenadas na arte da barra (2172 x 724) e uma carta a cada .177 da largura
+            var rings = new[]
+            {
+                HighlightPart(board, "Contorno nome", 148, 160, 538, 296, column, cardFillSprite),
+                HighlightPart(board, "Contorno janela", 165, 302, 519, 518, column, cardRingSprite),
+                HighlightPart(board, "Contorno preco", 155, 524, 540, 645, column, cardFillSprite),
+            };
+            feedback.ConfigureHighlight(new Image[0], rings);
             feedback.ConfigureSound(uiAudio,hoverSound);
             bottomCardFeedback.Add(feedback);
             bottomTowers.Add(data);
@@ -479,9 +491,11 @@ public class GameHUD : MonoBehaviour
                 var plot=PlotUnderPointer();
                 if (plot != null) TryBuildSelected(plot);
             });
-            var portrait = Rect(card,"Torre nível 1",new Vector2(.17f,.25f),new Vector2(.83f,.69f)).gameObject.AddComponent<Image>();
-            portrait.sprite = data.levels[0].sprite != null ? data.levels[0].sprite :
-                data.towerPrefab.GetComponent<SpriteRenderer>()?.sprite;
+            Sprite portraitSprite = TowerPortrait(data.levels[0].sprite != null ? data.levels[0].sprite :
+                data.towerPrefab.GetComponent<SpriteRenderer>()?.sprite);
+            PortraitBox(portraitSprite, column, out Vector2 portraitMin, out Vector2 portraitMax);
+            var portrait = Rect(card,"Torre nível 1",portraitMin,portraitMax).gameObject.AddComponent<Image>();
+            portrait.sprite = portraitSprite;
             portrait.preserveAspect = true;
             portrait.raycastTarget = false;
             Picture(card,"Moeda","icone_moedas",new Vector2(.15f,.055f),new Vector2(.33f,.18f),true);
@@ -494,6 +508,171 @@ public class GameHUD : MonoBehaviour
             bottomPrices.Add(price);
         }
     }
+    // Realce da carta: contorno e brilho com as quinas cortadas em diagonal, como a moldura da carta,
+    // em vez de um retangulo reto. 1 pixel do desenho = 2 pixels de tela.
+    Sprite ChamferSprite(string name, bool ring, int cut, int thickness = 1)
+    {
+        const int size = 24, border = 10;
+        var px = new Color32[size * size];
+        for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                int dx = Mathf.Min(x, size - 1 - x), dy = Mathf.Min(y, size - 1 - y);
+                bool inside = dx + dy >= cut;
+                bool edge = inside && (dx < thickness || dy < thickness || dx + dy < cut + thickness + 1);
+                px[y * size + x] = (ring ? edge : inside) ? new Color32(255, 255, 255, 255) : new Color32(0, 0, 0, 0);
+            }
+        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false)
+        { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp, name = name };
+        tex.SetPixels32(px);
+        tex.Apply(false, true);
+        Sprite sprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(.5f, .5f), 50f, 0,
+            SpriteMeshType.FullRect, new Vector4(border, border, border, border));
+        sprite.name = name;
+        generatedSprites.Add(sprite);
+        return sprite;
+    }
+
+    static readonly Dictionary<Sprite, Sprite> portraits = new Dictionary<Sprite, Sprite>();
+
+    // Retrato na janela da carta (coordenadas da carta): todas as torres com a mesma altura (75% da janela) e
+    // apoiadas na mesma linha; as muito largas ficam limitadas pela largura. A carta tem largura/altura = 0,733.
+    // Centro de cada janela na arte da barra (2172 px), medido nas placas de preco.
+    static readonly float[] WindowCenter = { 343f, 725.5f, 1095.5f, 1467.5f, 1841.5f };
+
+    static void PortraitBox(Sprite sprite, int column, out Vector2 min, out Vector2 max)
+    {
+        // a carta cobre de (.063 + coluna * .177) por .171 da largura; a janela nao fica no meio dela
+        int c = Mathf.Clamp(column, 0, WindowCenter.Length - 1);
+        float cardCenter = (.063f + c * .177f + .0855f) * 2172f;
+        float centerX = .5f + (WindowCenter[c] - cardCenter) / (.171f * 2172f);
+        const float cardAspect = .733f, baseline = .29f, windowHeight = .44f, windowWidth = .60f;
+        float aspect = sprite != null ? sprite.rect.width / Mathf.Max(1f, sprite.rect.height) : 1f;
+        float h = windowHeight * .75f;
+        float w = h * aspect / cardAspect;
+        if (w > windowWidth) { w = windowWidth; h = w * cardAspect / aspect; }
+        min = new Vector2(centerX - w * .5f, baseline);
+        max = new Vector2(centerX + w * .5f, baseline + h);
+    }
+
+    // Recorta a margem transparente do desenho da torre, para o retrato encher a janela da carta.
+    Sprite TowerPortrait(Sprite sprite)
+    {
+        if (sprite == null) return null;
+        if (portraits.TryGetValue(sprite, out Sprite cached) && cached != null) return cached;
+        Color32[] px = PixelSprites.Read(sprite, out int w, out int h);
+        if (px == null) return sprite;
+        int x0 = w, y0 = h, x1 = -1, y1 = -1;
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+                if (px[y * w + x].a > 0)
+                {
+                    if (x < x0) x0 = x;
+                    if (x > x1) x1 = x;
+                    if (y < y0) y0 = y;
+                    if (y > y1) y1 = y;
+                }
+        if (x1 < 0) return sprite;
+        var rect = new Rect(sprite.rect.x + x0, sprite.rect.y + y0, x1 - x0 + 1, y1 - y0 + 1);
+        Sprite cropped = Sprite.Create(sprite.texture, rect, new Vector2(.5f, .5f), sprite.pixelsPerUnit, 0, SpriteMeshType.FullRect);
+        cropped.name = sprite.name + "_retrato";
+        generatedSprites.Add(cropped);
+        portraits[sprite] = cropped;
+        return cropped;
+    }
+
+    // Posicao de cada carta na arte da barra (2172 px): a arte nao tem espacamento uniforme, entao o desvio
+    // e a largura de cada carta em relacao a primeira foram medidos nas placas de preco.
+    static readonly float[] CardShift = { 0f, 382.5f, 752.5f, 1124.5f, 1498.5f };
+    static readonly float[] CardWidth = { 1f, .942f, .936f, .948f, .954f };
+
+    Image HighlightPart(Transform board, string name, float x0, float y0, float x1, float y1, int column, Sprite sprite)
+    {
+        int c = Mathf.Clamp(column, 0, CardShift.Length - 1);
+        float center = (x0 + x1) * .5f + CardShift[c], half = (x1 - x0) * .5f * CardWidth[c];
+        var rect = Rect(board, name, new Vector2((center - half) / 2172f, (724f - y1) / 724f),
+            new Vector2((center + half) / 2172f, (724f - y0) / 724f));
+        var image = rect.gameObject.AddComponent<Image>();
+        image.sprite = sprite; image.type = Image.Type.Sliced; image.raycastTarget = false; image.color = Color.clear;
+        return image;
+    }
+
+    // Painel de madeira com filete laranja, em 9 fatias feitas em codigo (1 pixel do desenho = 3 de tela).
+    Sprite WoodPanelSprite()
+    {
+        // cores tiradas da arte da barra: contorno escuro, laranja em duas tonalidades e a madeira das placas de nome
+        Color32 outl = new Color32(20, 8, 0, 255), trim = new Color32(252, 140, 10, 255), trimDark = new Color32(188, 66, 0, 255);
+        Color32[] layers = { outl, trim, trimDark, outl };
+        Color32 fill = new Color32(100, 28, 4, 255);
+        int border = layers.Length, size = border * 2 + 4;
+        var px = new Color32[size * size];
+        for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                int dx = Mathf.Min(x, size - 1 - x), dy = Mathf.Min(y, size - 1 - y);
+                Color32 c = Mathf.Min(dx, dy) < border ? layers[Mathf.Min(dx, dy)] : fill;
+                if (dx + dy == 0) c = new Color32(0, 0, 0, 0);
+                else if (dx + dy == 1) c = layers[0];
+                px[y * size + x] = c;
+            }
+        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false)
+        { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp, name = "painel_madeira" };
+        tex.SetPixels32(px);
+        tex.Apply(false, true);
+        Sprite sprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(.5f, .5f), 100f / 3f, 0,
+            SpriteMeshType.FullRect, new Vector4(border, border, border, border));
+        sprite.name = "painel_madeira";
+        generatedSprites.Add(sprite);
+        return sprite;
+    }
+
+    // Painel acima da barra com o nome, o alvo e os atributos da torre sob o mouse ou selecionada.
+    void CreateStatsPanel(Transform board)
+    {
+        // mesma largura e centro da fileira de cartas (placas de preco de 155 a 2030 na arte de 2172 px)
+        statsPanel = Rect(board, "Atributos da torre", new Vector2(.071f, 1.0f), new Vector2(.935f, 1.30f));
+        var back = statsPanel.gameObject.AddComponent<Image>();
+        back.sprite = WoodPanelSprite(); back.type = Image.Type.Sliced; back.raycastTarget = false;
+        // nome e alvo encolhem ate 80% para caber inteiros
+        statsName = Label(statsPanel, "Torre", new Vector2(.04f, .50f), new Vector2(.47f, .88f), 27);
+        statsName.alignment = TextAnchor.MiddleLeft;
+        statsName.resizeTextForBestFit = true; statsName.resizeTextMinSize = 22; statsName.resizeTextMaxSize = 27;
+        statsTarget = Label(statsPanel, "Alvo", new Vector2(.04f, .14f), new Vector2(.47f, .54f), 17, false);
+        statsTarget.alignment = TextAnchor.MiddleLeft;
+        statsTarget.resizeTextForBestFit = true; statsTarget.resizeTextMinSize = 14; statsTarget.resizeTextMaxSize = 17;
+        statsTarget.color = new Color32(243, 217, 164, 255);
+        // rotulos em creme forte, numeros grandes e brancos, tres colunas logo depois do nome
+        string[] names = { "Dano", "Alcance", "Tiros/s" };
+        for (int k = 0; k < 3; k++)
+        {
+            float x0 = .49f + k * .163f;
+            var label = Label(statsPanel, names[k], new Vector2(x0, .56f), new Vector2(x0 + .155f, .88f), 16, false);
+            label.color = new Color32(242, 221, 176, 255);
+            label.fontStyle = FontStyle.Normal;
+            statsValues[k] = Label(statsPanel, "0", new Vector2(x0, .12f), new Vector2(x0 + .155f, .62f), 28);
+            statsValues[k].color = Color.white;
+            statsValues[k].supportRichText = true;
+            statsValues[k].horizontalOverflow = HorizontalWrapMode.Overflow;
+        }
+        statsPanel.gameObject.SetActive(false);
+    }
+
+    void UpdateStatsPanel(bool barVisible)
+    {
+        if (statsPanel == null) return;
+        TowerData data = hoveredCard != null ? hoveredCard : buildSelection;
+        bool show = barVisible && data != null;
+        if (statsPanel.gameObject.activeSelf != show) statsPanel.gameObject.SetActive(show);
+        if (!show || data == statsShown) return;
+        statsShown = data;
+        TowerLevel first = data.levels[0];
+        statsName.text = TowerDisplayName(data);
+        statsTarget.text = "Alvo: " + (data.hitsFlying ? "aéreos e terrestres" : "terrestres");
+        statsValues[0].text = first.damage.ToString("0.#");
+        statsValues[1].text = first.range.ToString("0.#") + " <size=18>casas</size>";   // unidade menor que o numero
+        statsValues[2].text = first.fireRate.ToString("0.#");
+    }
+
     static int TowerCardIndex(TowerData data)
     {
         switch (TowerDisplayName(data))
@@ -734,12 +913,13 @@ public class GameHUD : MonoBehaviour
         buildGhost.sortingOrder=DrawOrder.ForY(position.y)+5;
         buildGhost.color=valid ? new Color(1f,1f,1f,.8f) : new Color(1f,.45f,.45f,.75f);
         buildGhost.enabled=true;
-        if (buildRadius == null) buildRadius=BuildVisual("Alcance da prévia",RangeSprite());
+        if (buildRadius == null) buildRadius=BuildVisual("Alcance da prévia",null);
+        buildRadius.sprite=RangeSprite(data.levels[0].range);
         buildRadius.transform.position=position;
-        buildRadius.transform.localScale=Vector3.one*data.levels[0].range;
+        buildRadius.transform.localScale=Vector3.one;
         buildRadius.sortingLayerID=buildGhost.sortingLayerID;
         buildRadius.sortingOrder=buildGhost.sortingOrder-1;
-        buildRadius.color=valid ? new Color(.6f,1f,.55f,.75f) : new Color(1f,.35f,.25f,.65f);
+        buildRadius.color=valid ? new Color(1f,.96f,.86f,1f) : new Color(1f,.35f,.25f,1f);   // creme; vermelho onde nao da para construir
         buildRadius.enabled=true;
     }
     void UpdateWaveControls()
@@ -1035,24 +1215,28 @@ public class GameHUD : MonoBehaviour
         decisionOpen = false;
         GameManager.Instance?.SetDecisionPause(false);
     }
-    static Sprite RangeSprite()
+    // Circulo de alcance em pixels duros, ja no tamanho do raio (escala 1): 1 pixel do desenho = 2 de tela
+    // (1/32 de unidade). Borda clara de 3 px, anel escuro de 1 px por fora e preenchimento a 12%.
+    // A cor vem do SpriteRenderer; o anel escuro continua escuro com qualquer cor.
+    static Sprite RangeSprite(float radius)
     {
-        if (rangeSprite != null) return rangeSprite;
-        const int size = 128;
-        var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        texture.filterMode = FilterMode.Point;
-        texture.wrapMode = TextureWrapMode.Clamp;
-        var pixels = new Color[size * size];
+        int r = Mathf.Max(8, Mathf.RoundToInt(radius / PixelSprites.Pixel));
+        if (rangeSprites.TryGetValue(r, out Sprite cached) && cached != null) return cached;
+        int size = 2 * r + 2;
+        float center = size * .5f;
+        var px = new Color32[size * size];
         for (int y = 0; y < size; y++)
             for (int x = 0; x < size; x++)
             {
-                float radius = Vector2.Distance(new Vector2(x, y), new Vector2(63.5f, 63.5f)) / 63f;
-                pixels[y * size + x] = radius > 1f ? Color.clear :
-                    new Color(1f, 1f, 1f, radius > .965f ? .78f : .14f);
+                float d = Vector2.Distance(new Vector2(x + .5f, y + .5f), new Vector2(center, center));
+                px[y * size + x] = d > r + 1f ? new Color32(0, 0, 0, 0)
+                    : d > r ? new Color32(40, 22, 8, 190)
+                    : d > r - 3f ? new Color32(255, 255, 255, 255)
+                    : new Color32(255, 255, 255, 31);
             }
-        texture.SetPixels(pixels); texture.Apply();
-        rangeSprite = Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(.5f, .5f), 64f);
-        return rangeSprite;
+        Sprite sprite = PixelSprites.Make(px, size, size, new Vector2(.5f, .5f), 1f / PixelSprites.Pixel, "alcance_" + r);
+        rangeSprites[r] = sprite;
+        return sprite;
     }
     void DrawRange(BuildPlot plot, float radius, bool selected)
     {
@@ -1060,12 +1244,12 @@ public class GameHUD : MonoBehaviour
         if (rangeRenderer == null)
         {
             rangeRenderer = new GameObject("Alcance da torre").AddComponent<SpriteRenderer>();
-            rangeRenderer.sprite = RangeSprite();
         }
+        rangeRenderer.sprite = RangeSprite(radius);
         rangeRenderer.transform.position = plot.transform.position + new Vector3(0f, -.35f, 0f);   // pe da torre, de onde o alcance e medido
-        rangeRenderer.transform.localScale = Vector3.one * radius;
+        rangeRenderer.transform.localScale = Vector3.one;   // o sprite ja tem o tamanho do raio
         rangeRenderer.sortingOrder = DrawOrder.ForY(plot.transform.position.y) - 1;
-        rangeRenderer.color = selected ? new Color(1f, .87f, .39f, .86f) : new Color(.7f, .92f, 1f, .6f);
+        rangeRenderer.color = selected ? new Color(1f, .9f, .55f, 1f) : new Color(1f, .96f, .86f, .9f);   // creme; dourado na torre escolhida
         rangeRenderer.enabled = true;
     }
     void ShowSelectedRange(BuildPlot plot, float radius)
