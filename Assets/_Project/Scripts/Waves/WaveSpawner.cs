@@ -10,6 +10,8 @@ public class WaveSpawner : MonoBehaviour
     bool waveActive;
     bool startRequested;
     bool autoStart;
+    /// Avisa quando um inimigo entra no mapa (so os da onda; os que nascem de outros nao passam por aqui).
+    public static event System.Action<Enemy> OnEnemySpawned;
     public int CurrentWave { get; private set; }
     public int TotalWaves => waves == null ? 0 : waves.Length;
     public bool IsWaveActive => waveActive;
@@ -114,6 +116,7 @@ public class WaveSpawner : MonoBehaviour
                         enemy.Init(path);
                         liveEnemies++;
                         enemy.Finished += OnEnemyFinished;
+                        OnEnemySpawned?.Invoke(enemy);
                     }
 
                     if (entry.spawnInterval > 0f) yield return new WaitForSeconds(entry.spawnInterval);
