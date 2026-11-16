@@ -6,6 +6,7 @@ using UnityEngine.EventSystems;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 
 /// Menu estatico montado com os sprites finais do pacote de arte.
 public class MenuController : MonoBehaviour
@@ -522,10 +523,11 @@ public class MenuController : MonoBehaviour
             new Vector2(.12f, .19f), new Vector2(.88f, .97f), Color.white, true);
 
         AddImage(screen.transform, "Cabeçalho da tabela", rankingHeaderSprite,
-            new Vector2(.275f, .72f), new Vector2(.725f, .79f), Color.white, true);
+            new Vector2(.275f, .715f), new Vector2(.725f, .799f), Color.white, true);
         string[] headers = { "POS.", "PONTUAÇÃO", "DIFICULDADE", "DATA" };
-        float[] left = { .280f, .334f, .454f, .599f };
-        float[] right = { .331f, .451f, .597f, .720f };
+        // Align data columns with the separators and label centers baked into the header sprite.
+        float[] left = { .280f, .378f, .486f, .612f };
+        float[] right = { .368f, .477f, .603f, .720f };
 
         var entries = LocalRanking.GetEntries(bonus);
         const int maxRows = 10;
@@ -542,14 +544,14 @@ public class MenuController : MonoBehaviour
                 i >= 3 && i % 2 == 1 ? new Color32(216, 202, 174, 255) : Color.white, false);
             RankingEntry entry = entries[i];
             string position = i < 3 ? (i + 1).ToString() : (i + 1) + ".";
-            string[] values = { position, entry.score.ToString(), entry.difficulty, entry.date };
+            string[] values = { position, entry.score.ToString(), entry.difficulty, FormatRankingDate(entry.date) };
             for (int col = 0; col < values.Length; col++)
             {
                 if (col == 0 && i < 3)
                 {
                     Sprite medal = i == 0 ? rankingGoldMedalSprite : i == 1 ? rankingSilverMedalSprite : rankingBronzeMedalSprite;
                     AddImage(screen.transform, "Medalha posição " + (i + 1), medal,
-                        new Vector2(.287f, yMin + .001f), new Vector2(.324f, yMax - .001f), Color.white, true);
+                        new Vector2(.305f, yMin + .001f), new Vector2(.342f, yMax - .001f), Color.white, true);
                     continue;
                 }
                 CreateTmpText(screen.transform, "Dado " + (i + 1) + " " + headers[col], values[col],
@@ -566,6 +568,15 @@ public class MenuController : MonoBehaviour
                 Destroy(screen);
                 if (mainMenuContent != null) mainMenuContent.SetActive(true);
             });
+    }
+
+    static string FormatRankingDate(string value)
+    {
+        string[] formats = { "yyyy-MM-dd", "dd/MM/yyyy" };
+        return System.DateTime.TryParseExact(value, formats, CultureInfo.InvariantCulture,
+            DateTimeStyles.None, out var date)
+            ? date.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)
+            : value;
     }
 
     static void SetFullRect(RectTransform rect)
