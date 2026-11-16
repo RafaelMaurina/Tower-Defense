@@ -796,9 +796,7 @@ public class InfoPanel : MonoBehaviour
 
         if (teamPlaqueSprite != null)
             AddImage(screen.transform, "Placa da equipe", teamPlaqueSprite,
-                new Vector2(.35f, .60f), new Vector2(.65f, .72f), Color.white, true);
-        MakeInfoTmpText(screen.transform, "Título da equipe", "EQUIPE DE DESENVOLVIMENTO",
-            new Vector2(.36f, .615f), new Vector2(.64f, .705f), 28);
+                new Vector2(.28f, .615f), new Vector2(.72f, .705f), Color.white, true);
 
         Sprite[] icons = { artistIconSprite, combatIconSprite, gameplayIconSprite };
         float[] rowBottoms = { .52f, .43f, .34f };
