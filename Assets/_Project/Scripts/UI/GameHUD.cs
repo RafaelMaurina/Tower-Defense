@@ -140,7 +140,7 @@ public class GameHUD : MonoBehaviour
         if (name == "icone_auto" || name == "icone_configuracoes" ||
             name == "icone_continuar" || name == "icone_moedas" ||
             name == "icone_pausa" || name == "icone_rodadas" ||
-            name == "icone_vida" || name == "status_frame" || name == "square_button")
+            name == "icone_vida" || name == "icone_esconder_hud" || name == "status_frame" || name == "square_button")
             return "hud_superior/" + name;
         return name;
     }
