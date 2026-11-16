@@ -551,7 +551,7 @@ public class MenuController : MonoBehaviour
                 {
                     Sprite medal = i == 0 ? rankingGoldMedalSprite : i == 1 ? rankingSilverMedalSprite : rankingBronzeMedalSprite;
                     AddImage(screen.transform, "Medalha posição " + (i + 1), medal,
-                        new Vector2(.305f, yMin + .001f), new Vector2(.342f, yMax - .001f), Color.white, true);
+                        new Vector2(.300f, yMin - .004f), new Vector2(.347f, yMax + .004f), Color.white, true);
                     continue;
                 }
                 CreateTmpText(screen.transform, "Dado " + (i + 1) + " " + headers[col], values[col],
