@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.Rendering.Universal;
 
@@ -22,7 +23,12 @@ public class CameraZoom : MonoBehaviour
     PixelPerfectCamera pixelPerfect;
     // grao do jogo: 960x540 de referencia, PPU 32 (mesmo que MontarNiveis grava na Pixel Perfect Camera)
     const float RefWidth = 960f, RefHeight = 540f, RefPpu = 32f;
-    static readonly Color BorderColor = new Color32(52, 92, 40, 255);   // verde de grama, onde sobrar tela
+    // O mapa tem 30x17 casas em todas as fases (fixo de proposito: a posicao da camera nao e fonte confiavel).
+    // A altura (17) entra pelo piso de baseSize, ver RefreshFraming.
+    const float MapWidth = 30f;
+    // Onde sobrar tela: verde de grama de dia; de noite (Campus e dificuldade Dificil) a luz nao alcanca
+    // o fundo, entao ele e quase preto para nao brilhar fora do mapa.
+    static readonly Color DayBorder = new Color32(52, 92, 40, 255), NightBorder = new Color32(8, 10, 18, 255);
 
     float baseSize, targetZoom = 1f, currentZoom = 1f;
     Vector2Int lastScreen;
@@ -38,7 +44,8 @@ public class CameraZoom : MonoBehaviour
         pixelPerfect = GetComponent<PixelPerfectCamera>();
         homePosition = transform.position;
         cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.backgroundColor = BorderColor;
+        bool night = SceneManager.GetActiveScene().name == CampaignProgress.BonusScene || GameManager.Difficulty == GameDifficulty.Hard;
+        cam.backgroundColor = night ? NightBorder : DayBorder;
         RefreshFraming();
         Zoom = 1f;
     }
@@ -55,9 +62,9 @@ public class CameraZoom : MonoBehaviour
             baseSize = RefHeight / 2f / (RefPpu * 2f);   // 540 / 64 = 8,4375 unidades
         else
         {
-            // mapa inteiro: cabe pela altura ou pela largura, o que apertar mais
-            float halfWidth = homePosition.x, halfHeight = homePosition.y;
-            baseSize = Mathf.Max(halfHeight, halfWidth / aspect);
+            // mapa inteiro: cabe pela altura ou pela largura, o que apertar mais. O piso e a altura do modo
+            // exato (8,4375): em 16:9 fica igual a ele e enche a tela (8,5 deixaria uma faixa fina dos lados).
+            baseSize = Mathf.Max(RefHeight / 2f / (RefPpu * 2f), MapWidth / 2f / aspect);
         }
         if (pixelPerfect != null) pixelPerfect.enabled = exact && currentZoom <= 1f;
         exactFraming = exact;
@@ -72,8 +79,9 @@ public class CameraZoom : MonoBehaviour
     void Update()
     {
         if (cam == null || !cam.orthographic) return;
-        if (GameHUD.IsOverlayOpen || GameManager.State == GameState.Victory || GameManager.State == GameState.Defeat) return;
+        // antes do return: trocar a resolucao no painel de configuracoes (pausa) reenquadra na hora
         if (lastScreen.x != Screen.width || lastScreen.y != Screen.height) RefreshFraming();
+        if (GameHUD.IsOverlayOpen || GameManager.State == GameState.Victory || GameManager.State == GameState.Defeat) return;
         HandleScroll();
         AnimateZoom();
         HandlePan();
