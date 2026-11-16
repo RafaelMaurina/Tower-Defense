@@ -1,1 +1,159 @@
-Shader "TextMeshPro/Distance Field (Surface)" {\n\nProperties {\n	_FaceTex			("Fill Texture", 2D) = "white" {}\n	_FaceUVSpeedX		("Face UV Speed X", Range(-5, 5)) = 0.0\n	_FaceUVSpeedY		("Face UV Speed Y", Range(-5, 5)) = 0.0\n	_FaceColor		    ("Fill Color", Color) = (1,1,1,1)\n	_FaceDilate			("Face Dilate", Range(-1,1)) = 0\n\n	_OutlineColor	    ("Outline Color", Color) = (0,0,0,1)\n	_OutlineTex			("Outline Texture", 2D) = "white" {}\n	_OutlineUVSpeedX	("Outline UV Speed X", Range(-5, 5)) = 0.0\n	_OutlineUVSpeedY	("Outline UV Speed Y", Range(-5, 5)) = 0.0\n	_OutlineWidth		("Outline Thickness", Range(0, 1)) = 0\n	_OutlineSoftness	("Outline Softness", Range(0,1)) = 0\n\n	_Bevel				("Bevel", Range(0,1)) = 0.5\n	_BevelOffset		("Bevel Offset", Range(-0.5,0.5)) = 0\n	_BevelWidth			("Bevel Width", Range(-.5,0.5)) = 0\n	_BevelClamp			("Bevel Clamp", Range(0,1)) = 0\n	_BevelRoundness		("Bevel Roundness", Range(0,1)) = 0\n\n	_BumpMap 			("Normalmap", 2D) = "bump" {}\n	_BumpOutline		("Bump Outline", Range(0,1)) = 0.5\n	_BumpFace			("Bump Face", Range(0,1)) = 0.5\n\n	_ReflectFaceColor	    ("Face Color", Color) = (0,0,0,1)\n	_ReflectOutlineColor	("Outline Color", Color) = (0,0,0,1)\n	_Cube 					("Reflection Cubemap", Cube) = "black" { /* TexGen CubeReflect */ }\n	_EnvMatrixRotation  	("Texture Rotation", vector) = (0, 0, 0, 0)\n	_SpecColor		        ("Specular Color", Color) = (0,0,0,1)\n\n	_FaceShininess		("Face Shininess", Range(0,1)) = 0\n	_OutlineShininess	("Outline Shininess", Range(0,1)) = 0\n\n	_GlowColor		    ("Color", Color) = (0, 1, 0, 0.5)\n	_GlowOffset			("Offset", Range(-1,1)) = 0\n	_GlowInner			("Inner", Range(0,1)) = 0.05\n	_GlowOuter			("Outer", Range(0,1)) = 0.05\n	_GlowPower			("Falloff", Range(1, 0)) = 0.75\n\n	_WeightNormal		("Weight Normal", float) = 0\n	_WeightBold			("Weight Bold", float) = 0.5\n\n	// Should not be directly exposed to the user\n	_ShaderFlags		("Flags", float) = 0\n	_ScaleRatioA		("Scale RatioA", float) = 1\n	_ScaleRatioB		("Scale RatioB", float) = 1\n	_ScaleRatioC		("Scale RatioC", float) = 1\n\n	_MainTex			("Font Atlas", 2D) = "white" {}\n	_TextureWidth		("Texture Width", float) = 512\n	_TextureHeight		("Texture Height", float) = 512\n	_GradientScale		("Gradient Scale", float) = 5.0\n	_ScaleX				("Scale X", float) = 1.0\n	_ScaleY				("Scale Y", float) = 1.0\n	_PerspectiveFilter	("Perspective Correction", Range(0, 1)) = 0.875\n	_Sharpness			("Sharpness", Range(-1,1)) = 0\n\n	_VertexOffsetX		("Vertex OffsetX", float) = 0\n	_VertexOffsetY		("Vertex OffsetY", float) = 0\n\n	_CullMode			("Cull Mode", Float) = 0\n	//_MaskCoord		("Mask Coords", vector) = (0,0,0,0)\n	//_MaskSoftness		("Mask Softness", float) = 0\n}\n\nSubShader {\n\n	Tags { "Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent" }\n\n	LOD 300\n	Cull [_CullMode]\n\n	CGPROGRAM\n	#pragma surface PixShader BlinnPhong alpha:blend vertex:VertShader nolightmap nodirlightmap\n	#pragma target 3.0\n	#pragma shader_feature __ GLOW_ON\n	#pragma glsl\n\n	#include "TMPro_Properties.cginc"\n	#include "TMPro.cginc"\n\n	half _FaceShininess;\n	half _OutlineShininess;\n\n	struct Input\n	{\n		fixed4	color			: COLOR;\n		float2	uv_MainTex;\n		float2	uv2_FaceTex;\n		float2  uv2_OutlineTex;\n		float2	param;						// Weight, Scale\n		float3	viewDirEnv;\n	};\n\n\n	#define BEVEL_ON 1\n	#include "TMPro_Surface.cginc"\n\n	ENDCG\n\n	// Pass to render object as a shadow caster\n	Pass\n	{\n		Name "Caster"\n		Tags { "LightMode" = "ShadowCaster" }\n		Offset 1, 1\n\n		Fog {Mode Off}\n		ZWrite On\n		ZTest LEqual\n		Cull Off\n\n		CGPROGRAM\n		#pragma vertex vert\n		#pragma fragment frag\n		#pragma multi_compile_shadowcaster\n		#include "UnityCG.cginc"\n\n		struct v2f\n		{\n			V2F_SHADOW_CASTER;\n			float2	uv			: TEXCOORD1;\n			float2	uv2			: TEXCOORD3;\n			float	alphaClip	: TEXCOORD2;\n		};\n\n		uniform float4 _MainTex_ST;\n		uniform float4 _OutlineTex_ST;\n		float _OutlineWidth;\n		float _FaceDilate;\n		float _ScaleRatioA;\n\n		v2f vert( appdata_base v )\n		{\n			v2f o;\n			TRANSFER_SHADOW_CASTER(o)\n			o.uv = TRANSFORM_TEX(v.texcoord, _MainTex);\n			o.uv2 = TRANSFORM_TEX(v.texcoord, _OutlineTex);\n			o.alphaClip = (1.0 - _OutlineWidth * _ScaleRatioA - _FaceDilate * _ScaleRatioA) / 2;\n			return o;\n		}\n\n		uniform sampler2D _MainTex;\n\n		float4 frag(v2f i) : COLOR\n		{\n			fixed4 texcol = tex2D(_MainTex, i.uv).a;\n			clip(texcol.a - i.alphaClip);\n			SHADOW_CASTER_FRAGMENT(i)\n		}\n		ENDCG\n	}\n}\n\nCustomEditor "TMPro.EditorUtilities.TMP_SDFShaderGUI"\n}\n\n
+Shader "TextMeshPro/Distance Field (Surface)" {
+
+Properties {
+	_FaceTex			("Fill Texture", 2D) = "white" {}
+	_FaceUVSpeedX		("Face UV Speed X", Range(-5, 5)) = 0.0
+	_FaceUVSpeedY		("Face UV Speed Y", Range(-5, 5)) = 0.0
+	_FaceColor		    ("Fill Color", Color) = (1,1,1,1)
+	_FaceDilate			("Face Dilate", Range(-1,1)) = 0
+
+	_OutlineColor	    ("Outline Color", Color) = (0,0,0,1)
+	_OutlineTex			("Outline Texture", 2D) = "white" {}
+	_OutlineUVSpeedX	("Outline UV Speed X", Range(-5, 5)) = 0.0
+	_OutlineUVSpeedY	("Outline UV Speed Y", Range(-5, 5)) = 0.0
+	_OutlineWidth		("Outline Thickness", Range(0, 1)) = 0
+	_OutlineSoftness	("Outline Softness", Range(0,1)) = 0
+
+	_Bevel				("Bevel", Range(0,1)) = 0.5
+	_BevelOffset		("Bevel Offset", Range(-0.5,0.5)) = 0
+	_BevelWidth			("Bevel Width", Range(-.5,0.5)) = 0
+	_BevelClamp			("Bevel Clamp", Range(0,1)) = 0
+	_BevelRoundness		("Bevel Roundness", Range(0,1)) = 0
+
+	_BumpMap 			("Normalmap", 2D) = "bump" {}
+	_BumpOutline		("Bump Outline", Range(0,1)) = 0.5
+	_BumpFace			("Bump Face", Range(0,1)) = 0.5
+
+	_ReflectFaceColor	    ("Face Color", Color) = (0,0,0,1)
+	_ReflectOutlineColor	("Outline Color", Color) = (0,0,0,1)
+	_Cube 					("Reflection Cubemap", Cube) = "black" { /* TexGen CubeReflect */ }
+	_EnvMatrixRotation  	("Texture Rotation", vector) = (0, 0, 0, 0)
+	_SpecColor		        ("Specular Color", Color) = (0,0,0,1)
+
+	_FaceShininess		("Face Shininess", Range(0,1)) = 0
+	_OutlineShininess	("Outline Shininess", Range(0,1)) = 0
+
+	_GlowColor		    ("Color", Color) = (0, 1, 0, 0.5)
+	_GlowOffset			("Offset", Range(-1,1)) = 0
+	_GlowInner			("Inner", Range(0,1)) = 0.05
+	_GlowOuter			("Outer", Range(0,1)) = 0.05
+	_GlowPower			("Falloff", Range(1, 0)) = 0.75
+
+	_WeightNormal		("Weight Normal", float) = 0
+	_WeightBold			("Weight Bold", float) = 0.5
+
+	// Should not be directly exposed to the user
+	_ShaderFlags		("Flags", float) = 0
+	_ScaleRatioA		("Scale RatioA", float) = 1
+	_ScaleRatioB		("Scale RatioB", float) = 1
+	_ScaleRatioC		("Scale RatioC", float) = 1
+
+	_MainTex			("Font Atlas", 2D) = "white" {}
+	_TextureWidth		("Texture Width", float) = 512
+	_TextureHeight		("Texture Height", float) = 512
+	_GradientScale		("Gradient Scale", float) = 5.0
+	_ScaleX				("Scale X", float) = 1.0
+	_ScaleY				("Scale Y", float) = 1.0
+	_PerspectiveFilter	("Perspective Correction", Range(0, 1)) = 0.875
+	_Sharpness			("Sharpness", Range(-1,1)) = 0
+
+	_VertexOffsetX		("Vertex OffsetX", float) = 0
+	_VertexOffsetY		("Vertex OffsetY", float) = 0
+
+	_CullMode			("Cull Mode", Float) = 0
+	//_MaskCoord		("Mask Coords", vector) = (0,0,0,0)
+	//_MaskSoftness		("Mask Softness", float) = 0
+}
+
+SubShader {
+
+	Tags { "Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent" }
+
+	LOD 300
+	Cull [_CullMode]
+
+	CGPROGRAM
+	#pragma surface PixShader BlinnPhong alpha:blend vertex:VertShader nolightmap nodirlightmap
+	#pragma target 3.0
+	#pragma shader_feature __ GLOW_ON
+	#pragma glsl
+
+	#include "TMPro_Properties.cginc"
+	#include "TMPro.cginc"
+
+	half _FaceShininess;
+	half _OutlineShininess;
+
+	struct Input
+	{
+		fixed4	color			: COLOR;
+		float2	uv_MainTex;
+		float2	uv2_FaceTex;
+		float2  uv2_OutlineTex;
+		float2	param;						// Weight, Scale
+		float3	viewDirEnv;
+	};
+
+
+	#define BEVEL_ON 1
+	#include "TMPro_Surface.cginc"
+
+	ENDCG
+
+	// Pass to render object as a shadow caster
+	Pass
+	{
+		Name "Caster"
+		Tags { "LightMode" = "ShadowCaster" }
+		Offset 1, 1
+
+		Fog {Mode Off}
+		ZWrite On
+		ZTest LEqual
+		Cull Off
+
+		CGPROGRAM
+		#pragma vertex vert
+		#pragma fragment frag
+		#pragma multi_compile_shadowcaster
+		#include "UnityCG.cginc"
+
+		struct v2f
+		{
+			V2F_SHADOW_CASTER;
+			float2	uv			: TEXCOORD1;
+			float2	uv2			: TEXCOORD3;
+			float	alphaClip	: TEXCOORD2;
+		};
+
+		uniform float4 _MainTex_ST;
+		uniform float4 _OutlineTex_ST;
+		float _OutlineWidth;
+		float _FaceDilate;
+		float _ScaleRatioA;
+
+		v2f vert( appdata_base v )
+		{
+			v2f o;
+			TRANSFER_SHADOW_CASTER(o)
+			o.uv = TRANSFORM_TEX(v.texcoord, _MainTex);
+			o.uv2 = TRANSFORM_TEX(v.texcoord, _OutlineTex);
+			o.alphaClip = (1.0 - _OutlineWidth * _ScaleRatioA - _FaceDilate * _ScaleRatioA) / 2;
+			return o;
+		}
+
+		uniform sampler2D _MainTex;
+
+		float4 frag(v2f i) : COLOR
+		{
+			fixed4 texcol = tex2D(_MainTex, i.uv).a;
+			clip(texcol.a - i.alphaClip);
+			SHADOW_CASTER_FRAGMENT(i)
+		}
+		ENDCG
+	}
+}
+
+CustomEditor "TMPro.EditorUtilities.TMP_SDFShaderGUI"
+}
+

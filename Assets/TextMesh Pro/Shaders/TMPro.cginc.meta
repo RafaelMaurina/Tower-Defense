@@ -1,1 +1,9 @@
-fileFormatVersion: 2\nguid: 407bc68d299748449bbf7f48ee690f8d\nShaderImporter:\n  externalObjects: {}\n  defaultTextures: []\n  nonModifiableTextures: []\n  userData: Version 2.0\n  assetBundleName:\n  assetBundleVariant:\n\n
+fileFormatVersion: 2
+guid: 407bc68d299748449bbf7f48ee690f8d
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: Version 2.0
+  assetBundleName: 
+  assetBundleVariant: 

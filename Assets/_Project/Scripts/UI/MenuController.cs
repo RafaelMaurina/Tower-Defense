@@ -10,6 +10,7 @@ using System.Collections.Generic;
 /// Menu estatico montado com os sprites finais do pacote de arte.
 public class MenuController : MonoBehaviour
 {
+    static TMP_FontAsset rankingFontAsset;
     [Header("Fundo e letreiro")]
     [SerializeField] Sprite backgroundSprite;
     [SerializeField] Sprite logoSprite;
@@ -587,6 +588,13 @@ public class MenuController : MonoBehaviour
         var rect = go.GetComponent<RectTransform>();
         rect.anchorMin = min; rect.anchorMax = max; rect.offsetMin = Vector2.zero; rect.offsetMax = Vector2.zero;
         var text = go.GetComponent<TextMeshProUGUI>();
+        if (rankingFontAsset == null)
+            rankingFontAsset = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
+        if (rankingFontAsset != null)
+        {
+            text.font = rankingFontAsset;
+            text.fontSharedMaterial = rankingFontAsset.material;
+        }
         text.text = value;
         text.fontSize = fontSize;
         text.fontSizeMin = fontSize * .75f;
@@ -594,8 +602,11 @@ public class MenuController : MonoBehaviour
         text.enableAutoSizing = true;
         text.alignment = TextAlignmentOptions.Center;
         text.color = new Color32(255, 246, 213, 255);
-        text.outlineWidth = .18f;
-        text.outlineColor = new Color32(54, 27, 13, 255);
+        if (rankingFontAsset != null)
+        {
+            text.outlineWidth = .18f;
+            text.outlineColor = new Color32(54, 27, 13, 255);
+        }
         text.raycastTarget = false;
         return text;
     }

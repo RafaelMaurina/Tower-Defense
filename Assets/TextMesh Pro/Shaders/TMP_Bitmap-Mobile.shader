@@ -1,1 +1,155 @@
-Shader "TextMeshPro/Mobile/Bitmap" {\n\nProperties {\n	_MainTex		    ("Font Atlas", 2D) = "white" {}\n	_Color		        ("Text Color", Color) = (1,1,1,1)\n	_DiffusePower	    ("Diffuse Power", Range(1.0,4.0)) = 1.0\n\n	_VertexOffsetX      ("Vertex OffsetX", float) = 0\n	_VertexOffsetY      ("Vertex OffsetY", float) = 0\n	_MaskSoftnessX      ("Mask SoftnessX", float) = 0\n	_MaskSoftnessY      ("Mask SoftnessY", float) = 0\n\n	_ClipRect           ("Clip Rect", vector) = (-32767, -32767, 32767, 32767)\n\n	_StencilComp        ("Stencil Comparison", Float) = 8\n	_Stencil            ("Stencil ID", Float) = 0\n	_StencilOp          ("Stencil Operation", Float) = 0\n	_StencilWriteMask   ("Stencil Write Mask", Float) = 255\n	_StencilReadMask    ("Stencil Read Mask", Float) = 255\n\n	_CullMode           ("Cull Mode", Float) = 0\n	_ColorMask          ("Color Mask", Float) = 15\n}\n\nSubShader {\n\n	Tags { "Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent" }\n\n	Stencil\n	{\n		Ref[_Stencil]\n		Comp[_StencilComp]\n		Pass[_StencilOp]\n		ReadMask[_StencilReadMask]\n		WriteMask[_StencilWriteMask]\n	}\n\n\n	Lighting Off\n	Cull [_CullMode]\n	ZTest [unity_GUIZTestMode]\n	ZWrite Off\n	Fog { Mode Off }\n	Blend SrcAlpha OneMinusSrcAlpha\n	ColorMask[_ColorMask]\n\n	Pass {\n		CGPROGRAM\n		#pragma vertex vert\n		#pragma fragment frag\n		#pragma fragmentoption ARB_precision_hint_fastest\n\n		#pragma multi_compile __ UNITY_UI_CLIP_RECT\n		#pragma multi_compile __ UNITY_UI_ALPHACLIP\n\n\n		#include "UnityCG.cginc"\n		#include "UnityUI.cginc"\n\n		struct appdata_t\n		{\n			float4 vertex : POSITION;\n			fixed4 color : COLOR;\n			float2 texcoord0 : TEXCOORD0;\n			float2 texcoord1 : TEXCOORD1;\n		};\n\n		struct v2f\n		{\n			float4 vertex		: POSITION;\n			fixed4 color		: COLOR;\n			float2 texcoord0	: TEXCOORD0;\n			float4 mask			: TEXCOORD2;\n		};\n\n		sampler2D 	_MainTex;\n		fixed4		_Color;\n		float		_DiffusePower;\n\n		uniform float		_VertexOffsetX;\n		uniform float		_VertexOffsetY;\n		uniform float4		_ClipRect;\n		uniform float		_MaskSoftnessX;\n		uniform float		_MaskSoftnessY;\n		uniform float		_UIMaskSoftnessX;\n        uniform float		_UIMaskSoftnessY;\n        uniform int _UIVertexColorAlwaysGammaSpace;\n\n		v2f vert (appdata_t v)\n		{\n			v2f OUT;\n			float4 vert = v.vertex;\n			vert.x += _VertexOffsetX;\n			vert.y += _VertexOffsetY;\n\n			vert.xy += (vert.w * 0.5) / _ScreenParams.xy;\n            if (_UIVertexColorAlwaysGammaSpace && !IsGammaSpace())\n            {\n                v.color.rgb = UIGammaToLinear(v.color.rgb);\n            }\n            OUT.vertex = UnityPixelSnap(UnityObjectToClipPos(vert));\n			OUT.color = v.color;\n			OUT.color *= _Color;\n			OUT.color.rgb *= _DiffusePower;\n			OUT.texcoord0 = v.texcoord0;\n\n			float2 pixelSize = OUT.vertex.w;\n			//pixelSize /= abs(float2(_ScreenParams.x * UNITY_MATRIX_P[0][0], _ScreenParams.y * UNITY_MATRIX_P[1][1]));\n\n			// Clamp _ClipRect to 16bit.\n			const float4 clampedRect = clamp(_ClipRect, -2e10, 2e10);\n			const half2 maskSoftness = half2(max(_UIMaskSoftnessX, _MaskSoftnessX), max(_UIMaskSoftnessY, _MaskSoftnessY));\n			OUT.mask = float4(vert.xy * 2 - clampedRect.xy - clampedRect.zw, 0.25 / (0.25 * maskSoftness + pixelSize.xy));\n\n			return OUT;\n		}\n\n		fixed4 frag (v2f IN) : COLOR\n		{\n			fixed4 color = fixed4(IN.color.rgb, IN.color.a * tex2D(_MainTex, IN.texcoord0).a);\n\n			// Alternative implementation to UnityGet2DClipping with support for softness.\n			#if UNITY_UI_CLIP_RECT\n				half2 m = saturate((_ClipRect.zw - _ClipRect.xy - abs(IN.mask.xy)) * IN.mask.zw);\n				color *= m.x * m.y;\n			#endif\n\n			#if UNITY_UI_ALPHACLIP\n				clip(color.a - 0.001);\n			#endif\n\n			return color;\n		}\n		ENDCG\n	}\n}\n\nSubShader {\n	Tags { "Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent" }\n	Lighting Off Cull Off ZTest Always ZWrite Off Fog { Mode Off }\n	Blend SrcAlpha OneMinusSrcAlpha\n	BindChannels {\n		Bind "Color", color\n		Bind "Vertex", vertex\n		Bind "TexCoord", texcoord0\n	}\n	Pass {\n		SetTexture [_MainTex] {\n			constantColor [_Color] combine constant * primary, constant * texture\n		}\n	}\n}\n\nCustomEditor "TMPro.EditorUtilities.TMP_BitmapShaderGUI"\n}\n
+Shader "TextMeshPro/Mobile/Bitmap" {
+
+Properties {
+	_MainTex		    ("Font Atlas", 2D) = "white" {}
+	_Color		        ("Text Color", Color) = (1,1,1,1)
+	_DiffusePower	    ("Diffuse Power", Range(1.0,4.0)) = 1.0
+
+	_VertexOffsetX      ("Vertex OffsetX", float) = 0
+	_VertexOffsetY      ("Vertex OffsetY", float) = 0
+	_MaskSoftnessX      ("Mask SoftnessX", float) = 0
+	_MaskSoftnessY      ("Mask SoftnessY", float) = 0
+
+	_ClipRect           ("Clip Rect", vector) = (-32767, -32767, 32767, 32767)
+
+	_StencilComp        ("Stencil Comparison", Float) = 8
+	_Stencil            ("Stencil ID", Float) = 0
+	_StencilOp          ("Stencil Operation", Float) = 0
+	_StencilWriteMask   ("Stencil Write Mask", Float) = 255
+	_StencilReadMask    ("Stencil Read Mask", Float) = 255
+
+	_CullMode           ("Cull Mode", Float) = 0
+	_ColorMask          ("Color Mask", Float) = 15
+}
+
+SubShader {
+
+	Tags { "Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent" }
+
+	Stencil
+	{
+		Ref[_Stencil]
+		Comp[_StencilComp]
+		Pass[_StencilOp]
+		ReadMask[_StencilReadMask]
+		WriteMask[_StencilWriteMask]
+	}
+
+
+	Lighting Off
+	Cull [_CullMode]
+	ZTest [unity_GUIZTestMode]
+	ZWrite Off
+	Fog { Mode Off }
+	Blend SrcAlpha OneMinusSrcAlpha
+	ColorMask[_ColorMask]
+
+	Pass {
+		CGPROGRAM
+		#pragma vertex vert
+		#pragma fragment frag
+		#pragma fragmentoption ARB_precision_hint_fastest
+
+		#pragma multi_compile __ UNITY_UI_CLIP_RECT
+		#pragma multi_compile __ UNITY_UI_ALPHACLIP
+
+
+		#include "UnityCG.cginc"
+		#include "UnityUI.cginc"
+
+		struct appdata_t
+		{
+			float4 vertex : POSITION;
+			fixed4 color : COLOR;
+			float2 texcoord0 : TEXCOORD0;
+			float2 texcoord1 : TEXCOORD1;
+		};
+
+		struct v2f
+		{
+			float4 vertex		: POSITION;
+			fixed4 color		: COLOR;
+			float2 texcoord0	: TEXCOORD0;
+			float4 mask			: TEXCOORD2;
+		};
+
+		sampler2D 	_MainTex;
+		fixed4		_Color;
+		float		_DiffusePower;
+
+		uniform float		_VertexOffsetX;
+		uniform float		_VertexOffsetY;
+		uniform float4		_ClipRect;
+		uniform float		_MaskSoftnessX;
+		uniform float		_MaskSoftnessY;
+		uniform float		_UIMaskSoftnessX;
+        uniform float		_UIMaskSoftnessY;
+        uniform int _UIVertexColorAlwaysGammaSpace;
+
+		v2f vert (appdata_t v)
+		{
+			v2f OUT;
+			float4 vert = v.vertex;
+			vert.x += _VertexOffsetX;
+			vert.y += _VertexOffsetY;
+
+			vert.xy += (vert.w * 0.5) / _ScreenParams.xy;
+            if (_UIVertexColorAlwaysGammaSpace && !IsGammaSpace())
+            {
+                v.color.rgb = UIGammaToLinear(v.color.rgb);
+            }
+            OUT.vertex = UnityPixelSnap(UnityObjectToClipPos(vert));
+			OUT.color = v.color;
+			OUT.color *= _Color;
+			OUT.color.rgb *= _DiffusePower;
+			OUT.texcoord0 = v.texcoord0;
+
+			float2 pixelSize = OUT.vertex.w;
+			//pixelSize /= abs(float2(_ScreenParams.x * UNITY_MATRIX_P[0][0], _ScreenParams.y * UNITY_MATRIX_P[1][1]));
+
+			// Clamp _ClipRect to 16bit.
+			const float4 clampedRect = clamp(_ClipRect, -2e10, 2e10);
+			const half2 maskSoftness = half2(max(_UIMaskSoftnessX, _MaskSoftnessX), max(_UIMaskSoftnessY, _MaskSoftnessY));
+			OUT.mask = float4(vert.xy * 2 - clampedRect.xy - clampedRect.zw, 0.25 / (0.25 * maskSoftness + pixelSize.xy));
+
+			return OUT;
+		}
+
+		fixed4 frag (v2f IN) : COLOR
+		{
+			fixed4 color = fixed4(IN.color.rgb, IN.color.a * tex2D(_MainTex, IN.texcoord0).a);
+
+			// Alternative implementation to UnityGet2DClipping with support for softness.
+			#if UNITY_UI_CLIP_RECT
+				half2 m = saturate((_ClipRect.zw - _ClipRect.xy - abs(IN.mask.xy)) * IN.mask.zw);
+				color *= m.x * m.y;
+			#endif
+
+			#if UNITY_UI_ALPHACLIP
+				clip(color.a - 0.001);
+			#endif
+
+			return color;
+		}
+		ENDCG
+	}
+}
+
+SubShader {
+	Tags { "Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent" }
+	Lighting Off Cull Off ZTest Always ZWrite Off Fog { Mode Off }
+	Blend SrcAlpha OneMinusSrcAlpha
+	BindChannels {
+		Bind "Color", color
+		Bind "Vertex", vertex
+		Bind "TexCoord", texcoord0
+	}
+	Pass {
+		SetTexture [_MainTex] {
+			constantColor [_Color] combine constant * primary, constant * texture
+		}
+	}
+}
+
+CustomEditor "TMPro.EditorUtilities.TMP_BitmapShaderGUI"
+}
