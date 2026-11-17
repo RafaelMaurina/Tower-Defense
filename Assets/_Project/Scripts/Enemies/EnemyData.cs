@@ -50,6 +50,8 @@ public class EnemyData : ScriptableObject
     public Sprite[] frames;                 // quadros da animacao de andar de lado, em ordem
     public Sprite[] framesUp;               // andar para cima (de costas); vazio = usa frames
     public Sprite[] framesDown;             // andar para baixo (de frente); vazio = usa frames
+    public Sprite[] framesDiagUp;           // andar na diagonal para cima; vazio = usa frames
+    public Sprite[] framesDiagDown;         // andar na diagonal para baixo; vazio = usa frames
     public float framesPerSecond = 6f;
 
     /// Velocidade media no caminho, contando os saltos. E a que a torre usa para mirar:

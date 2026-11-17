@@ -12,6 +12,8 @@ public class Enemy : MonoBehaviour, IDamageable
     float health;
     float animTime;
     float zigzagTime;  // tempo desde o inicio, so para a fase do ziguezague
+    Vector3 moveDir;   // ultimo deslocamento real na tela (inclui o ziguezague); so quem tem diagonais usa
+    bool hasMoveDir;
     float jumpTimer;   // tempo andando ate o proximo salto, ou tempo ja gasto no salto
     bool jumping;
     bool split;        // ja se dividiu, ou e a copia de quem se dividiu: so divide uma vez
@@ -59,6 +61,7 @@ public class Enemy : MonoBehaviour, IDamageable
         animTime = 0f;
         split = false;
         zigzagTime = 0f;
+        hasMoveDir = false;   // objeto reaproveitado do Pool: sem deslocamento anterior
         SetMovement(data.speed, data.jumpInterval, data.jumpDistance, data.jumpDuration);
         if (boss != null) boss.Begin();
         transform.position = path.PointAt(0f);
@@ -75,7 +78,10 @@ public class Enemy : MonoBehaviour, IDamageable
 
         Distance += CurrentSpeed() * Time.deltaTime;
         zigzagTime += Time.deltaTime;
+        Vector3 before = transform.position;
         transform.position = path.PointAt(Distance) + ZigzagOffset();
+        Vector3 moved = transform.position - before;
+        if (moved.sqrMagnitude > 1e-8f) { moveDir = moved; hasMoveDir = true; }   // quase zero: mantem o anterior
         UpdateOrder();
         animTime += Time.deltaTime;
         Animate();
@@ -130,24 +136,49 @@ public class Enemy : MonoBehaviour, IDamageable
     }
 
     // Troca o quadro pelo tempo. Sem quadros (ex.: placeholder), mantem o sprite do prefab.
-    // O conjunto de quadros vem da direcao do caminho neste ponto: para cima (framesUp, de costas),
-    // para baixo (framesDown, de frente) ou de lado (frames). Conjunto vazio cai em frames (o rato so
-    // tem lado). Os sprites de lado olham para a direita; se o caminho vai para a esquerda, espelha (flipX).
+    // Sem diagonais (framesDiagUp/Down vazios, todos menos o rato) o conjunto vem da direcao do caminho:
+    // para cima (framesUp, de costas), para baixo (framesDown, de frente) ou de lado (frames).
+    // Com diagonais, vem da direcao REAL do movimento na tela (caminho + ziguezague), pelo angulo
+    // em relacao a horizontal: ate 15 graus lado, de 15 a 60 diagonal, acima de 60 cima/baixo.
+    // Conjunto vazio cai em frames. Os sprites de lado e diagonais olham para a direita;
+    // se vai para a esquerda, espelha (flipX).
     void Animate()
     {
         if (sr == null || data.frames == null || data.frames.Length == 0) return;
 
         Vector3 dir = path.PointAt(Distance + 0.1f) - path.PointAt(Distance);
+        bool diagonais = (data.framesDiagUp != null && data.framesDiagUp.Length > 0)
+                      || (data.framesDiagDown != null && data.framesDiagDown.Length > 0);
+        if (diagonais && hasMoveDir) dir = moveDir;
+
         Sprite[] frameSet = data.frames;
         bool flip = false;
-        if (Mathf.Abs(dir.y) > Mathf.Abs(dir.x))
+        float ax = Mathf.Abs(dir.x), ay = Mathf.Abs(dir.y);
+        bool vertical = ay > ax;
+        if (diagonais)
         {
-            Sprite[] vertical = dir.y > 0f ? data.framesUp : data.framesDown;
-            if (vertical != null && vertical.Length > 0) frameSet = vertical;
+            const float Tan15 = 0.0875f, Tan60 = 1.7321f;   // diagonal a partir de 5 graus: no ziguezague o rato quase sempre vai inclinado
+            vertical = ay > ax * Tan60;
+            if (!vertical && ay > ax * Tan15)
+            {
+                Sprite[] diag = dir.y > 0f ? data.framesDiagUp : data.framesDiagDown;
+                if (diag != null && diag.Length > 0) frameSet = diag;
+                flip = dir.x < 0f;
+            }
+            else if (!vertical)
+            {
+                flip = dir.x < 0f;
+            }
         }
-        else
+        else if (!vertical)
         {
             flip = dir.x < 0f;
+        }
+
+        if (vertical)
+        {
+            Sprite[] v = dir.y > 0f ? data.framesUp : data.framesDown;
+            if (v != null && v.Length > 0) frameSet = v;
         }
 
         int i = (int)(animTime * data.framesPerSecond) % frameSet.Length;
