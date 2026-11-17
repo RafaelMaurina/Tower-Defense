@@ -7,8 +7,9 @@ using UnityEngine;
 [RequireComponent(typeof(SpriteRenderer))]
 public class HiveBees : MonoBehaviour
 {
-    const float RadiusX = 27f, RadiusY = 9f;     // em pixels de desenho
-    static readonly Vector2 Center = new Vector2(31.5f, 22f);
+    // orbita em volta do corpo da casinha (pixels do desenho): o nivel 2 e o 3 tem um anexo a direita
+    float RadiusX = 21f, RadiusY = 7f;
+    Vector2 Center = new Vector2(31.5f, 34f);
 
     static Sprite bee;
 
@@ -23,6 +24,9 @@ public class HiveBees : MonoBehaviour
         sr = GetComponent<SpriteRenderer>();
         source = sprite;
         if (bee == null) bee = MakeBee();
+        bool annex = sprite.name != "torre_colmeia";
+        Center = annex ? new Vector2(36.5f, 34f) : new Vector2(31.5f, 34f);
+        RadiusX = annex ? 25f : 21f;
 
         // refaz as abelhas quando o numero muda (melhoria da torre)
         foreach (SpriteRenderer b in bees) if (b != null) Destroy(b.gameObject);

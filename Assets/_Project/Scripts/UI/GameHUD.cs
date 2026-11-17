@@ -33,7 +33,7 @@ public class GameHUD : MonoBehaviour
     }
     sealed class Purchase { public Button button; public int cost; }
     static GameHUD current;
-    static Sprite rangeSprite;
+    static readonly Dictionary<int, Sprite> rangeSprites = new Dictionary<int, Sprite>();
     readonly Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>();
     readonly List<Sprite> generatedSprites = new List<Sprite>();
     readonly List<Purchase> purchases = new List<Purchase>();
@@ -61,7 +61,18 @@ public class GameHUD : MonoBehaviour
     BuildPlot pendingBuildPlot;
     TowerData buildSelection, hoveredCard;
     SpriteRenderer buildGhost, buildRadius;
+    BuildPlot hiddenToolsPlot;
+    readonly Dictionary<BuildPlot, PlotFx> plotFx = new Dictionary<BuildPlot, PlotFx>();
     Text buildHint;
+    RectTransform statsPanel;
+    Text statsName, statsTarget;
+    readonly Text[] statsValues = new Text[3];
+    TowerData statsShown;
+    Sprite cardFillSprite, cardRingSprite;
+    // Esconder HUD: so o cenario aparece; o botao (e a tecla H) continua para voltar.
+    readonly List<GameObject> hudLayer = new List<GameObject>();
+    Button hudToggleButton;
+    bool hudHidden;
     bool draggingCard;
     readonly List<RaycastResult> buildRaycastHits = new List<RaycastResult>(16);
     PointerEventData buildPointer;
@@ -134,7 +145,7 @@ public class GameHUD : MonoBehaviour
         if (name == "icone_auto" || name == "icone_configuracoes" ||
             name == "icone_continuar" || name == "icone_moedas" ||
             name == "icone_pausa" || name == "icone_rodadas" ||
-            name == "icone_vida" || name == "status_frame" || name == "square_button")
+            name == "icone_vida" || name == "icone_esconder_hud" || name == "status_frame" || name == "square_button")
             return "hud_superior/" + name;
         return name;
     }
@@ -193,8 +204,8 @@ public class GameHUD : MonoBehaviour
         clip.SetData(samples, 0);
         return clip;
     }
-    void PlayHover() { if (uiAudio != null && hoverSound != null) uiAudio.PlayOneShot(hoverSound); }
-    void PlayClick() { if (uiAudio != null && clickSound != null) uiAudio.PlayOneShot(clickSound); }
+    void PlayHover() { if (uiAudio != null && hoverSound != null) uiAudio.PlayOneShot(hoverSound, GameSettings.Sfx); }
+    void PlayClick() { if (uiAudio != null && clickSound != null) uiAudio.PlayOneShot(clickSound, GameSettings.Sfx); }
     void OnEnable()
     {
         GameManager.OnMoneyChanged += UpdateMoney;
@@ -238,17 +249,24 @@ public class GameHUD : MonoBehaviour
         UpdateWaveControls();
         if (bottomBarArea != null)
         {
-            bool visible = bottomCardFeedback.Count > 0 && !IsOverlayOpen && GameManager.State == GameState.Playing;
+            // a barra so aparece na espera entre rodadas; durante a onda, so ao clicar num canteiro
+            bool waiting = waveSpawner == null || !waveSpawner.IsWaveActive;
+            bool visible = !hudHidden && bottomCardFeedback.Count > 0 && !IsOverlayOpen && GameManager.State == GameState.Playing &&
+                (waiting || pendingBuildPlot != null);
+            if (!waiting && pendingBuildPlot == null && buildSelection != null && !draggingCard) CancelBuildSelection();
             if (bottomBarArea.gameObject.activeSelf != visible) bottomBarArea.gameObject.SetActive(visible);
+            UpdateStatsPanel(visible);
         }
         if (Keyboard.current == null) return;
-        if (overlay.activeSelf && EventSystem.current != null && EventSystem.current.currentSelectedGameObject == null &&
+        if (Keyboard.current.hKey.wasPressedThisFrame && !IsOverlayOpen && GameManager.State == GameState.Playing) ToggleHud();
+        if (overlay.activeSelf && !SettingsPanel.IsOpenOrJustClosed && EventSystem.current != null && EventSystem.current.currentSelectedGameObject == null &&
             (Keyboard.current.tabKey.wasPressedThisFrame || Keyboard.current.downArrowKey.wasPressedThisFrame || Keyboard.current.upArrowKey.wasPressedThisFrame))
         {
             foreach (Button option in overlay.GetComponentsInChildren<Button>())
                 if (option.interactable) { EventSystem.current.SetSelectedGameObject(option.gameObject); break; }
         }
         if (!Keyboard.current.escapeKey.wasPressedThisFrame) return;
+        if (SettingsPanel.IsOpenOrJustClosed) return;   // o Esc e do painel de configuracoes
         if (!IsOverlayOpen && (buildSelection != null || pendingBuildPlot != null)) { CancelBuildSelection(); return; }
         if (towerPanel && overlay.activeSelf) Back();
         else if (GameManager.State == GameState.Victory || GameManager.State == GameState.Defeat) return;
@@ -382,6 +400,11 @@ public class GameHUD : MonoBehaviour
         // Centro em x=0.5, no mesmo eixo do celeiro da moldura superior.
         bottomBarArea = Rect(root.transform,"HUD inferior de torres",Vector2.zero,Vector2.one);
         ApplyBottomHudLayout();
+        foreach (Transform child in root.transform)
+            if (child != bottomBarArea) hudLayer.Add(child.gameObject);
+        // junto dos botoes do canto superior direito, a esquerda da pausa (mesmo passo de .0615 entre eles)
+        hudToggleButton = TopControl(root.transform, "Esconder HUD", "HUD", "esconder_hud", "v2/square_button",
+            new Vector2(.7685f,.917f), new Vector2(.8005f,.974f), ToggleHud);
         overlay = Rect(root.transform, "Submenu", Vector2.zero, Vector2.one).gameObject;
         var dim = overlay.AddComponent<Image>(); dim.color = new Color(.06f,.035f,.015f,.72f);
         var panel = Picture(overlay.transform, "Moldura da pausa", "moldura_pausa", new Vector2(.23f,.13f), new Vector2(.77f,.87f));
@@ -392,6 +415,16 @@ public class GameHUD : MonoBehaviour
         rows = Rect(panel.transform,"Opcoes",new Vector2(.16f,.16f),new Vector2(.84f,.53f));
         MakeButton(panel.transform, new Action("Voltar", "voltar", "voltar", Back), new Vector2(.34f,.055f), new Vector2(.66f,.15f));
         overlay.SetActive(false);
+    }
+    void ToggleHud()
+    {
+        hudHidden = !hudHidden;
+        foreach (var item in hudLayer) if (item != null) item.SetActive(!hudHidden);
+        if (hudHidden) { CancelBuildSelection(); pendingBuildPlot = null; HideSelectedRange(); }
+        // com o HUD escondido o botao fica discreto, so para lembrar onde voltar
+        var group = hudToggleButton.GetComponent<CanvasGroup>();
+        if (group == null) group = hudToggleButton.gameObject.AddComponent<CanvasGroup>();
+        group.alpha = hudHidden ? .4f : 1f;
     }
     void CreateBottomTowerBar()
     {
@@ -412,9 +445,12 @@ public class GameHUD : MonoBehaviour
         fit.aspectRatio = 2172f / 724f;
         var background = Picture(board,"Moldura","hud_inferior/hud_conjunto_contraste",Vector2.zero,Vector2.one,true);
         background.raycastTarget = false;
-        buildHint = Label(bottomBarArea,"",new Vector2(-.10f,1.01f),new Vector2(1.10f,1.15f),20);
+        buildHint = Label(bottomBarArea,"",new Vector2(-.10f,1.32f),new Vector2(1.10f,1.46f),20);
         buildHint.resizeTextForBestFit = true;
         buildHint.resizeTextMinSize = 14;
+        CreateStatsPanel(board);
+        cardFillSprite = ChamferSprite("realce_carta_placa", true, 6, 2);
+        cardRingSprite = ChamferSprite("realce_carta_janela", true, 2, 2);
         for (int i=0;i<towers.Count;i++)
         {
             var data = towers[i];
@@ -430,12 +466,15 @@ public class GameHUD : MonoBehaviour
             button.targetGraphic = plate;
             button.transition = Selectable.Transition.None;
             var feedback = card.gameObject.AddComponent<HudButtonFeedback>();
-            var edges = new Image[4];
-            edges[0] = Picture(card,"Realce esquerdo","",Vector2.zero,new Vector2(.012f,1));
-            edges[1] = Picture(card,"Realce direito","",new Vector2(.988f,0),Vector2.one);
-            edges[2] = Picture(card,"Realce inferior","",Vector2.zero,new Vector2(1,.008f));
-            edges[3] = Picture(card,"Realce superior","",new Vector2(0,.992f),Vector2.one);
-            feedback.ConfigureOverlay(plate,edges);
+            // realce: brilho dourado so nas tres partes da arte (placa do nome, janela e placa do preco) e um
+            // contorno na janela; coordenadas na arte da barra (2172 x 724) e uma carta a cada .177 da largura
+            var rings = new[]
+            {
+                HighlightPart(board, "Contorno nome", 148, 160, 538, 296, column, cardFillSprite),
+                HighlightPart(board, "Contorno janela", 165, 302, 519, 518, column, cardRingSprite),
+                HighlightPart(board, "Contorno preco", 155, 524, 540, 645, column, cardFillSprite),
+            };
+            feedback.ConfigureHighlight(new Image[0], rings);
             feedback.ConfigureSound(uiAudio,hoverSound);
             bottomCardFeedback.Add(feedback);
             bottomTowers.Add(data);
@@ -453,9 +492,11 @@ public class GameHUD : MonoBehaviour
                 var plot=PlotUnderPointer();
                 if (plot != null) TryBuildSelected(plot);
             });
-            var portrait = Rect(card,"Torre nível 1",new Vector2(.17f,.25f),new Vector2(.83f,.69f)).gameObject.AddComponent<Image>();
-            portrait.sprite = data.levels[0].sprite != null ? data.levels[0].sprite :
-                data.towerPrefab.GetComponent<SpriteRenderer>()?.sprite;
+            Sprite portraitSprite = TowerPortrait(data.levels[0].sprite != null ? data.levels[0].sprite :
+                data.towerPrefab.GetComponent<SpriteRenderer>()?.sprite);
+            PortraitBox(portraitSprite, column, out Vector2 portraitMin, out Vector2 portraitMax);
+            var portrait = Rect(card,"Torre nível 1",portraitMin,portraitMax).gameObject.AddComponent<Image>();
+            portrait.sprite = portraitSprite;
             portrait.preserveAspect = true;
             portrait.raycastTarget = false;
             Picture(card,"Moeda","icone_moedas",new Vector2(.15f,.055f),new Vector2(.33f,.18f),true);
@@ -468,6 +509,172 @@ public class GameHUD : MonoBehaviour
             bottomPrices.Add(price);
         }
     }
+    // Realce da carta: contorno e brilho com as quinas cortadas em diagonal, como a moldura da carta,
+    // em vez de um retangulo reto. 1 pixel do desenho = 2 pixels de tela.
+    Sprite ChamferSprite(string name, bool ring, int cut, int thickness = 1)
+    {
+        const int size = 24, border = 10;
+        var px = new Color32[size * size];
+        for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                int dx = Mathf.Min(x, size - 1 - x), dy = Mathf.Min(y, size - 1 - y);
+                bool inside = dx + dy >= cut;
+                bool edge = inside && (dx < thickness || dy < thickness || dx + dy < cut + thickness + 1);
+                px[y * size + x] = (ring ? edge : inside) ? new Color32(255, 255, 255, 255) : new Color32(0, 0, 0, 0);
+            }
+        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false)
+        { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp, name = name };
+        tex.SetPixels32(px);
+        tex.Apply(false, true);
+        Sprite sprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(.5f, .5f), 50f, 0,
+            SpriteMeshType.FullRect, new Vector4(border, border, border, border));
+        sprite.name = name;
+        generatedSprites.Add(sprite);
+        return sprite;
+    }
+
+    static readonly Dictionary<Sprite, Sprite> portraits = new Dictionary<Sprite, Sprite>();
+
+    // Retrato na janela da carta (coordenadas da carta): todas as torres com a mesma altura (75% da janela) e
+    // apoiadas na mesma linha; as muito largas ficam limitadas pela largura. A carta tem largura/altura = 0,733.
+    // Centro de cada janela na arte da barra (2172 px), medido nas placas de preco.
+    static readonly float[] WindowCenter = { 343f, 725.5f, 1095.5f, 1467.5f, 1841.5f };
+
+    static void PortraitBox(Sprite sprite, int column, out Vector2 min, out Vector2 max)
+    {
+        // a carta cobre de (.063 + coluna * .177) por .171 da largura; a janela nao fica no meio dela
+        int c = Mathf.Clamp(column, 0, WindowCenter.Length - 1);
+        float cardCenter = (.063f + c * .177f + .0855f) * 2172f;
+        float centerX = .5f + (WindowCenter[c] - cardCenter) / (.171f * 2172f);
+        const float cardAspect = .733f, baseline = .29f, windowHeight = .44f, windowWidth = .60f;
+        float aspect = sprite != null ? sprite.rect.width / Mathf.Max(1f, sprite.rect.height) : 1f;
+        float h = windowHeight * .75f;
+        float w = h * aspect / cardAspect;
+        if (w > windowWidth) { w = windowWidth; h = w * cardAspect / aspect; }
+        min = new Vector2(centerX - w * .5f, baseline);
+        max = new Vector2(centerX + w * .5f, baseline + h);
+    }
+
+    // Recorta a margem transparente do desenho da torre, para o retrato encher a janela da carta.
+    Sprite TowerPortrait(Sprite sprite)
+    {
+        if (sprite == null) return null;
+        if (portraits.TryGetValue(sprite, out Sprite cached) && cached != null) return cached;
+        Color32[] px = PixelSprites.Read(sprite, out int w, out int h);
+        if (px == null) return sprite;
+        int x0 = w, y0 = h, x1 = -1, y1 = -1;
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+                if (px[y * w + x].a > 0)
+                {
+                    if (x < x0) x0 = x;
+                    if (x > x1) x1 = x;
+                    if (y < y0) y0 = y;
+                    if (y > y1) y1 = y;
+                }
+        if (x1 < 0) return sprite;
+        var rect = new Rect(sprite.rect.x + x0, sprite.rect.y + y0, x1 - x0 + 1, y1 - y0 + 1);
+        Sprite cropped = Sprite.Create(sprite.texture, rect, new Vector2(.5f, .5f), sprite.pixelsPerUnit, 0, SpriteMeshType.FullRect);
+        cropped.name = sprite.name + "_retrato";
+        // fica no cache pelo jogo todo: nao entra em generatedSprites, que e destruida quando a fase acaba
+        // (o HUD da fase seguinte reaproveita o cache e ficaria com quadrado branco)
+        portraits[sprite] = cropped;
+        return cropped;
+    }
+
+    // Posicao de cada carta na arte da barra (2172 px): a arte nao tem espacamento uniforme, entao o desvio
+    // e a largura de cada carta em relacao a primeira foram medidos nas placas de preco.
+    static readonly float[] CardShift = { 0f, 382.5f, 752.5f, 1124.5f, 1498.5f };
+    static readonly float[] CardWidth = { 1f, .942f, .936f, .948f, .954f };
+
+    Image HighlightPart(Transform board, string name, float x0, float y0, float x1, float y1, int column, Sprite sprite)
+    {
+        int c = Mathf.Clamp(column, 0, CardShift.Length - 1);
+        float center = (x0 + x1) * .5f + CardShift[c], half = (x1 - x0) * .5f * CardWidth[c];
+        var rect = Rect(board, name, new Vector2((center - half) / 2172f, (724f - y1) / 724f),
+            new Vector2((center + half) / 2172f, (724f - y0) / 724f));
+        var image = rect.gameObject.AddComponent<Image>();
+        image.sprite = sprite; image.type = Image.Type.Sliced; image.raycastTarget = false; image.color = Color.clear;
+        return image;
+    }
+
+    // Painel de madeira com filete laranja, em 9 fatias feitas em codigo (1 pixel do desenho = 3 de tela).
+    Sprite WoodPanelSprite()
+    {
+        // cores tiradas da arte da barra: contorno escuro, laranja em duas tonalidades e a madeira das placas de nome
+        Color32 outl = new Color32(20, 8, 0, 255), trim = new Color32(252, 140, 10, 255), trimDark = new Color32(188, 66, 0, 255);
+        Color32[] layers = { outl, trim, trimDark, outl };
+        Color32 fill = new Color32(100, 28, 4, 255);
+        int border = layers.Length, size = border * 2 + 4;
+        var px = new Color32[size * size];
+        for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                int dx = Mathf.Min(x, size - 1 - x), dy = Mathf.Min(y, size - 1 - y);
+                Color32 c = Mathf.Min(dx, dy) < border ? layers[Mathf.Min(dx, dy)] : fill;
+                if (dx + dy == 0) c = new Color32(0, 0, 0, 0);
+                else if (dx + dy == 1) c = layers[0];
+                px[y * size + x] = c;
+            }
+        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false)
+        { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp, name = "painel_madeira" };
+        tex.SetPixels32(px);
+        tex.Apply(false, true);
+        Sprite sprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(.5f, .5f), 100f / 3f, 0,
+            SpriteMeshType.FullRect, new Vector4(border, border, border, border));
+        sprite.name = "painel_madeira";
+        generatedSprites.Add(sprite);
+        return sprite;
+    }
+
+    // Painel acima da barra com o nome, o alvo e os atributos da torre sob o mouse ou selecionada.
+    void CreateStatsPanel(Transform board)
+    {
+        // mesma largura e centro da fileira de cartas (placas de preco de 155 a 2030 na arte de 2172 px)
+        statsPanel = Rect(board, "Atributos da torre", new Vector2(.071f, 1.0f), new Vector2(.935f, 1.30f));
+        var back = statsPanel.gameObject.AddComponent<Image>();
+        back.sprite = WoodPanelSprite(); back.type = Image.Type.Sliced; back.raycastTarget = false;
+        // nome e alvo encolhem ate 80% para caber inteiros
+        statsName = Label(statsPanel, "Torre", new Vector2(.04f, .50f), new Vector2(.47f, .88f), 27);
+        statsName.alignment = TextAnchor.MiddleLeft;
+        statsName.resizeTextForBestFit = true; statsName.resizeTextMinSize = 22; statsName.resizeTextMaxSize = 27;
+        statsTarget = Label(statsPanel, "Alvo", new Vector2(.04f, .14f), new Vector2(.47f, .54f), 17, false);
+        statsTarget.alignment = TextAnchor.MiddleLeft;
+        statsTarget.resizeTextForBestFit = true; statsTarget.resizeTextMinSize = 14; statsTarget.resizeTextMaxSize = 17;
+        statsTarget.color = new Color32(243, 217, 164, 255);
+        // rotulos em creme forte, numeros grandes e brancos, tres colunas logo depois do nome
+        string[] names = { "Dano", "Alcance", "Tiros/s" };
+        for (int k = 0; k < 3; k++)
+        {
+            float x0 = .49f + k * .163f;
+            var label = Label(statsPanel, names[k], new Vector2(x0, .56f), new Vector2(x0 + .155f, .88f), 16, false);
+            label.color = new Color32(242, 221, 176, 255);
+            label.fontStyle = FontStyle.Normal;
+            statsValues[k] = Label(statsPanel, "0", new Vector2(x0, .12f), new Vector2(x0 + .155f, .62f), 28);
+            statsValues[k].color = Color.white;
+            statsValues[k].supportRichText = true;
+            statsValues[k].horizontalOverflow = HorizontalWrapMode.Overflow;
+        }
+        statsPanel.gameObject.SetActive(false);
+    }
+
+    void UpdateStatsPanel(bool barVisible)
+    {
+        if (statsPanel == null) return;
+        TowerData data = hoveredCard != null ? hoveredCard : buildSelection;
+        bool show = barVisible && data != null;
+        if (statsPanel.gameObject.activeSelf != show) statsPanel.gameObject.SetActive(show);
+        if (!show || data == statsShown) return;
+        statsShown = data;
+        TowerLevel first = data.levels[0];
+        statsName.text = TowerDisplayName(data);
+        statsTarget.text = "Alvo: " + (data.hitsFlying ? "aéreos e terrestres" : "terrestres");
+        statsValues[0].text = first.damage.ToString("0.#");
+        statsValues[1].text = first.range.ToString("0.#") + " <size=18>casas</size>";   // unidade menor que o numero
+        statsValues[2].text = first.fireRate.ToString("0.#");
+    }
+
     static int TowerCardIndex(TowerData data)
     {
         switch (TowerDisplayName(data))
@@ -501,7 +708,8 @@ public class GameHUD : MonoBehaviour
     }
     public static void SelectBuildPlot(BuildPlot plot)
     {
-        if (current == null || plot == null || plot.Placed != null || IsOverlayOpen || GameManager.State != GameState.Playing) return;
+        // com o HUD escondido a barra de torres nao aparece, entao o clique no canteiro e ignorado
+        if (current == null || plot == null || plot.Placed != null || IsOverlayOpen || current.hudHidden || GameManager.State != GameState.Playing) return;
         current.pendingBuildPlot=plot;
         current.HideSelectedRange();
         if (current.buildSelection != null) current.TryBuildSelected(plot);
@@ -553,9 +761,138 @@ public class GameHUD : MonoBehaviour
         if (buildGhost != null) buildGhost.enabled=false;
         if (buildRadius != null) buildRadius.enabled=false;
     }
+    // Dica de que o canteiro vazio e clicavel, discreta: contorno branco de 1 px so no canteiro sob o
+    // mouse ou selecionado, e um brilhinho raro na espera entre rodadas.
+    sealed class PlotFx
+    {
+        public readonly List<SpriteRenderer> outline = new List<SpriteRenderer>();
+        public SpriteRenderer glint;
+        public float offset;
+    }
+
+    const float GlintEvery = 4.5f;
+    static Sprite glintSmall, glintBig;
+
+    void UpdatePlotOutlines()
+    {
+        if (buildPlots == null) return;
+        bool canBuild = !IsOverlayOpen && GameManager.State == GameState.Playing;
+        bool waiting = waveSpawner == null || !waveSpawner.IsWaveActive;
+        BuildPlot hover = canBuild && !draggingCard ? PlotUnderPointer() : null;
+        float now = Time.unscaledTime;
+        foreach (var plot in buildPlots)
+        {
+            if (plot == null) continue;
+            if (!plotFx.TryGetValue(plot, out PlotFx fx))
+            {
+                fx = MakePlotFx(plot);
+                plotFx[plot] = fx;
+            }
+            bool show = canBuild && plot.Placed == null;
+
+            bool strong = show && (plot == pendingBuildPlot || plot == hover);
+            foreach (var o in fx.outline) if (o != null) o.enabled = strong;
+
+            if (fx.glint != null)
+            {
+                float cycle = (now + fx.offset) % GlintEvery;
+                bool on = show && waiting && cycle < .6f;
+                fx.glint.enabled = on;
+                if (on) fx.glint.sprite = cycle > .2f && cycle < .4f ? glintBig : glintSmall;
+            }
+        }
+    }
+
+    PlotFx MakePlotFx(BuildPlot plot)
+    {
+        var fx = new PlotFx { offset = UnityEngine.Random.Range(0f, GlintEvery) };
+        var sources = new List<SpriteRenderer>();
+        var plotRenderer = plot.GetComponent<SpriteRenderer>();
+        if (plotRenderer != null) sources.Add(plotRenderer);
+        if (plot.ferramentas != null) sources.AddRange(plot.ferramentas.GetComponentsInChildren<SpriteRenderer>(true));
+        Bounds bounds = default;
+        bool any = false;
+        foreach (var r in sources)
+        {
+            if (r.sprite == null) continue;
+            if (!any) { bounds = r.bounds; any = true; }
+            else bounds.Encapsulate(r.bounds);
+        }
+        if (!any) return fx;
+
+        // contorno que segue o desenho: 4 silhuetas lisas deslocadas 1 px, uma para cada lado, atras do original
+        Vector2[] dirs = { Vector2.left, Vector2.right, Vector2.up, Vector2.down };
+        foreach (var src in sources)
+        {
+            if (src.sprite == null) continue;
+            foreach (var d in dirs)
+            {
+                var go = new GameObject("Contorno");
+                go.transform.SetParent(src.transform, false);
+                Vector3 scale = src.transform.lossyScale;
+                go.transform.localPosition = new Vector3(d.x / 32f / scale.x, d.y / 32f / scale.y, 0f);
+                var r = go.AddComponent<SpriteRenderer>();
+                r.sprite = Silhouette(src.sprite);
+                r.sortingLayerID = src.sortingLayerID;
+                r.sortingOrder = src.sortingOrder - 1;
+                r.color = new Color(1f, .97f, .88f, 1f);   // branco quente
+                r.enabled = false;
+                fx.outline.Add(r);
+            }
+        }
+
+        if (glintSmall == null) MakeGlintSprites();
+        var star = new GameObject("Brilhinho");
+        star.transform.position = PixelSprites.Snap(new Vector3(bounds.center.x + .28f, bounds.center.y + .3f, 0f));
+        fx.glint = star.AddComponent<SpriteRenderer>();
+        fx.glint.sprite = glintSmall;
+        fx.glint.sortingOrder = DrawOrder.ForY(plot.transform.position.y) + 3;
+        fx.glint.enabled = false;
+        return fx;
+    }
+
+    // Silhueta lisa (branca) do sprite: o contorno ganha a cor pura, sem herdar o escuro do desenho.
+    static readonly Dictionary<Sprite, Sprite> silhouettes = new Dictionary<Sprite, Sprite>();
+    static Sprite Silhouette(Sprite source)
+    {
+        if (silhouettes.TryGetValue(source, out Sprite made) && made != null) return made;
+        Color32[] px = PixelSprites.Read(source, out int w, out int h);
+        if (px == null) return source;
+        for (int i = 0; i < px.Length; i++)
+            px[i] = px[i].a > 40 ? new Color32(255, 255, 255, 255) : new Color32(0, 0, 0, 0);
+        made = PixelSprites.MakeLike(source, px, w, h, "_silhueta");
+        silhouettes[source] = made;
+        return made;
+    }
+
+    static void MakeGlintSprites()
+    {
+        var o = new Color32(0, 0, 0, 0);
+        Color32 c = new Color32(255, 250, 215, 255), e = new Color32(255, 235, 150, 255);
+        var small = new Color32[9];
+        for (int i = 0; i < 9; i++) small[i] = o;
+        small[4] = c; small[1] = e; small[3] = e; small[5] = e; small[7] = e;
+        glintSmall = PixelSprites.Make(small, 3, 3, new Vector2(.5f, .5f), 32f, "brilho_1");
+        var big = new Color32[25];
+        for (int i = 0; i < 25; i++) big[i] = o;
+        foreach (int i in new[] { 2, 7, 10, 11, 13, 14, 17, 22 }) big[i] = e;
+        big[12] = c;
+        glintBig = PixelSprites.Make(big, 5, 5, new Vector2(.5f, .5f), 32f, "brilho_2");
+    }
+
+    // O carrinho some enquanto a previa da torre aparece no canteiro, como acontece ao construir.
+    void RestorePlotTools()
+    {
+        if (hiddenToolsPlot == null) return;
+        if (hiddenToolsPlot.Placed == null && hiddenToolsPlot.ferramentas != null) hiddenToolsPlot.ferramentas.SetActive(true);
+        hiddenToolsPlot = null;
+    }
+
     void LateUpdate()
     {
+        RestorePlotTools();
         HideBuildPreview();
+        UpdatePlotOutlines();
         if (IsOverlayOpen || GameManager.State != GameState.Playing) { hoveredCard=null; return; }
         if (Mouse.current == null || Camera.main == null) return;
         if (Mouse.current.rightButton.wasPressedThisFrame) { CancelBuildSelection(); return; }
@@ -567,6 +904,7 @@ public class GameHUD : MonoBehaviour
         if (plot == null && overUi && !draggingCard) return;
         Vector3 position=plot != null ? plot.transform.position+new Vector3(0,-.35f,0) : Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
         position.z=0;
+        if (plot != null && plot.Placed == null && plot.ferramentas != null) { plot.ferramentas.SetActive(false); hiddenToolsPlot=plot; }
         bool valid=plot != null && plot.Placed == null && plot.Accepts(data) && GameManager.Money>=Mathf.Max(0,data.levels[0].cost);
         var prefabSprite=data.towerPrefab.GetComponent<SpriteRenderer>();
         if (buildGhost == null) buildGhost=BuildVisual("Prévia da torre",null);
@@ -575,14 +913,15 @@ public class GameHUD : MonoBehaviour
         buildGhost.transform.localScale=data.towerPrefab.transform.localScale;
         buildGhost.sortingLayerID=prefabSprite != null ? prefabSprite.sortingLayerID : 0;
         buildGhost.sortingOrder=DrawOrder.ForY(position.y)+5;
-        buildGhost.color=valid ? new Color(.75f,1f,.75f,.7f) : new Color(1f,.4f,.4f,.65f);
+        buildGhost.color=valid ? new Color(1f,1f,1f,.8f) : new Color(1f,.45f,.45f,.75f);
         buildGhost.enabled=true;
-        if (buildRadius == null) buildRadius=BuildVisual("Alcance da prévia",RangeSprite());
+        if (buildRadius == null) buildRadius=BuildVisual("Alcance da prévia",null);
+        buildRadius.sprite=RangeSprite(data.levels[0].range);
         buildRadius.transform.position=position;
-        buildRadius.transform.localScale=Vector3.one*data.levels[0].range;
+        buildRadius.transform.localScale=Vector3.one;
         buildRadius.sortingLayerID=buildGhost.sortingLayerID;
         buildRadius.sortingOrder=buildGhost.sortingOrder-1;
-        buildRadius.color=valid ? new Color(.6f,1f,.55f,.75f) : new Color(1f,.35f,.25f,.65f);
+        buildRadius.color=valid ? new Color(1f,.96f,.86f,1f) : new Color(1f,.35f,.25f,1f);   // creme; vermelho onde nao da para construir
         buildRadius.enabled=true;
     }
     void UpdateWaveControls()
@@ -878,24 +1217,28 @@ public class GameHUD : MonoBehaviour
         decisionOpen = false;
         GameManager.Instance?.SetDecisionPause(false);
     }
-    static Sprite RangeSprite()
+    // Circulo de alcance em pixels duros, ja no tamanho do raio (escala 1): 1 pixel do desenho = 2 de tela
+    // (1/32 de unidade). Borda clara de 3 px, anel escuro de 1 px por fora e preenchimento a 12%.
+    // A cor vem do SpriteRenderer; o anel escuro continua escuro com qualquer cor.
+    static Sprite RangeSprite(float radius)
     {
-        if (rangeSprite != null) return rangeSprite;
-        const int size = 128;
-        var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        texture.filterMode = FilterMode.Point;
-        texture.wrapMode = TextureWrapMode.Clamp;
-        var pixels = new Color[size * size];
+        int r = Mathf.Max(8, Mathf.RoundToInt(radius / PixelSprites.Pixel));
+        if (rangeSprites.TryGetValue(r, out Sprite cached) && cached != null) return cached;
+        int size = 2 * r + 2;
+        float center = size * .5f;
+        var px = new Color32[size * size];
         for (int y = 0; y < size; y++)
             for (int x = 0; x < size; x++)
             {
-                float radius = Vector2.Distance(new Vector2(x, y), new Vector2(63.5f, 63.5f)) / 63f;
-                pixels[y * size + x] = radius > 1f ? Color.clear :
-                    new Color(1f, 1f, 1f, radius > .965f ? .78f : .14f);
+                float d = Vector2.Distance(new Vector2(x + .5f, y + .5f), new Vector2(center, center));
+                px[y * size + x] = d > r + 1f ? new Color32(0, 0, 0, 0)
+                    : d > r ? new Color32(40, 22, 8, 190)
+                    : d > r - 3f ? new Color32(255, 255, 255, 255)
+                    : new Color32(255, 255, 255, 31);
             }
-        texture.SetPixels(pixels); texture.Apply();
-        rangeSprite = Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(.5f, .5f), 64f);
-        return rangeSprite;
+        Sprite sprite = PixelSprites.Make(px, size, size, new Vector2(.5f, .5f), 1f / PixelSprites.Pixel, "alcance_" + r);
+        rangeSprites[r] = sprite;
+        return sprite;
     }
     void DrawRange(BuildPlot plot, float radius, bool selected)
     {
@@ -903,12 +1246,12 @@ public class GameHUD : MonoBehaviour
         if (rangeRenderer == null)
         {
             rangeRenderer = new GameObject("Alcance da torre").AddComponent<SpriteRenderer>();
-            rangeRenderer.sprite = RangeSprite();
         }
-        rangeRenderer.transform.position = plot.transform.position;
-        rangeRenderer.transform.localScale = Vector3.one * radius;
+        rangeRenderer.sprite = RangeSprite(radius);
+        rangeRenderer.transform.position = plot.transform.position + new Vector3(0f, -.35f, 0f);   // pe da torre, de onde o alcance e medido
+        rangeRenderer.transform.localScale = Vector3.one;   // o sprite ja tem o tamanho do raio
         rangeRenderer.sortingOrder = DrawOrder.ForY(plot.transform.position.y) - 1;
-        rangeRenderer.color = selected ? new Color(1f, .87f, .39f, .86f) : new Color(.7f, .92f, 1f, .6f);
+        rangeRenderer.color = selected ? new Color(1f, .9f, .55f, 1f) : new Color(1f, .96f, .86f, .9f);   // creme; dourado na torre escolhida
         rangeRenderer.enabled = true;
     }
     void ShowSelectedRange(BuildPlot plot, float radius)
@@ -945,6 +1288,7 @@ public class GameHUD : MonoBehaviour
             Show("JOGO PAUSADO","A colheita pode esperar um pouquinho.\nRetome a defesa quando estiver pronto.",false,
                 new Action("Continuar","continuar","continuar",()=>GameManager.Instance?.TogglePause()),
                 new Action("Recomeçar nível","recomecar","voltar",()=>GameManager.Instance?.RestartCurrentLevel()),
+                new Action("Configurações","construir",null,()=>SettingsPanel.Open(overlay)),
                 new Action("Voltar ao menu","menu","voltar",ToMenu));
         }
         else if (state == GameState.Playing) Close();

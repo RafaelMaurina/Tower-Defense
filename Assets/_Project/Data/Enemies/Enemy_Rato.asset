@@ -22,8 +22,31 @@ MonoBehaviour:
   jumpInterval: 0
   jumpDistance: 0
   jumpDuration: 0.3
-  zigzagAmplitude: 0.8
+  zigzagAmplitude: 0.25
   zigzagPeriod: 1.6
   frames:
-  - {fileID: 21300000, guid: f117f4b285df40398d20f60a3181466c, type: 3}
-  framesPerSecond: 8
+  - {fileID: 21300000, guid: 9434710d24a541e9964dd881866a6a20, type: 3}
+  - {fileID: 21300000, guid: d8ac2bee9aee4d8ba04103bc4d7a7203, type: 3}
+  - {fileID: 21300000, guid: daef1159e35c4c3bab1e038c1fd7b03b, type: 3}
+  - {fileID: 21300000, guid: 52d9399a793f45e9b0955eb96a2b1853, type: 3}
+  framesUp:
+  - {fileID: 21300000, guid: be5bc43f96164dd498de2a031f23a8b6, type: 3}
+  - {fileID: 21300000, guid: 9fd60ce27c1042268050c0290fb32e2f, type: 3}
+  - {fileID: 21300000, guid: 64a870f3f0b042d9b48f2d1a93067130, type: 3}
+  - {fileID: 21300000, guid: b9b762dd0dbf43ea8bbe23a0de54cd78, type: 3}
+  framesDown:
+  - {fileID: 21300000, guid: ae00767cdda2421c99d526d0af8700e3, type: 3}
+  - {fileID: 21300000, guid: 809f756a729d4669a38da529b32244b9, type: 3}
+  - {fileID: 21300000, guid: 914f237391db421da35da66300008ef2, type: 3}
+  - {fileID: 21300000, guid: 96ddea0443d54ca19832eb0d2304135e, type: 3}
+  framesDiagUp:
+  - {fileID: 21300000, guid: 0506b2302d9c47ea885769457755d07e, type: 3}
+  - {fileID: 21300000, guid: 0f2b827f05c34fccb39bd770509facb0, type: 3}
+  - {fileID: 21300000, guid: ba13b741d95c44989ac17d4a42503153, type: 3}
+  - {fileID: 21300000, guid: b79131548d744c9b8937323ec47750b5, type: 3}
+  framesDiagDown:
+  - {fileID: 21300000, guid: 1eb5bee9badc4acf9a8acfe1ac075836, type: 3}
+  - {fileID: 21300000, guid: 8c0dd9a051c0464696d856e27acad2d6, type: 3}
+  - {fileID: 21300000, guid: 05f426d5e8234d4c8448cd0a9bd15164, type: 3}
+  - {fileID: 21300000, guid: 5912d85b1ba249c5a6b33c7899062ae3, type: 3}
+  framesPerSecond: 12

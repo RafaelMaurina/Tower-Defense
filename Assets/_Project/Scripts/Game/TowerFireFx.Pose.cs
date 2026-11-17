@@ -7,12 +7,6 @@ using UnityEngine;
 /// bagaco de uva e abelhinhas. Os PNG nunca mudam. Tudo em pixel inteiro, sem escala nem rotacao.
 public partial class TowerFireFx
 {
-    static readonly RectInt BarrelRect = new RectInt(47, 26, 14, 22);   // so a ponta do cano, fora do toco (uva, os 3 niveis)
-    static readonly Color32[] BarrelColors =                            // cinzas e pretos do cano; o resto do retangulo nao treme
-    {
-        new Color32(0x1a, 0x09, 0x09, 255), new Color32(0x68, 0x5b, 0x5b, 255),
-        new Color32(0x28, 0x24, 0x24, 255), new Color32(0x15, 0x12, 0x16, 255),
-    };
     static readonly Color32 HoleColor = new Color32(0x1a, 0x09, 0x09, 255);
     static readonly Color32 OutlineColor = new Color32(0x20, 0x18, 0x21, 255);
 
@@ -110,7 +104,8 @@ public partial class TowerFireFx
     {
         var sr = tower.GetComponent<SpriteRenderer>();
         if (sr == null || sr.sprite == null) return;
-        SwapPose(tower, barrelPoses, ShakeBarrel, StepTime);
+        Vector2Int back = BarrelBack(sr.sprite);
+        SwapPose(tower, barrelPoses, src => ShakeBarrel(src, back.x, back.y), StepTime);
         if (Random.value < .7f) StartCoroutine(Seed(tower, rest, order, sr.sprite));
     }
 
@@ -124,10 +119,12 @@ public partial class TowerFireFx
         if (TowerShotFx.TryGetSpot(sprite, out TowerShotFx.Spot spot))
             start += PixelSprites.Local(sprite, spot.b.x, spot.b.y);   // sob o cano, ao lado do toco
         int stretch = Random.value < .5f ? 1 : 2;   // alguns pulam mais para o lado
+        // cano virado para a esquerda: o bagaco pula para a esquerda
+        float side = sprite.name.EndsWith("_sudoeste") || sprite.name.EndsWith("_noroeste") ? -1f : 1f;
         for (int t = 0; t < SeedPath.Length; t++)
         {
             Vector2Int p = SeedPath[t];
-            part.transform.position = Snap(start + new Vector3(p.x * stretch / 1f, -p.y, 0f) * Pixel);
+            part.transform.position = Snap(start + new Vector3(p.x * stretch * side, -p.y, 0f) * Pixel);
             yield return new WaitForSeconds(StepTime * .9f);
         }
         ReleaseFx(part);
@@ -140,7 +137,6 @@ public partial class TowerFireFx
     {
         var sr = tower.GetComponent<SpriteRenderer>();
         if (sr == null || sr.sprite == null) return;
-        SwapPose(tower, holePoses, OpenHole, StepTime * 1.5f);
         StartCoroutine(Bees(rest + TowerShotFx.Muzzle(tower, TowerShotFx.Kind.Hive), dir, order));
     }
 
@@ -167,25 +163,41 @@ public partial class TowerFireFx
         for (int i = 0; i < 3; i++) ReleaseFx(bees[i]);
     }
 
-    // Copia do sprite com so os pixels do cano (cinzas e pretos) 1 px para tras; toco e balde ficam parados.
-    static Color32[] ShakeBarrel(Color32[] src)
+    // Para onde o cano recua (px, y para baixo), pelo nome do desenho: contrario ao rumo do tiro.
+    static Vector2Int BarrelBack(Sprite sprite)
+    {
+        string n = sprite != null ? sprite.name : "";
+        if (n.EndsWith("_sul")) return new Vector2Int(0, -1);
+        if (n.EndsWith("_sudoeste")) return new Vector2Int(1, -1);
+        if (n.EndsWith("_noroeste")) return new Vector2Int(1, 1);
+        if (n.EndsWith("_norte")) return new Vector2Int(0, 1);
+        if (n.EndsWith("_nordeste")) return new Vector2Int(-1, 1);
+        return new Vector2Int(-1, -1);       // sudeste, que e tambem o desenho de repouso
+    }
+
+    // Copia do sprite com so os pixels do cano (cinzas e pretos neutros) 1 px para tras; toco e balde ficam parados.
+    static Color32[] ShakeBarrel(Color32[] src, int backX, int backY)
     {
         int w = 64, h = 64;
         var dst = (Color32[])src.Clone();
         BarrelPixels(src, w, h, (x, y, c) => dst[(h - 1 - y) * w + x] = new Color32(0, 0, 0, 0));
-        BarrelPixels(src, w, h, (x, y, c) => dst[(h - 1 - y) * w + x - 1] = c);
+        BarrelPixels(src, w, h, (x, y, c) =>
+        {
+            int nx = x + backX, ny = y + backY;
+            if (nx >= 0 && ny >= 0 && nx < w && ny < h) dst[(h - 1 - ny) * w + nx] = c;
+        });
         return dst;
     }
 
+    // Pixels do cano: cinzas e pretos neutros (o marrom da madeira e o roxo da uva nao entram).
     static void BarrelPixels(Color32[] src, int w, int h, System.Action<int, int, Color32> each)
     {
-        for (int y = BarrelRect.y; y < BarrelRect.yMax; y++)
-            for (int x = BarrelRect.x; x < BarrelRect.xMax; x++)
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
             {
                 Color32 c = src[(h - 1 - y) * w + x];
                 if (c.a == 0) continue;
-                foreach (Color32 b in BarrelColors)
-                    if (SameColor(c, b)) { each(x, y, c); break; }
+                if (Mathf.Abs(c.r - c.g) <= 14 && Mathf.Abs(c.g - c.b) <= 14 && c.r <= 0xA0) each(x, y, c);
             }
     }
 

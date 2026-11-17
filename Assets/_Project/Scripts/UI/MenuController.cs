@@ -125,6 +125,11 @@ public class MenuController : MonoBehaviour
             new Vector2(.30f, .19f), new Vector2(.70f, .31f), ShowInfo);
         CreateSpriteButton(mainMenuContent.transform, "Sair", exitNormalSprite, exitSelectedSprite,
             new Vector2(.30f, .02f), new Vector2(.70f, .14f), ExitGame);
+        // O acesso à fase bônus fica integrado à tela de seleção de fases.
+        var settings = CreateSpriteButton(mainMenuContent.transform, "Configurações",
+            Resources.Load<Sprite>("hud/botao_normal"), Resources.Load<Sprite>("hud/botao_selecionado"),
+            new Vector2(.04f,.02f), new Vector2(.27f,.12f), () => { if (!loading) SettingsPanel.Open(mainMenuContent); });
+        MakeText(settings.transform, "Configurações", new Vector2(.08f,.1f), new Vector2(.92f,.9f), 28, Color.white).raycastTarget = false;
         // O fundo é filho direto do Canvas e deve ficar atrás do conteúdo principal.
         mainMenuContent.transform.SetAsLastSibling();
     }
@@ -402,7 +407,7 @@ public class MenuController : MonoBehaviour
         var audio = image.gameObject.AddComponent<AudioSource>();
         audio.playOnAwake = false;
         audio.spatialBlend = 0;
-        if (clickSound != null) button.onClick.AddListener(() => audio.PlayOneShot(clickSound));
+        if (clickSound != null) button.onClick.AddListener(() => audio.PlayOneShot(clickSound, GameSettings.Sfx));
         button.onClick.AddListener(action);
         var hover = image.gameObject.AddComponent<MenuButtonHoverSound>();
         hover.Initialize(audio, hoverSound);
@@ -642,7 +647,7 @@ public class MenuButtonHoverSound : MonoBehaviour, IPointerEnterHandler
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (source != null && clip != null) source.PlayOneShot(clip);
+        if (source != null && clip != null) source.PlayOneShot(clip, GameSettings.Sfx);
     }
 }
 

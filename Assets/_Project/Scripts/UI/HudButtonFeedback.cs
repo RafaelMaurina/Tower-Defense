@@ -16,12 +16,19 @@ public class HudButtonFeedback : MonoBehaviour, IPointerEnterHandler, IPointerEx
     bool hovered, keyboardSelected, pressed;
     bool toggled;
     bool overlayFeedback;
+    Image[] highlightTints, highlightRings;
     Image[] overlayBorders;
 
     public void ConfigureOverlay(Image image, params Image[] borders)
     {
         target = image; button = GetComponent<Button>();
         overlayFeedback = true; overlayBorders = borders; Refresh();
+    }
+
+    /// Realce em partes: brilho dourado nas partes (tints) e contorno (rings), so quando ativo.
+    public void ConfigureHighlight(Image[] tints, Image[] rings)
+    {
+        button = GetComponent<Button>(); highlightTints = tints; highlightRings = rings; Refresh();
     }
 
     public void SetToggleState(bool active) { toggled = active; Refresh(); }
@@ -52,10 +59,21 @@ public class HudButtonFeedback : MonoBehaviour, IPointerEnterHandler, IPointerEx
     {
         if (button == null) return;
         bool active = button.interactable && (hovered || keyboardSelected || toggled);
+        if (highlightTints != null)
+        {
+            Color tint = active ? (pressed ? new Color(1f,.8f,.3f,.26f) : toggled ? new Color(1f,.86f,.45f,.20f) : new Color(1f,.92f,.6f,.12f)) : Color.clear;
+            // torre escolhida: dourado (#FFD54A) pulsando de leve; so passando o mouse: dourado claro fixo
+            float pulse = .78f + .22f * (.5f + .5f * Mathf.Sin(Time.unscaledTime * 6.2f));
+            Color edge = toggled ? new Color(1f,.835f,.29f,pulse) : new Color(1f,.93f,.65f,.85f);
+            foreach (var part in highlightTints) part.color = tint;
+            foreach (var ring in highlightRings) { ring.enabled = active; ring.color = edge; }
+            return;
+        }
         if (overlayFeedback)
         {
-            target.color = active ? (pressed ? new Color(.1f,.25f,.05f,.28f) : new Color(.6f,1f,.35f,.16f)) : Color.clear;
-            Color edge = toggled ? new Color(.65f,1f,.38f,1f) : new Color(1f,.87f,.5f,.9f);
+            // dourado suave: brilho leve dentro e contorno claro; mais forte na torre escolhida
+            target.color = active ? (pressed ? new Color(1f,.8f,.3f,.24f) : toggled ? new Color(1f,.86f,.45f,.18f) : new Color(1f,.92f,.6f,.10f)) : Color.clear;
+            Color edge = toggled ? new Color(1f,.82f,.30f,1f) : new Color(1f,.93f,.65f,.85f);
             foreach (var border in overlayBorders) { border.enabled = active; border.color = edge; }
             return;
         }
@@ -85,7 +103,7 @@ public class HudButtonFeedback : MonoBehaviour, IPointerEnterHandler, IPointerEx
             : pressed ? new Color(.85f, .85f, .85f, 1f)
             : active && selected == normal ? new Color(.83f, 1f, .78f, 1f) : Color.white;
     }
-    public void OnPointerEnter(PointerEventData e) { hovered = true; if (button != null && button.interactable && audioSource != null && hoverClip != null) audioSource.PlayOneShot(hoverClip); Refresh(); }
+    public void OnPointerEnter(PointerEventData e) { hovered = true; if (button != null && button.interactable && audioSource != null && hoverClip != null) audioSource.PlayOneShot(hoverClip, GameSettings.Sfx); Refresh(); }
     public void OnPointerExit(PointerEventData e) { hovered = pressed = false; Refresh(); }
     public void OnPointerDown(PointerEventData e) { keyboardSelected = false; pressed = true; Refresh(); }
     public void OnPointerUp(PointerEventData e) { pressed = false; Refresh(); }

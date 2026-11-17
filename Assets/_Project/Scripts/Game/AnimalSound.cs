@@ -100,7 +100,8 @@ public class AnimalSound : MonoBehaviour
             if (sleepClicks < clicksToWake) { say = sleepWord; makesSound = false; }
             else { sleepClicks = 0; wakeNow = true; }
         }
-        if (makesSound) SoundBank.Play(id);
+        // a vaca que dormia acorda com o proprio som (vaca_acorda), se existir
+        if (makesSound) SoundBank.Play(wakeNow && SoundBank.Has(id + "_acorda") ? id + "_acorda" : id);
         Vector3 above = new Vector3(sr.bounds.center.x, sr.bounds.max.y, 0f);
         Say(say, above);
 
@@ -110,6 +111,7 @@ public class AnimalSound : MonoBehaviour
         if (streak >= 5)
         {
             streak = 0;
+            SoundBank.Play(id + "_coracao");   // o gato ronrona
             EnsureRunner();
             runner.StartCoroutine(runner.Show(Heart(), above + new Vector3(0f, 9f * Pixel, 0f), "coracao"));
         }
