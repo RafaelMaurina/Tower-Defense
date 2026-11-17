@@ -10,16 +10,13 @@ EditorBuildSettings:
     guid: 40da1f1113244274b82d45cf754843f6
   - enabled: 1
     path: Assets/_Project/Scenes/Nivel_1_Primavera.unity
-    guid: 747cfe5e6b6219e4a94bcc60d89ac0a0
+    guid: 611baa42a80c804488995c6d058aa2cf
   - enabled: 1
     path: Assets/_Project/Scenes/Nivel_2_Verao.unity
-    guid: 69072633526f575489a156879cff597b
+    guid: eb457d0f7cb220a4c9ee98dd68bcbbc3
   - enabled: 1
     path: Assets/_Project/Scenes/Nivel_3_Outono.unity
-    guid: 0451c03f41960834cbcf1045f5531675
-  - enabled: 1
-    path: Assets/_Project/Scenes/Nivel_4_Campus.unity
-    guid: 80757208bd591f1469ec22ffa1d17e84
+    guid: 027d06c9787b1d2419eb68dd823bbf4d
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}

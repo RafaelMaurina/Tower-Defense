@@ -42,7 +42,6 @@ public static class MenuArtSetup
         Assign(serialized, "submenuPanelSprite", "submenu_molde.png");
         Assign(serialized, "backButtonSprite", "botao_voltar.png");
         Assign(serialized, "backButtonSelectedSprite", "botao_voltar_selecionado.png");
-        Assign(serialized, "repositoryButtonSprite", "botao_github.png");
         Assign(serialized, "rankingNormalSprite", "menu_ranking_normal.png");
         Assign(serialized, "rankingSelectedSprite", "menu_ranking_selecionado.png");
         Assign(serialized, "infoNormalSprite", "menu_informacoes_normal.png");

@@ -11,7 +11,6 @@ using System.Globalization;
 /// Menu estatico montado com os sprites finais do pacote de arte.
 public class MenuController : MonoBehaviour
 {
-    static TMP_FontAsset rankingFontAsset;
     [Header("Fundo e letreiro")]
     [SerializeField] Sprite backgroundSprite;
     [SerializeField] Sprite logoSprite;
@@ -121,6 +120,12 @@ public class MenuController : MonoBehaviour
 
         CreateSpriteButton(mainMenuContent.transform, "Ranking", rankingNormalSprite, rankingSelectedSprite,
             new Vector2(.30f, .36f), new Vector2(.70f, .48f), ShowRanking);
+        var bonusRankingButton = CreateSpriteButton(mainMenuContent.transform, "Ranking do bônus",
+            Resources.Load<Sprite>("hud/botao_normal"), Resources.Load<Sprite>("hud/botao_selecionado"),
+            new Vector2(.72f, .36f), new Vector2(.96f, .48f), () => ShowRankingFor(true));
+        if (bonusRankingButton.sprite == null) bonusRankingButton.color = new Color32(111, 68, 41, 245);
+        MakeText(bonusRankingButton.transform, "Ranking do bônus", new Vector2(.04f, .08f), new Vector2(.96f, .92f),
+            20, new Color32(255, 246, 213, 255)).raycastTarget = false;
         CreateSpriteButton(mainMenuContent.transform, "Informações", infoNormalSprite, infoSelectedSprite,
             new Vector2(.30f, .19f), new Vector2(.70f, .31f), ShowInfo);
         CreateSpriteButton(mainMenuContent.transform, "Sair", exitNormalSprite, exitSelectedSprite,
@@ -215,10 +220,10 @@ public class MenuController : MonoBehaviour
         }
 
         phaseCards.Clear();
-        AddPhaseCard("VERÃO", "Nivel_2_Verao", summerPreviewSprite, summerCardFrameSprite, false, false,
-            new Vector2(.21f, .52f), new Vector2(.49f, .80f));
         AddPhaseCard("PRIMAVERA", "Nivel_1_Primavera", springPreviewSprite, springCardFrameSprite, false,
             springPreviewIsProvisional,
+            new Vector2(.21f, .52f), new Vector2(.49f, .80f));
+        AddPhaseCard("VERÃO", "Nivel_2_Verao", summerPreviewSprite, summerCardFrameSprite, false, false,
             new Vector2(.51f, .52f), new Vector2(.79f, .80f));
         AddPhaseCard("OUTONO", "Nivel_3_Outono", autumnPreviewSprite, autumnCardFrameSprite, false, false,
             new Vector2(.21f, .22f), new Vector2(.49f, .50f));
@@ -227,6 +232,13 @@ public class MenuController : MonoBehaviour
         if (bonusCardPreview == null) bonusCardPreview = bonusPreviewSprite;
         AddPhaseCard("BÔNUS", CampaignProgress.BonusScene, bonusCardPreview, bonusCardFrameSprite,
             bonusLocked, true, new Vector2(.51f, .22f), new Vector2(.79f, .50f));
+
+        string progressMessage = $"Bônus: vença Primavera, Verão e Outono uma vez em qualquer dificuldade ({CampaignProgress.CompletedCampaignLevelCount}/3).\n" +
+            "O ranking da campanha registra vitórias completas iniciadas na Primavera.";
+        var progressHint = MakeText(phaseSelectionMenu.transform, "Progresso e ranking da campanha",
+            new Vector2(.16f, .105f), new Vector2(.84f, .195f), 17, new Color32(255, 246, 213, 255));
+        progressHint.text = progressMessage;
+        progressHint.raycastTarget = false;
 
         CreateSpriteButton(phaseSelectionMenu.transform, "Voltar", backButtonSprite, backButtonSelectedSprite,
             new Vector2(.39f, .005f), new Vector2(.61f, .09f), ClosePhaseSelection);
@@ -498,6 +510,7 @@ public class MenuController : MonoBehaviour
         GameManager.SetDifficulty(difficulty);
         CloseDifficultyMenu();
         if (GameManager.Instance != null) GameManager.Instance.ResetGame();
+        GameManager.PrepareRun(selectedLevel);
         StartCoroutine(LoadGameAfterClick());
     }
 
@@ -608,12 +621,11 @@ public class MenuController : MonoBehaviour
         var rect = go.GetComponent<RectTransform>();
         rect.anchorMin = min; rect.anchorMax = max; rect.offsetMin = Vector2.zero; rect.offsetMax = Vector2.zero;
         var text = go.GetComponent<TextMeshProUGUI>();
-        if (rankingFontAsset == null)
-            rankingFontAsset = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
-        if (rankingFontAsset != null)
+        var defaultFont = TMP_Settings.defaultFontAsset;
+        if (defaultFont != null)
         {
-            text.font = rankingFontAsset;
-            text.fontSharedMaterial = rankingFontAsset.material;
+            text.font = defaultFont;
+            text.fontSharedMaterial = defaultFont.material;
         }
         text.text = value;
         text.fontSize = fontSize;
@@ -622,7 +634,7 @@ public class MenuController : MonoBehaviour
         text.enableAutoSizing = true;
         text.alignment = TextAlignmentOptions.Center;
         text.color = new Color32(255, 246, 213, 255);
-        if (rankingFontAsset != null)
+        if (text.font != null)
         {
             text.outlineWidth = .18f;
             text.outlineColor = new Color32(54, 27, 13, 255);
@@ -749,7 +761,6 @@ public class PhaseCardHoverScale : MonoBehaviour, IPointerEnterHandler, IPointer
 
 public class InfoPanel : MonoBehaviour
 {
-    static TMP_FontAsset infoFontAsset;
     static Sprite panelSprite;
     static Sprite backSprite;
     static Sprite backSelectedSprite;
@@ -858,12 +869,11 @@ public class InfoPanel : MonoBehaviour
         rect.anchorMin = min; rect.anchorMax = max;
         rect.offsetMin = Vector2.zero; rect.offsetMax = Vector2.zero;
         var text = go.GetComponent<TextMeshProUGUI>();
-        if (infoFontAsset == null)
-            infoFontAsset = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
-        if (infoFontAsset != null)
+        var defaultFont = TMP_Settings.defaultFontAsset;
+        if (defaultFont != null)
         {
-            text.font = infoFontAsset;
-            text.fontSharedMaterial = infoFontAsset.material;
+            text.font = defaultFont;
+            text.fontSharedMaterial = defaultFont.material;
             text.outlineWidth = .16f;
             text.outlineColor = new Color32(54, 27, 13, 255);
         }
