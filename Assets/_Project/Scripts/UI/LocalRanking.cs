@@ -19,11 +19,12 @@ class RankingSaveData { public List<RankingEntry> entries = new List<RankingEntr
 /// Ranking local simples, persistido entre execucoes com PlayerPrefs.
 public static class LocalRanking
 {
-    const string Key = "DefesaDaColheita.Ranking.v1";
+    const string Key = "DefesaDaColheita.Ranking.CampanhaCompleta.v1";
     const string BonusKey = "DefesaDaColheita.Ranking.Bonus.v1";
     const int Limit = 10;
     public static void Record(GameResult result)
     {
+        if (!result.bonus && !result.fullCampaign) return;
         string key = result.bonus ? BonusKey : Key;
         var data = LoadData(key);
         data.entries.Add(new RankingEntry

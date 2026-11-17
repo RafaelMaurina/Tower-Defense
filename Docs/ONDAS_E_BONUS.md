@@ -1,48 +1,28 @@
-# Ondas e integração do bônus — #32 e #76
+# Seleção de fases e fase bônus
 
-## Entrega
+## Fluxo de fases
 
-Branch `joao/ondas-bonus`, baseada em `joao/submenu-melhorar` (PR #95). Inclui main até 4573acd. A seleção completa de fases continua em trabalho futuro; a campanha mantém Primavera → Verão → Outono.
+A tela de seleção apresenta as fases na ordem da campanha: Primavera, Verão e Outono. Cada card pode iniciar sua fase diretamente. Uma campanha completa começa em Primavera e avança automaticamente por Verão e Outono.
 
-### #32 — ondas
+O ranking da campanha registra somente uma vitória ao concluir os três níveis em sequência, começando em Primavera. Partidas iniciadas diretamente em Verão ou Outono continuam jogáveis, mas seus resultados não entram no ranking da campanha. O ranking do bônus permanece separado e acessível pelo menu principal.
 
-Cada estação tem três assets WaveData, ordenados pelo novo campo `order` e, em empate, pelo nome. Os assets iniciais e seus GUIDs foram preservados; sufixos `_02` e `_03` são as rodadas seguintes. O GameBootstrap filtra por `levelScene` antes de ordenar. Não depende da ordem retornada por AssetDatabase.
+## Desbloqueio do bônus
 
-| Fase | Onda 1 | Onda 2 | Onda 3 | Total |
-|---|---|---|---|---|
-| Primavera | 6 corvos, 2 guaxinins | 5 corvos, 4 guaxinins, 2 morcegos | 5 guaxinins, 3 morcegos, 1 javali | 28 |
-| Verão | 5 guaxinins, 3 raposas | 5 corvos, 4 raposas, 3 morcegos | 5 raposas, 5 guaxinins, 2 javalis | 32 |
-| Outono | 4 guaxinins, 4 gafanhotos, 3 patos | 4 raposas, 4 patos, 4 morcegos | 5 gafanhotos, 4 raposas, 4 patos, 2 javalis | 38 |
+A fase `Nivel_4_Campus` é desbloqueada depois que o jogador vence Primavera, Verão e Outono pelo menos uma vez cada, em qualquer dificuldade. As conclusões ficam salvas em `PlayerPrefs`, independentemente da ordem ou dificuldade, e continuam disponíveis ao reabrir o jogo. Vencer apenas Outono não libera o bônus.
 
-`Enemy_Rato` / `Inimigo_Rato` são os nomes atuais dos arquivos do **Pato** (displayName e zigue-zague). Foram reutilizados sem renomear assets do Fábio. Raposa começa no Verão; Gafanhoto e Pato no Outono, conforme comentários da #32. Outono usa explicitamente os caminhos A e B. As entradas de cada onda são sequenciais, como no spawner original.
+A seleção mostra o progresso das três conclusões enquanto o bônus está bloqueado. A fase bônus não participa da progressão automática da campanha.
 
-Quantidades e intervalos são uma primeira proposta, não balanceamento final aprovado. Nenhum atributo de inimigo/torre foi alterado. Início manual, auto-start, pausa e velocidade existentes foram mantidos.
+## Integração
 
-### #76 — fluxo e progresso
+O nome de cena usado na seleção e no progresso é `Nivel_4_Campus`, igual ao gerador e ao `Wave_Bonus_Prova_Final.levelScene`. O campus usa iluminação noturna em qualquer dificuldade. A geometria é funcional e reaproveita arte da fazenda; o acabamento visual do campus continua separado.
 
-- Vencer o Outono salva `DefesaDaColheita.BonusUnlocked.v1` em PlayerPrefs e termina a campanha com a tela de vitória habitual. Derrota e conclusão de outras cenas não liberam o bônus.
-- O menu oferece **A Prova Final**, bloqueado até esse desbloqueio. Depois, o jogador confirma a dificuldade na tela existente e inicia uma partida nova no bônus. A entrada checa novamente o desbloqueio e a disponibilidade da cena.
-- Nome definitivo de integração: `Nivel_4_Campus`, igual no gerador, no progresso e em `Wave_Bonus_Prova_Final.levelScene`. O gerador registra essa cena no Build Settings e conecta catálogo de torres/ondas, Caminho_A, canteiros e base.
-- O campus usa iluminação noturna em qualquer dificuldade. A geometria é funcional, mas reaproveita arte da fazenda: **não conclui o acabamento da #50**.
-- Bônus opcional, fora da transição automática após Outono. Recomeçar reinicia o mesmo nível com saldo normal e preserva o desbloqueio. Voltar ao menu também o preserva.
-- A onda bônus mantém 4 AFD, 4 AFN e 1 Chomsky, pelo caminho A. Invocados e cópias continuam contabilizados pelo WaveSpawner existente.
-- Ranking do bônus separado em `DefesaDaColheita.Ranking.Bonus.v1`, dez entradas, acessível por “Ranking do bônus”. Campanha mantém a chave anterior e seus dados. Ambos usam a fórmula de pontuação existente.
+As ondas e seus dados não foram alterados por esta atualização da interface e do fluxo de seleção.
 
-## Para a equipe continuar
+## Validação manual
 
-- **Fábio:** inimigos novos já entram nas ondas; ajustar `count`, `spawnInterval`, `pauseAfter` nos assets. Preservar `order`, `levelScene` e as referências de prefab/EnemyData. Boss e comportamentos de combate não foram alterados.
-- **Rafael:** acabamento do campus (#50), sprites e sons podem se apoiar no nome `Nivel_4_Campus`; preservar Caminho_A, base, canteiros e GameBootstrap. O gerador mantém cenas já existentes, sem sobrescrever trabalho manual.
-- **João:** seleção completa de fases e barra/diálogo do boss (#77) continuam separados desta entrega. A seleção futura pode consultar `CampaignProgress.BonusUnlocked`.
-
-## Validação e teste antes do merge/build
-
-Compilação de Assembly-CSharp e Assembly-CSharp-Editor sem erros (quatro avisos existentes de GroundFx, NightLights e PixelPerfectCamera). Checagem dos dez assets de ondas aprovada: GUIDs e fileIDs resolvem, EnemyData coincide com o prefab, contagens positivas, caminhos válidos, ordem sem repetição e presença dos inimigos previstos.
-
-Teste em Play ainda pendente; a última tentativa de abrir Unity nesta máquina falhou por licença indisponível. Não fechar #32 como balanceamento final nem considerar #46 validada só pela compilação.
-
-1. Abrir o Unity e aguardar a geração automática. Se necessário usar **Defesa da Colheita > Gerar niveis** (sem apagar/refazer). Confirmar Menu + quatro níveis no Build Settings. A atualização de catálogos também roda quando somente o campus estava faltando.
-2. Jogar três ondas por estação, manual e auto-start, incluindo pausa/velocidade; conferir raposa no Verão e pato/gafanhoto nos dois caminhos do Outono.
-3. Com progresso limpo, bônus bloqueado. Derrota não deve desbloquear. Vencer Outono deve mostrar vitória; ao voltar ao menu, bônus disponível. Fechar/reabrir o jogo deve manter esse estado.
-4. Entrar no bônus, conferir AFD, divisão do AFN e boss com três fases; a vitória só ocorre quando todos terminarem. Boss na base mantém dano 999 (derrota).
-5. Testar Recomeçar e retorno ao menu na vitória e derrota do bônus; conferir que os rankings ficam separados e o desbloqueio não é perdido.
-6. Fazer os ajustes de economia/dificuldade com jogo real antes da build final Windows e do teste em outra máquina (#46).
+1. Com progresso limpo, confirmar que o bônus está bloqueado e mostra `0/3`.
+2. Vencer cada uma das três fases em qualquer ordem e dificuldade. Conferir o contador após cada vitória e o desbloqueio após a terceira.
+3. Reiniciar o jogo e confirmar que o bônus continua desbloqueado.
+4. Iniciar uma fase diretamente em Verão ou Outono e confirmar que o resultado não entra no ranking da campanha.
+5. Iniciar em Primavera, concluir as três fases e confirmar que o resultado aparece no ranking da campanha.
+6. Conferir que os resultados do bônus aparecem no ranking próprio.

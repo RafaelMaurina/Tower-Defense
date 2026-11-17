@@ -21,12 +21,14 @@ public struct GameResult
     [NonSerialized] public Sprite topDamageSprite;
     public GameDifficulty difficulty;
     public bool bonus;
+    public bool fullCampaign;
 }
 
 /// Estado, economia e resumo da partida. HUD e sistemas observam os eventos abaixo.
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
+    static string pendingRunStartScene;
     public static int Money => Instance != null ? Instance.money : 0;
     public static int BaseLife => Instance != null ? Instance.baseLife : 0;
     public static int StartingLife => Instance != null ? Instance.startingLife : 0;
@@ -60,6 +62,9 @@ public class GameManager : MonoBehaviour
     float gameSpeed = 1f;
     bool decisionPaused;
     bool buildPaused;
+    bool campaignRunEligible;
+    int campaignLevelsCompleted;
+    string expectedCampaignScene;
 
     void Awake()
     {
@@ -72,6 +77,8 @@ public class GameManager : MonoBehaviour
         startingLife = baseLife;
         moneyReceived = startingMoney;
         activeLevelScene = SceneManager.GetActiveScene().name;
+        BeginCampaignRun(string.IsNullOrEmpty(pendingRunStartScene) ? activeLevelScene : pendingRunStartScene);
+        pendingRunStartScene = null;
         Enemy.OnDied += HandleEnemyDied;
         Enemy.OnReachedBase += HandleEnemyReachedBase;
         SceneManager.sceneLoaded += HandleSceneLoaded;
@@ -100,6 +107,19 @@ public class GameManager : MonoBehaviour
     }
 
     public static void SetDifficulty(GameDifficulty value) => Difficulty = value;
+
+    public static void PrepareRun(string startScene)
+    {
+        pendingRunStartScene = startScene;
+        if (Instance != null) Instance.BeginCampaignRun(startScene);
+    }
+
+    void BeginCampaignRun(string startScene)
+    {
+        campaignRunEligible = startScene == "Nivel_1_Primavera";
+        campaignLevelsCompleted = 0;
+        expectedCampaignScene = campaignRunEligible ? "Nivel_1_Primavera" : null;
+    }
 
     public void ResetGame()
     {
@@ -142,6 +162,16 @@ public class GameManager : MonoBehaviour
         if (state != GameState.Playing) return;
         string current = SceneManager.GetActiveScene().name;
         CampaignProgress.Complete(current);
+        if (campaignRunEligible)
+        {
+            if (current != expectedCampaignScene) campaignRunEligible = false;
+            else
+            {
+                campaignLevelsCompleted++;
+                expectedCampaignScene = current == "Nivel_1_Primavera" ? "Nivel_2_Verao"
+                    : current == "Nivel_2_Verao" ? "Nivel_3_Outono" : null;
+            }
+        }
         string next = current == "Nivel_1_Primavera" ? "Nivel_2_Verao" : current == "Nivel_2_Verao" ? "Nivel_3_Outono" : null;
         if (next == null) CompleteGame();
         else SceneManager.LoadScene(next);
@@ -259,7 +289,8 @@ public class GameManager : MonoBehaviour
             topDamage = topDamage,
             topDamageSprite = topDamageSprite,
             difficulty = Difficulty,
-            bonus = activeLevelScene == CampaignProgress.BonusScene
+            bonus = activeLevelScene == CampaignProgress.BonusScene,
+            fullCampaign = won && campaignRunEligible && campaignLevelsCompleted == 3
         };
         LocalRanking.Record(result);
         SetState(won ? GameState.Victory : GameState.Defeat);
@@ -294,6 +325,19 @@ public class GameManager : MonoBehaviour
 
     void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (scene.name != "Menu") activeLevelScene = scene.name;
+        if (scene.name == "Menu")
+        {
+            campaignRunEligible = false;
+            campaignLevelsCompleted = 0;
+            expectedCampaignScene = null;
+            return;
+        }
+
+        activeLevelScene = scene.name;
+        if (!string.IsNullOrEmpty(pendingRunStartScene))
+        {
+            BeginCampaignRun(pendingRunStartScene);
+            pendingRunStartScene = null;
+        }
     }
 }
