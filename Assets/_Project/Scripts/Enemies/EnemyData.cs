@@ -45,8 +45,13 @@ public class EnemyData : ScriptableObject
     [Header("Divisao (AFN). splitOnFirstDamage = false desliga")]
     public bool splitOnFirstDamage;     // no primeiro dano que nao mata, nasce uma copia com a mesma vida
     public float splitOffset;           // quanto a copia nasce atras do original, em unidades (0 = no mesmo ponto)
-    [Header("Boss (Chomsky). Sem fases = inimigo comum")]
+    [Header("Boss (Prof Rieder). Sem fases = inimigo comum")]
     public BossPhase[] phases;
+    [Header("Nota 0 (Prof Rieder). zeroInterval = 0 desliga")]
+    public float zeroInterval;              // segundos entre uma nota 0 e outra
+    public int zeroCount = 1;               // quantas torres ele zera por vez
+    public float zeroRecoverTick = 2f;      // a cada quantos segundos cada torre zerada tenta voltar
+    [Range(0f, 1f)] public float zeroRecoverChance = .15f;   // chance de voltar a cada tentativa
     public Sprite[] frames;                 // quadros da animacao de andar de lado, em ordem
     public Sprite[] framesUp;               // andar para cima (de costas); vazio = usa frames
     public Sprite[] framesDown;             // andar para baixo (de frente); vazio = usa frames

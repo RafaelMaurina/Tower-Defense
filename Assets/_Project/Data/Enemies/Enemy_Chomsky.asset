@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4dd8e9a77973a43aa9ab44018426a540, type: 3}
   m_Name: Enemy_Chomsky
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
-  displayName: Chomsky
-  health: 600
+  displayName: Prof Rieder
+  health: 1500
   speed: 0.7
   reward: 100
   baseDamage: 999
@@ -26,6 +26,10 @@ MonoBehaviour:
   zigzagPeriod: 1.6
   splitOnFirstDamage: 0
   splitOffset: 0
+  zeroInterval: 10
+  zeroCount: 1
+  zeroRecoverTick: 2
+  zeroRecoverChance: 0.15
   phases:
   - name: Regular (Tipo 3)
     startsBelowHealth: 1

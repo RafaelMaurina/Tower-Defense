@@ -18,7 +18,11 @@ public class Tower : MonoBehaviour
     /// Avisa quando a torre sobe de nivel (so ao melhorar, nao ao construir). Usado pelo UpgradeFx.
     public static event System.Action<Tower> OnUpgraded;
 
+    /// Todas as torres em campo (o boss Rieder sorteia a que recebe nota 0).
+    public static readonly System.Collections.Generic.List<Tower> All = new System.Collections.Generic.List<Tower>();
+
     float cooldown;
+    GameObject zeroMark;
     readonly System.Collections.Generic.List<Guardian> guardians = new System.Collections.Generic.List<Guardian>();
 
     /// Nivel atual, de 0 a data.levels.Length - 1.
@@ -26,10 +30,30 @@ public class Tower : MonoBehaviour
     public TowerLevel Stats => data.levels[Level];
     public bool CanUpgrade => Level < data.levels.Length - 1;
 
+    /// Torre com nota 0 do Prof Rieder: desligada (nao atira, os guardioes recuam), mas mantem nivel e dinheiro.
+    public bool Zeroed { get; private set; }
+
+    void OnEnable() => All.Add(this);
+    void OnDisable() => All.Remove(this);
+
+    /// Liga ou desliga a nota 0: some/aparece o "0" vermelho em cima da torre.
+    public void SetZeroed(bool value)
+    {
+        if (Zeroed == value) return;
+        Zeroed = value;
+        if (value)
+        {
+            if (zeroMark == null) zeroMark = ZeroMark.Create(transform);
+            zeroMark.SetActive(true);
+        }
+        else if (zeroMark != null) zeroMark.SetActive(false);
+    }
+
     /// O Joao chama ao construir no canteiro.
     public void Init(TowerData towerData)
     {
         data = towerData;
+        SetZeroed(false);
         Level = 0;
         cooldown = 0f;
         ApplySprite();
@@ -83,6 +107,7 @@ public class Tower : MonoBehaviour
 
     void Update()
     {
+        if (Zeroed) return;
         if (data.guardian != null) return;   // quem ataca sao os guardioes
         cooldown -= Time.deltaTime;
         if (cooldown > 0f) return;
