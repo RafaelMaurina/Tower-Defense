@@ -18,15 +18,22 @@ public static class ZeroMark
         sr.sprite = Build();
 
         var towerSr = tower.GetComponent<SpriteRenderer>();
-        float top = towerSr != null ? towerSr.bounds.max.y : tower.position.y + 1f;
-        go.transform.position = new Vector3(tower.position.x, top + .45f, 0f);
-        go.transform.localScale = Vector3.one * 2f;   // cada pixel do 0 fica com 2 pixels do jogo
+        Place(go, tower);
         if (towerSr != null)
         {
             sr.sortingLayerID = towerSr.sortingLayerID;
             sr.sortingOrder = towerSr.sortingOrder + 50;   // sempre acima da torre e dos vizinhos
         }
         return go;
+    }
+
+    /// Poe o "0" logo acima do desenho atual da torre, em pixel inteiro. Chamado a cada nota 0,
+    /// pois a torre pode ter melhorado (e crescido) desde a ultima.
+    public static void Place(GameObject mark, Transform tower)
+    {
+        var towerSr = tower.GetComponent<SpriteRenderer>();
+        float top = towerSr != null ? towerSr.bounds.max.y : tower.position.y + 1f;
+        mark.transform.position = PixelSprites.Snap(new Vector3(tower.position.x, top + .45f, 0f));
     }
 
     static Sprite Build()
