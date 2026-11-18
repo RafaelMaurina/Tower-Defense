@@ -44,7 +44,7 @@ public static class Achievements
     const int ExtraMoneyAllowed = 150;       // 12: moedas gastas alem das iniciais
     const int GuardianKillsNeeded = 20;      // 15: inimigos derrotados pelos caes do Tufao numa partida
     const int BeehivesNeeded = 3;            // 16: colmeias no nivel 3 ao mesmo tempo
-    const int ScarecrowsNeeded = 4;          // 17: espantalhos que chegam ao nivel 3 numa partida
+    const int ScarecrowsNeeded = 4;          // 17: espantalhos diferentes que chegam ao nivel 3 numa partida
     const int MaxTowerLevel = 2;             // nivel 3 = indice 2
     const float RatHalfPath = .5f;           // 18
     const float BoarThirdPath = 1f / 3f;     // 19
@@ -58,7 +58,7 @@ public static class Achievements
         "Enemy_Rato", "Enemy_Gafanhoto", "Enemy_Javali", "Enemy_Raposa", "Enemy_Guaxinim",
         "Enemy_Corvo", "Enemy_Morcego", "Enemy_AFD", "Enemy_AFN", "Enemy_Chomsky"   // Chomsky = Prof Rieder
     };
-    const string RatId = "Enemy_Rato", BoarId = "Enemy_Javali";   // Enemy_Rato e o "Pato" em jogo (zigzag)
+    const string RatId = "Enemy_Rato", BoarId = "Enemy_Javali";   // o rato anda em ziguezague
     const string BeehiveId = "Tower_Colmeia", ScarecrowId = "Tower_Espantalho";
 
     public static readonly AchievementInfo[] All =
@@ -83,7 +83,7 @@ public static class Achievements
         New(ReiDoMel, "Rei do mel", "Tenha 3 colmeias no nível 3 ao mesmo tempo.", AchievementGroup.Torres),
         New(ChuvaDeMilho, "Chuva de milho", "Tenha 4 espantalhos no nível 3 numa partida.", AchievementGroup.Torres),
 
-        New(AndaRato, "Anda, rato", "Derrote um pato antes de ele andar metade do caminho.", AchievementGroup.Inimigos),
+        New(AndaRato, "Anda, rato", "Derrote um rato antes de ele andar metade do caminho.", AchievementGroup.Inimigos),
         New(CacadorDeJavalis, "Caçador de javalis", "Derrote um javali antes de ele chegar a um terço do caminho.", AchievementGroup.Inimigos),
         New(Bestiario, "Bestiário completo", "Veja todos os tipos de inimigo.", AchievementGroup.Inimigos),
     };
@@ -92,7 +92,8 @@ public static class Achievements
     static AchievementSave save;
 
     // contadores do nivel atual
-    static int levelSpent, guardianKills, scarecrowsMaxed;
+    static int levelSpent, guardianKills;
+    static readonly HashSet<Tower> scarecrowsMaxed = new HashSet<Tower>();   // cada torre conta uma vez
     static bool earlyWave, barnHit, animalClicked;
 
     static AchievementInfo New(string id, string name, string description, AchievementGroup group) =>
@@ -162,7 +163,7 @@ public static class Achievements
     {
         levelSpent = 0;
         guardianKills = 0;
-        scarecrowsMaxed = 0;
+        scarecrowsMaxed.Clear();
         earlyWave = false;
         barnHit = false;
         animalClicked = false;
@@ -170,7 +171,7 @@ public static class Achievements
 
     public static void NoteSpent(int amount) => levelSpent += Mathf.Max(0, amount);
 
-    /// 5: chamou a proxima onda com o automatico ligado, antes de acabar a espera entre ondas.
+    /// 5: chamou a proxima onda antes de acabar a espera entre ondas (pauseAfter).
     public static void NoteEarlyWave() => earlyWave = true;
 
     /// Nivel vencido (GameManager.CompleteLevel, vale para os 3 da campanha e para a fase bonus).
@@ -256,7 +257,7 @@ public static class Achievements
                 if (other != null && other.data == tower.data && other.Level >= MaxTowerLevel) maxed++;
             if (maxed >= BeehivesNeeded) Unlock(ReiDoMel);
         }
-        else if (tower.data.name == ScarecrowId && ++scarecrowsMaxed >= ScarecrowsNeeded)
+        else if (tower.data.name == ScarecrowId && scarecrowsMaxed.Add(tower) && scarecrowsMaxed.Count >= ScarecrowsNeeded)
             Unlock(ChuvaDeMilho);
     }
 

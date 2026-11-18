@@ -14,8 +14,11 @@ public static class AchievementsScreen
     static readonly Color32 Gold = new Color32(255, 222, 126, 255);
     static readonly Color32 Dim = new Color32(150, 138, 124, 255);
 
-    /// Monta a lista dentro de 'parent' (o painel do submenu), na faixa entre o titulo e o botao Voltar.
-    public static void Build(Transform parent)
+    const float BarWidth = 12f, BarSpacing = 6f;
+
+    /// Monta a lista dentro de 'parent' (a area do desenho da moldura do submenu), na parte escura de dentro.
+    /// Devolve a barra de rolagem, para o menu ligar a navegacao do teclado e do controle.
+    public static Scrollbar Build(Transform parent)
     {
         var count = MakeText(parent, "Contagem", $"{Achievements.UnlockedCount} / {Achievements.Total}",
             new Vector2(.30f, .735f), new Vector2(.70f, .79f), 30, Gold, TextAnchor.MiddleCenter);
@@ -24,7 +27,9 @@ public static class AchievementsScreen
         var scrollObject = new GameObject("Lista de conquistas", typeof(RectTransform), typeof(ScrollRect));
         scrollObject.transform.SetParent(parent, false);
         var scrollRect = scrollObject.GetComponent<RectTransform>();
-        scrollRect.anchorMin = new Vector2(.12f, .17f); scrollRect.anchorMax = new Vector2(.88f, .72f);
+        // parte escura da moldura (submenu_molde, 1024x768): x de .115 a .881, y de .219 a .781;
+        // com folga para as folhas dos cantos
+        scrollRect.anchorMin = new Vector2(.15f, .235f); scrollRect.anchorMax = new Vector2(.85f, .72f);
         scrollRect.offsetMin = Vector2.zero; scrollRect.offsetMax = Vector2.zero;
 
         // area visivel: corta o que passa e recebe a roda do mouse
@@ -32,7 +37,7 @@ public static class AchievementsScreen
         viewport.transform.SetParent(scrollObject.transform, false);
         var viewportRect = viewport.GetComponent<RectTransform>();
         viewportRect.anchorMin = Vector2.zero; viewportRect.anchorMax = Vector2.one;
-        viewportRect.offsetMin = Vector2.zero; viewportRect.offsetMax = Vector2.zero;
+        viewportRect.offsetMin = Vector2.zero; viewportRect.offsetMax = new Vector2(-(BarWidth + BarSpacing), 0f);
         var viewportImage = viewport.GetComponent<Image>();
         viewportImage.color = new Color(0f, 0f, 0f, 0f);
         viewportImage.raycastTarget = true;
@@ -57,6 +62,8 @@ public static class AchievementsScreen
         scroll.vertical = true;
         scroll.movementType = ScrollRect.MovementType.Clamped;
         scroll.scrollSensitivity = 45f;
+        scroll.verticalScrollbar = MakeScrollbar(scrollObject.transform);
+        scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.Permanent;
 
         AchievementGroup? current = null;
         foreach (AchievementInfo info in Achievements.All)
@@ -68,6 +75,44 @@ public static class AchievementsScreen
             }
             AddRow(content.transform, info);
         }
+        return scroll.verticalScrollbar;
+    }
+
+    // barra simples, sem arte: trilho escuro e alca creme; com foco a alca fica dourada e as setas rolam
+    static Scrollbar MakeScrollbar(Transform parent)
+    {
+        var bar = new GameObject("Barra de rolagem", typeof(RectTransform), typeof(Image), typeof(Scrollbar));
+        bar.transform.SetParent(parent, false);
+        var barRect = bar.GetComponent<RectTransform>();
+        barRect.anchorMin = new Vector2(1f, 0f); barRect.anchorMax = Vector2.one;
+        barRect.pivot = new Vector2(1f, .5f);
+        barRect.offsetMin = new Vector2(-BarWidth, 0f); barRect.offsetMax = Vector2.zero;
+        bar.GetComponent<Image>().color = new Color32(30, 20, 14, 140);
+
+        var area = new GameObject("Area da alca", typeof(RectTransform));
+        area.transform.SetParent(bar.transform, false);
+        var areaRect = area.GetComponent<RectTransform>();
+        areaRect.anchorMin = Vector2.zero; areaRect.anchorMax = Vector2.one;
+        areaRect.offsetMin = Vector2.zero; areaRect.offsetMax = Vector2.zero;
+
+        var handle = new GameObject("Alca", typeof(RectTransform), typeof(Image));
+        handle.transform.SetParent(area.transform, false);
+        var handleRect = handle.GetComponent<RectTransform>();
+        handleRect.offsetMin = Vector2.zero; handleRect.offsetMax = Vector2.zero;
+        var handleImage = handle.GetComponent<Image>();
+        handleImage.color = Color.white;
+
+        var scrollbar = bar.GetComponent<Scrollbar>();
+        scrollbar.handleRect = handleRect;
+        scrollbar.targetGraphic = handleImage;
+        scrollbar.direction = Scrollbar.Direction.BottomToTop;
+        var colors = scrollbar.colors;
+        colors.normalColor = new Color32(255, 248, 215, 150);
+        colors.highlightedColor = new Color32(255, 248, 215, 230);
+        colors.selectedColor = Gold;
+        colors.pressedColor = Gold;
+        scrollbar.colors = colors;
+        return scrollbar;
     }
 
     static void AddHeader(Transform parent, string title)

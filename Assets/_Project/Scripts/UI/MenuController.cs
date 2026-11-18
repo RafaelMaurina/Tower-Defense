@@ -69,6 +69,7 @@ public class MenuController : MonoBehaviour
     GameObject mainMenuContent;
     GameObject difficultyMenu;
     GameObject phaseSelectionMenu;
+    Button achievementsMenuButton;
     readonly List<PhaseCard> phaseCards = new List<PhaseCard>();
     PhaseCard selectedPhaseCard;
     string selectedLevel;
@@ -141,6 +142,7 @@ public class MenuController : MonoBehaviour
             Resources.Load<Sprite>("hud/botao_normal"), Resources.Load<Sprite>("hud/botao_selecionado"),
             new Vector2(.03f, .03f), new Vector2(.27f, .15f), ShowAchievements);
         if (achievementsButton.sprite == null) achievementsButton.color = new Color32(111, 68, 41, 245);
+        achievementsMenuButton = achievementsButton.GetComponent<Button>();
         MakeText(achievementsButton.transform, "Conquistas", new Vector2(.04f, .08f), new Vector2(.96f, .92f),
             26, new Color32(255, 246, 213, 255)).raycastTarget = false;
         CreateSpriteButton(mainButtons.transform, "Informações", infoNormalSprite, infoSelectedSprite,
@@ -462,7 +464,7 @@ public class MenuController : MonoBehaviour
         return text;
     }
 
-    GameObject CreateSubmenuPanel(string title, UnityEngine.Events.UnityAction backAction)
+    GameObject CreateSubmenuPanel(string title, UnityEngine.Events.UnityAction backAction, out Transform artArea, out Button back)
     {
         if (mainMenuContent != null) mainMenuContent.SetActive(false);
         var panelObject = new GameObject("Submenu " + title, typeof(RectTransform), typeof(Image));
@@ -476,24 +478,33 @@ public class MenuController : MonoBehaviour
         panelImage.preserveAspect = true;
         panelImage.raycastTarget = true;
 
-        var heading = MakeText(panelObject.transform, title.ToUpperInvariant(), new Vector2(.30f, .79f), new Vector2(.70f, .875f), 48,
+        // Com preserveAspect o desenho fica menor que o painel em quase toda proporcao de tela; o
+        // conteudo vai num filho do tamanho do desenho, entao as ancoras abaixo sao em coordenadas da arte.
+        var art = new GameObject("Area da moldura", typeof(RectTransform), typeof(AspectRatioFitter));
+        art.transform.SetParent(panelObject.transform, false);
+        var fitter = art.GetComponent<AspectRatioFitter>();
+        fitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+        fitter.aspectRatio = submenuPanelSprite != null ? submenuPanelSprite.rect.width / submenuPanelSprite.rect.height : 4f / 3f;
+        artArea = art.transform;
+
+        var heading = MakeText(art.transform, title.ToUpperInvariant(), new Vector2(.30f, .79f), new Vector2(.70f, .875f), 48,
             new Color32(255, 248, 215, 255));
         InfoPanel.StyleSubmenuHeading(heading);
 
         if (backButtonSprite != null)
         {
-            CreateSpriteButton(panelObject.transform, "Voltar", backButtonSprite, backButtonSelectedSprite,
-                new Vector2(.67f, .055f), new Vector2(.88f, .15f), backAction);
+            back = CreateSpriteButton(art.transform, "Voltar", backButtonSprite, backButtonSelectedSprite,
+                new Vector2(.67f, .055f), new Vector2(.88f, .15f), backAction).GetComponent<Button>();
         }
         else
         {
-            var backText = MakeText(panelObject.transform, "VOLTAR", new Vector2(.67f, .055f), new Vector2(.88f, .15f), 24,
+            var backText = MakeText(art.transform, "VOLTAR", new Vector2(.67f, .055f), new Vector2(.88f, .15f), 24,
                 new Color32(255, 237, 190, 255));
             backText.raycastTarget = true;
-            var backButton = backText.gameObject.AddComponent<Button>();
-            backButton.targetGraphic = backText;
-            backButton.transition = Selectable.Transition.None;
-            backButton.onClick.AddListener(backAction);
+            back = backText.gameObject.AddComponent<Button>();
+            back.targetGraphic = backText;
+            back.transition = Selectable.Transition.None;
+            back.onClick.AddListener(backAction);
         }
         return panelObject;
     }
@@ -647,8 +658,19 @@ public class MenuController : MonoBehaviour
         {
             Destroy(panel);
             if (mainMenuContent != null) mainMenuContent.SetActive(true);
-        });
-        AchievementsScreen.Build(panel.transform);
+            if (EventSystem.current != null && achievementsMenuButton != null)
+                EventSystem.current.SetSelectedGameObject(achievementsMenuButton.gameObject);
+        }, out Transform artArea, out Button back);
+        Scrollbar scrollbar = AchievementsScreen.Build(artArea);
+
+        // Voltar sobe para a barra; na barra cima e baixo rolam a lista e os lados voltam ao Voltar
+        back.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnUp = scrollbar };
+        scrollbar.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnLeft = back, selectOnRight = back };
+        if (EventSystem.current != null)
+        {
+            back.GetComponent<MenuButtonVisualState>()?.SuppressInitialFeedback(true, false);
+            EventSystem.current.SetSelectedGameObject(back.gameObject);
+        }
     }
 
     void ShowRanking() => ShowRankingFor(false);
