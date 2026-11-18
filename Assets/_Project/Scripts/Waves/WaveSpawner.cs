@@ -10,6 +10,7 @@ public class WaveSpawner : MonoBehaviour
     bool waveActive;
     bool startRequested;
     bool autoStart;
+    float pauseEndsAt;   // fim da espera (pauseAfter) da onda anterior, em Time.time
     /// Avisa quando um inimigo entra no mapa (so os da onda; os que nascem de outros nao passam por aqui).
     public static event System.Action<Enemy> OnEnemySpawned;
     public int CurrentWave { get; private set; }
@@ -34,7 +35,11 @@ public class WaveSpawner : MonoBehaviour
 
     public void StartNextWave()
     {
-        if (CanStartNextWave) startRequested = true;
+        if (!CanStartNextWave) return;
+        // Chamar pelo botao antes de acabar a espera (pauseAfter) da onda anterior e "antes da hora",
+        // com o automatico ligado ou nao.
+        if (CurrentWave > 0 && Time.time < pauseEndsAt) Achievements.NoteEarlyWave();
+        startRequested = true;
     }
 
     public void SetAutoStart(bool enabled) => autoStart = enabled;
@@ -126,6 +131,7 @@ public class WaveSpawner : MonoBehaviour
             while (liveEnemies > 0 && (GameManager.State == GameState.Playing || GameManager.State == GameState.Paused)) yield return null;
             while (GameManager.State == GameState.Paused || Time.timeScale == 0f) yield return null;
             if (GameManager.State != GameState.Playing) yield break;
+            pauseEndsAt = Time.time + (wave != null ? wave.pauseAfter : 0f);
             waveActive = false;
         }
 

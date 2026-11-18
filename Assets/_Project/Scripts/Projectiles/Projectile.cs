@@ -3,7 +3,7 @@ using UnityEngine;
 
 /// Projetil com mira preditiva: a torre calcula onde o inimigo vai estar e o
 /// projetil voa em linha reta ate la. Nao persegue o alvo; por isso um inimigo
-/// que muda de rumo (o pato) escapa.
+/// que muda de rumo (o rato) escapa.
 ///
 /// Com splashRadius > 0 vira projetil de area (canhao): explode ao tocar um
 /// inimigo ou ao chegar no ponto de mira, e machuca todos no raio.

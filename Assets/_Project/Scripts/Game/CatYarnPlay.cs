@@ -129,7 +129,9 @@ public class CatYarnPlay : MonoBehaviour
     /// Clique no gato: se esta parado, se agacha e pula no novelo.
     public void Startle()
     {
-        if (state == State.Sit || state == State.Pat || state == State.Watch) StartCrouch();
+        if (state != State.Sit && state != State.Pat && state != State.Watch) return;
+        StartCrouch();
+        Achievements.NoteInteraction("gato_pula");
     }
 
     void StartSit(float time)

@@ -25,6 +25,9 @@ public class Enemy : MonoBehaviour, IDamageable
     /// Distancia percorrida no caminho. Empurrao diminui, salto soma.
     public float Distance { get; set; }
 
+    /// Comprimento do caminho deste inimigo (Distance / PathLength = quanto ja andou, de 0 a 1).
+    public float PathLength => path != null ? path.Length : 0f;
+
     public float Health => health;
     public bool IsFlying => data != null && data.flying;
     public bool Flying => IsFlying;
@@ -116,8 +119,8 @@ public class Enemy : MonoBehaviour, IDamageable
         jumping = false;
     }
 
-    // Desvio lateral do pato: perpendicular ao trecho do caminho, indo e voltando em seno.
-    // Distance nao muda (o pato nao anda mais nem menos), so a posicao desenhada sai do caminho.
+    // Desvio lateral do rato: perpendicular ao trecho do caminho, indo e voltando em seno.
+    // Distance nao muda (o rato nao anda mais nem menos), so a posicao desenhada sai do caminho.
     // Comeca em zero (seno de 0), entao nasce em cima do spawn.
     Vector3 ZigzagOffset()
     {
@@ -191,8 +194,8 @@ public class Enemy : MonoBehaviour, IDamageable
 
     /// Onde o CENTRO do inimigo estara depois de 'seconds', se continuar reto pelo caminho.
     /// E o que o projetil usa para mirar a frente. Usa a velocidade media (com os saltos do
-    /// gafanhoto) e de proposito NAO soma o ziguezague do pato (ZigzagOffset): a mira preditiva
-    /// supoe o inimigo no centro do caminho, e por isso o pato escapa dela.
+    /// gafanhoto) e de proposito NAO soma o ziguezague do rato (ZigzagOffset): a mira preditiva
+    /// supoe o inimigo no centro do caminho, e por isso o rato escapa dela.
     public Vector3 PredictPosition(float seconds) =>
         path.PointAt(Distance + EnemyData.AverageSpeedOf(speed, jumpInterval, jumpDistance, jumpDuration) * seconds)
         + (Vector3)data.centerOffset;

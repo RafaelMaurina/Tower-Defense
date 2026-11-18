@@ -16,4 +16,18 @@ public static class CampaignProgressEditor
         CampaignProgress.ResetCampaignProgressForTesting();
         Debug.Log("Progresso de fases resetado. Volte ao menu ou reabra a seleção de fases para conferir a Bônus bloqueada.");
     }
+
+    [MenuItem("Defesa da Colheita/Testes/Resetar conquistas")]
+    static void ResetAchievements()
+    {
+        if (!EditorUtility.DisplayDialog(
+                "Resetar conquistas",
+                "Isso apaga as 20 conquistas e o progresso guardado (bichos, torres, inimigos). Ranking e fases não mudam.",
+                "Resetar conquistas",
+                "Cancelar"))
+            return;
+
+        Achievements.ResetForTesting();
+        Debug.Log("Conquistas resetadas.");
+    }
 }
