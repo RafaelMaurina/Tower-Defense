@@ -492,6 +492,16 @@ public static class MontarNiveis
                 }
 
         estacaoAtual = nv.estacao;
+        // fazendeiro de chapeu capinando, na grama a esquerda do primeiro bloco da plantacao, no meio da fileira de baixo
+        // (o campus nao tem plantacao, entao nao tem fazendeiro). Pe a 0,42 casa do bloco, em pixel inteiro (1/32).
+        if (nv.plantacao.Length > 0)
+        {
+            Vector2Int bloco = nv.plantacao[0];
+            var fazendeiro = Sprite_(grupo, Est_(nv, "Props/prop_fazendeiro_1"), new Vector3(Mathf.Round((bloco.x - .42f) * 32f) / 32f, bloco.y + .5f, 0f), -1).AddComponent<FarmerHoe>();
+            fazendeiro.frames = new Sprite[7];
+            for (int i = 0; i < 7; i++)
+                fazendeiro.frames[i] = Bicho_("prop_fazendeiro_" + (i + 1));
+        }
         // props de pivo no pe apoiam na base da casa; o poco (2x2, PPU 32) centra entre as duas casas
         Sprite_(grupo, Est_(nv, "Props/prop_poco"), new Vector3(nv.poco.x + 1f, nv.poco.y, 0f), -1);
         // casa da fazenda no alto do cenario, maior que o celeiro (PPU 8: uns 7,3 x 5,4 casas); encostada no canto, o que
