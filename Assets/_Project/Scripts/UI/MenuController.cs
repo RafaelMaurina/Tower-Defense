@@ -361,6 +361,12 @@ public class MenuController : MonoBehaviour
         if (selectedPhaseCard == null || loading) return;
         selectedLevel = selectedPhaseCard.scene;
         if (selectedLevel == CampaignProgress.BonusScene && !CampaignProgress.BonusUnlocked) return;
+        // a fase bonus e sempre no Dificil: nao passa pelo seletor de dificuldade
+        if (selectedLevel == CampaignProgress.BonusScene)
+        {
+            StartLevel(GameDifficulty.Hard);
+            return;
+        }
         if (phaseSelectionMenu != null) phaseSelectionMenu.SetActive(false);
         OpenDifficultyMenu();
     }
@@ -603,6 +609,11 @@ public class MenuController : MonoBehaviour
             return;
         }
 
+        StartLevel(selectedDifficulty);
+    }
+
+    void StartLevel(GameDifficulty selectedDifficulty)
+    {
         if (!Application.CanStreamedLevelBeLoaded(selectedLevel))
         {
             CloseDifficultyMenu();
