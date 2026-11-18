@@ -1,36 +1,45 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-/// Menu de configuracoes: volume da musica, volume dos efeitos, mudo, resolucao e modo de tela.
-/// Abre por cima de qualquer tela (menu principal ou pausa do jogo) num Canvas proprio.
-/// Os valores ficam em GameSettings (PlayerPrefs) e valem na hora, sem botao de aplicar.
+/// Painel unico de configuracoes, usado tanto pelo menu principal quanto pela pausa.
+/// Audio e pre-visualizado; video so e aplicado ao confirmar em Aplicar.
 public class SettingsPanel : MonoBehaviour
 {
+    const float VideoConfirmSeconds = 15f;
     static SettingsPanel instance;
     static int closedFrame = -1;
 
-    /// Aberto agora, ou fechado neste mesmo quadro (o Esc que fecha nao deve tambem pausar o jogo).
+    static readonly Color32 Wood = new Color32(111, 55, 25, 255);
+    static readonly Color32 DarkWood = new Color32(56, 27, 13, 255);
+    static readonly Color32 Cream = new Color32(255, 239, 196, 255);
+    static readonly Color32 Gold = new Color32(238, 166, 48, 255);
+
+    Slider musicSlider, effectsSlider;
+    TMP_Text musicValue, effectsValue, resolutionCaption;
+    Image musicIcon, effectsIcon, fullscreenImage, windowedImage, applyImage;
+    Button applyButton;
+    Sprite fullscreenNormal, fullscreenSelected, windowedNormal, windowedSelected;
+    TMP_Dropdown resolutionDropdown;
+    List<Vector2Int> resolutions;
+    GameSettings.Snapshot committed;
+    Vector2Int pendingResolution;
+    bool pendingFullscreen;
+    AudioSource testSource;
+    AudioClip testClip, hoverClip, clickClip;
+    RectTransform backRect;
+    System.Action onClosed;
+    CanvasGroup blocked;
+    GameObject confirmation;
+    TMP_Text confirmationTimer, confirmationSeconds;
+    float confirmationRemaining;
+    bool closed;
+
     public static bool IsOpenOrJustClosed => instance != null || closedFrame == Time.frameCount;
 
-    static readonly Color Wood = new Color32(111, 68, 41, 255), Cream = new Color32(255, 239, 196, 255),
-        TrackColor = new Color32(49, 25, 12, 255), FillColor = new Color32(232, 168, 56, 255),
-        HandleColor = new Color32(255, 248, 215, 255);
-
-    Slider musicSlider, sfxSlider;
-    Text musicValue, sfxValue, muteLabel, resolutionLabel, modeLabel;
-    List<Vector2Int> resolutions;
-    int resolutionIndex;
-    AudioSource testSource;
-    AudioClip testClip;
-    System.Action onClosed;
-    CanvasGroup blocked;       // tela de baixo (pausa/menu): fica sem clique nem teclado enquanto o painel esta aberto
-    bool building, closed;
-    int altEnterFrame = -10;
-
-    /// `below` e a tela que fica por baixo (pausa ou menu principal); ela e bloqueada ate o painel fechar.
     public static void Open(GameObject below = null, System.Action onClosed = null)
     {
         if (instance != null) return;
@@ -39,7 +48,6 @@ public class SettingsPanel : MonoBehaviour
         panel.onClosed = onClosed;
         if (below != null)
         {
-            // sem "??": em Object da Unity ele nao enxerga o nulo falso e nao chamaria o AddComponent
             panel.blocked = below.GetComponent<CanvasGroup>();
             if (panel.blocked == null) panel.blocked = below.AddComponent<CanvasGroup>();
             panel.blocked.interactable = false;
@@ -57,11 +65,10 @@ public class SettingsPanel : MonoBehaviour
         closed = true;
         closedFrame = Time.frameCount;
         instance = null;
-        GameSettings.Persist();
+        GameSettings.Restore(committed);
         if (blocked != null) { blocked.interactable = true; blocked.blocksRaycasts = true; }
         if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
         onClosed?.Invoke();
-        // some da tela na hora, mas o objeto fica um instante para o som de teste do Voltar nao cortar
         GetComponent<Canvas>().enabled = false;
         Destroy(gameObject, testClip != null ? testClip.length + .1f : 0f);
     }
@@ -71,24 +78,34 @@ public class SettingsPanel : MonoBehaviour
     void Update()
     {
         if (closed) return;
-        Keyboard k = Keyboard.current;
-        if (k == null) return;
-        if (k.escapeKey.wasPressedThisFrame) { CloseSelf(); return; }
-        // Alt+Enter troca o modo de tela por fora do GameSettings: le o modo real dois quadros depois
-        if ((k.altKey.isPressed && (k.enterKey.wasPressedThisFrame || k.numpadEnterKey.wasPressedThisFrame))) altEnterFrame = Time.frameCount;
-        if (altEnterFrame > 0 && Time.frameCount >= altEnterFrame + 2)
+        var keyboard = Keyboard.current;
+        if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
         {
-            altEnterFrame = -10;
-            GameSettings.SyncFullScreen();
-            Refresh();
+            if (confirmation != null) RevertVideo();
+            else CloseSelf();
+            return;
+        }
+
+        if (confirmation != null)
+        {
+            confirmationRemaining -= Time.unscaledDeltaTime;
+            if (confirmationTimer != null)
+                confirmationTimer.text = "A tela será revertida em";
+            if (confirmationSeconds != null)
+                confirmationSeconds.text = $"{Mathf.CeilToInt(Mathf.Max(0f, confirmationRemaining))} s";
+            if (confirmationRemaining <= 0f) RevertVideo();
         }
     }
 
-    // ------------------------------------------------------------------ montagem
-
     void Build()
     {
-        building = true;
+        committed = GameSettings.Capture();
+        pendingResolution = GameSettings.CurrentResolution();
+        pendingFullscreen = GameSettings.FullScreen;
+        resolutions = GameSettings.AvailableResolutions();
+        if (!resolutions.Contains(pendingResolution)) resolutions.Add(pendingResolution);
+        resolutions.Sort((a, b) => a.x != b.x ? a.x.CompareTo(b.x) : a.y.CompareTo(b.y));
+
         var canvas = GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 500;
@@ -96,150 +113,514 @@ public class SettingsPanel : MonoBehaviour
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920, 1080);
         scaler.matchWidthOrHeight = .5f;
+
         if (EventSystem.current == null)
             new GameObject("EventSystem", typeof(EventSystem), typeof(UnityEngine.InputSystem.UI.InputSystemUIInputModule));
 
         testSource = gameObject.AddComponent<AudioSource>();
-        testSource.playOnAwake = false; testSource.spatialBlend = 0f; testSource.ignoreListenerPause = true;
+        testSource.playOnAwake = false;
+        testSource.spatialBlend = 0f;
+        testSource.ignoreListenerPause = true;
         testClip = MakeTone();
+        hoverClip = MakeTone(760f, 1120f, .11f, .22f);
+        clickClip = MakeTone(260f, 520f, .10f, .30f);
 
         var dim = NewRect(transform, "Fundo", Vector2.zero, Vector2.one).gameObject.AddComponent<Image>();
-        dim.color = new Color(.06f, .035f, .015f, .8f);
+        dim.color = new Color(.035f, .018f, .008f, .78f);
 
-        var frame = NewRect(transform, "Moldura", new Vector2(.25f, .08f), new Vector2(.75f, .92f)).gameObject.AddComponent<Image>();
-        frame.sprite = Resources.Load<Sprite>("hud/moldura_pausa");
-        frame.color = frame.sprite != null ? Color.white : Wood;
-        frame.preserveAspect = false;
-        frame.raycastTarget = true;
+        // Reutiliza a moldura de madeira do HUD, sem duplicar arte.
+        var frame = NewRect(transform, "Moldura de configurações", new Vector2(.5f, .5f), new Vector2(.5f, .5f));
+        frame.pivot = new Vector2(.5f, .5f);
+        frame.sizeDelta = new Vector2(1080f, 800f);
+        frame.anchoredPosition = Vector2.zero;
+        var frameImage = frame.gameObject.AddComponent<Image>();
+        frameImage.sprite = Resources.Load<Sprite>("SettingsMenu/configuracoes_moldura_principal");
+        if (frameImage.sprite == null) frameImage.sprite = Resources.Load<Sprite>("hud/moldura_pausa");
+        frameImage.color = frameImage.sprite != null ? Color.white : Wood;
+        frameImage.preserveAspect = true;
+        frameImage.raycastTarget = true;
 
-        MakeText(frame.transform, "CONFIGURAÇÕES", .13f, .87f, .86f, .95f, 46);
+        MakeSection(frame, "ÁUDIO", .70f, .77f);
+        musicSlider = AddAudioRow(frame, "MÚSICA", .60f, committed.music, "icone_musica", "icone_musica_mutado", out musicIcon, out musicValue);
+        effectsSlider = AddAudioRow(frame, "EFEITOS", .48f, committed.sfx, "icone_efeitos", "icone_efeitos_mutado", out effectsIcon, out effectsValue);
 
-        musicSlider = AddSliderRow(frame.transform, "Música", .76f, GameSettings.MusicVolume, out musicValue,
-            v => GameSettings.MusicVolume = v);
-        sfxSlider = AddSliderRow(frame.transform, "Efeitos", .60f, GameSettings.SfxVolume, out sfxValue,
-            v => GameSettings.SfxVolume = v);
+        MakeSection(frame, "VÍDEO", .37f, .43f);
+        AddResolutionRow(frame);
+        AddDisplayModeButtons(frame);
+        AddApplyButton();
+        AddBackButton(transform);
 
-        muteLabel = AddButton(frame.transform, "", .30f, .70f, .385f, .475f, ToggleMute);
-
-        resolutions = GameSettings.AvailableResolutions();
-        resolutionIndex = Mathf.Max(0, resolutions.IndexOf(GameSettings.CurrentResolution()));   // a salva entra na lista (AvailableResolutions)
-        AddButton(frame.transform, "<", .13f, .21f, .27f, .355f, () => StepResolution(-1));
-        AddButton(frame.transform, ">", .79f, .87f, .27f, .355f, () => StepResolution(1));
-        resolutionLabel = MakeText(frame.transform, "", .22f, .78f, .27f, .355f, 36);
-        modeLabel = AddButton(frame.transform, "", .30f, .70f, .165f, .25f, ToggleMode);
-
-        AddButton(frame.transform, "Voltar", .36f, .64f, .045f, .14f, CloseSelf);
-
-        building = false;
         Refresh();
         if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(musicSlider.gameObject);
     }
 
-    Slider AddSliderRow(Transform parent, string title, float top, float value, out Text valueText, UnityEngine.Events.UnityAction<float> onChange)
+    Slider AddAudioRow(RectTransform parent, string title, float centerY, float value,
+        string iconName, string mutedIconName, out Image icon, out TMP_Text percentage)
     {
-        MakeText(parent, title, .12f, .40f, top - .02f, top + .045f, 34).alignment = TextAnchor.MiddleLeft;
-        valueText = MakeText(parent, "", .78f, .88f, top - .06f, top + .0f, 32);
+        var iconRect = NewRect(parent, "Ícone " + title, new Vector2(.105f, centerY - .045f), new Vector2(.175f, centerY + .045f));
+        icon = iconRect.gameObject.AddComponent<Image>();
+        icon.preserveAspect = true;
+        icon.raycastTarget = false;
+        var normal = Resources.Load<Sprite>("SettingsMenu/" + iconName);
+        var muted = Resources.Load<Sprite>("SettingsMenu/" + mutedIconName);
 
-        var root = NewRect(parent, "Slider " + title, new Vector2(.14f, top - .105f), new Vector2(.76f, top - .03f));
-        var track = NewRect(root, "Trilho", new Vector2(0, .32f), new Vector2(1, .68f)).gameObject.AddComponent<Image>();
-        track.color = TrackColor;
-        var fillArea = NewRect(root, "Area do preenchimento", new Vector2(0, .32f), new Vector2(1, .68f));
+        MakeText(parent, title, .19f, .36f, centerY - .035f, centerY + .035f, 26, FontStyles.Bold).alignment = TextAlignmentOptions.MidlineLeft;
+        percentage = MakeText(parent, "", .82f, .92f, centerY - .035f, centerY + .035f, 27, FontStyles.Bold);
+
+        var root = NewRect(parent, "Controle " + title, new Vector2(.37f, centerY - .035f), new Vector2(.80f, centerY + .035f));
+        var track = NewRect(root, "Trilho", new Vector2(0, .34f), new Vector2(1, .66f)).gameObject.AddComponent<Image>();
+        track.color = DarkWood;
+        var fillArea = NewRect(root, "Área de preenchimento", new Vector2(.01f, .34f), new Vector2(.99f, .66f));
         var fill = NewRect(fillArea, "Preenchimento", Vector2.zero, Vector2.one).gameObject.AddComponent<Image>();
-        fill.color = FillColor;
-        var handleArea = NewRect(root, "Area do cursor", Vector2.zero, Vector2.one);
+        fill.color = Gold;
+        var handleArea = NewRect(root, "Área do cursor", Vector2.zero, Vector2.one);
         var handle = NewRect(handleArea, "Cursor", Vector2.zero, new Vector2(0, 1)).gameObject.AddComponent<Image>();
-        handle.color = HandleColor;
-        handle.rectTransform.sizeDelta = new Vector2(34, 0);
+        handle.color = Cream;
+        handle.rectTransform.sizeDelta = new Vector2(30, 0);
 
         var slider = root.gameObject.AddComponent<Slider>();
+        AddHover(root.gameObject);
         slider.fillRect = fill.rectTransform;
         slider.handleRect = handle.rectTransform;
         slider.targetGraphic = handle;
         slider.direction = Slider.Direction.LeftToRight;
         slider.wholeNumbers = true;
-        slider.minValue = 0; slider.maxValue = 100;
+        slider.minValue = 0;
+        slider.maxValue = 100;
         slider.SetValueWithoutNotify(Mathf.Round(value * 100f));
-        slider.onValueChanged.AddListener(v => { if (!building) { onChange(v / 100f); Refresh(); } });
-        root.gameObject.AddComponent<SliderRelease>().onRelease = () => { GameSettings.Persist(); PlayTest(); };
+        slider.onValueChanged.AddListener(_ => PreviewAudio());
+        root.gameObject.AddComponent<SliderRelease>().onRelease = PlayTest;
+
+        Image iconRef = icon;
+        TMP_Text percentageRef = percentage;
+        slider.onValueChanged.AddListener(amount => UpdateAudioIndicator(iconRef, normal, muted, percentageRef, amount));
+        UpdateAudioIndicator(icon, normal, muted, percentage, slider.value);
         return slider;
     }
 
-    Text AddButton(Transform parent, string label, float x0, float x1, float y0, float y1, UnityEngine.Events.UnityAction action)
+    static void UpdateAudioIndicator(Image icon, Sprite normal, Sprite muted, TMP_Text percentage, float amount)
     {
-        var rect = NewRect(parent, "Botão " + label, new Vector2(x0, y0), new Vector2(x1, y1));
-        var image = rect.gameObject.AddComponent<Image>();
-        Sprite normal = Resources.Load<Sprite>("hud/botao_normal"), selected = Resources.Load<Sprite>("hud/botao_selecionado");
-        image.sprite = normal; image.color = normal != null ? Color.white : Wood;
-        var button = rect.gameObject.AddComponent<Button>();
-        button.targetGraphic = image;
-        if (normal != null)
-        {
-            button.transition = Selectable.Transition.SpriteSwap;
-            button.spriteState = new SpriteState { highlightedSprite = selected, selectedSprite = selected, pressedSprite = selected };
-        }
-        button.onClick.AddListener(() => { action(); PlayTest(); });   // primeiro a acao: o teste ja usa o mudo novo
-        Text caption = MakeText(rect, label, .06f, .94f, .12f, .88f, 32);
-        caption.resizeTextForBestFit = true; caption.resizeTextMinSize = 20; caption.resizeTextMaxSize = 34;
-        return caption;
+        if (icon != null) icon.sprite = amount <= 0f ? muted : normal;
+        if (percentage != null) percentage.text = Mathf.RoundToInt(amount) + "%";
     }
 
-    // ------------------------------------------------------------------ acoes
-
-    void ToggleMute() { GameSettings.Muted = !GameSettings.Muted; Refresh(); }
-
-    void ToggleMode() { GameSettings.SetFullScreen(!GameSettings.FullScreen); Refresh(); }
-
-    void StepResolution(int step)
+    void PreviewAudio()
     {
-        resolutionIndex = (resolutionIndex + step + resolutions.Count) % resolutions.Count;
-        GameSettings.SetResolution(resolutions[resolutionIndex]);
+        if (musicSlider == null || effectsSlider == null) return;
+        GameSettings.PreviewVolumes(musicSlider.value / 100f, effectsSlider.value / 100f);
+        committed.music = musicSlider.value / 100f;
+        committed.sfx = effectsSlider.value / 100f;
+        GameSettings.Persist();
+        UpdateApplyButton();
+    }
+
+    void AddResolutionRow(RectTransform parent)
+    {
+        var icon = NewRect(parent, "Ícone resolução", new Vector2(.105f, .255f), new Vector2(.175f, .345f)).gameObject.AddComponent<Image>();
+        icon.sprite = Resources.Load<Sprite>("SettingsMenu/icone_resolucao");
+        icon.preserveAspect = true;
+        icon.raycastTarget = false;
+        MakeText(parent, "RESOLUÇÃO", .19f, .48f, .265f, .335f, 25, FontStyles.Bold).alignment = TextAlignmentOptions.MidlineLeft;
+
+        var fieldRect = NewRect(parent, "Seletor de resolução", new Vector2(.53f, .233f), new Vector2(.91f, .35f));
+        var fieldImage = fieldRect.gameObject.AddComponent<Image>();
+        fieldImage.sprite = Resources.Load<Sprite>("SettingsMenu/resolucao_dropdown_fechado");
+        fieldImage.type = Image.Type.Simple;
+        fieldImage.color = fieldImage.sprite != null ? Color.white : Wood;
+        fieldImage.preserveAspect = true;
+
+        resolutionCaption = MakeText(fieldRect, "", .04f, .84f, .12f, .88f, 25, FontStyles.Bold);
+        resolutionDropdown = fieldRect.gameObject.AddComponent<TMP_Dropdown>();
+        resolutionDropdown.targetGraphic = fieldImage;
+        AddHover(fieldRect.gameObject);
+        var soundTrigger = fieldRect.gameObject.AddComponent<EventTrigger>();
+        var soundEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerDown };
+        soundEntry.callback.AddListener(_ => PlayClick());
+        soundTrigger.triggers.Add(soundEntry);
+        resolutionDropdown.captionText = resolutionCaption;
+        resolutionDropdown.options.Clear();
+        foreach (var resolution in resolutions)
+            resolutionDropdown.options.Add(new TMP_Dropdown.OptionData($"{resolution.x} x {resolution.y}"));
+        resolutionDropdown.value = Mathf.Max(0, resolutions.IndexOf(pendingResolution));
+        resolutionDropdown.onValueChanged.AddListener(index =>
+        {
+            if (index >= 0 && index < resolutions.Count)
+            {
+                pendingResolution = resolutions[index];
+                resolutionDropdown.RefreshShownValue();
+                UpdateApplyButton();
+                PlayClick();
+            }
+        });
+        BuildResolutionTemplate();
+        resolutionDropdown.RefreshShownValue();
+    }
+
+    void BuildResolutionTemplate()
+    {
+        // O template precisa ficar dentro do objeto TMP_Dropdown. Assim o componente
+        // consegue clonar a lista e posicioná-la corretamente sobre o restante do painel.
+        var templateRect = NewRect(resolutionDropdown.transform, "Lista de resoluções", Vector2.zero, Vector2.one);
+        templateRect.anchorMin = new Vector2(0f, 0f);
+        templateRect.anchorMax = new Vector2(1f, 0f);
+        templateRect.pivot = new Vector2(.5f, 1f);
+        templateRect.anchoredPosition = Vector2.zero;
+        templateRect.sizeDelta = new Vector2(0f, 212f);
+        templateRect.gameObject.SetActive(false);
+        var panelImage = templateRect.gameObject.AddComponent<Image>();
+        panelImage.sprite = Resources.Load<Sprite>("SettingsMenu/resolucao_dropdown_aberto");
+        panelImage.type = Image.Type.Sliced;
+        panelImage.pixelsPerUnitMultiplier = 10f;
+        panelImage.color = panelImage.sprite != null ? Color.white : DarkWood;
+        var scroll = templateRect.gameObject.AddComponent<ScrollRect>();
+        scroll.horizontal = false;
+        scroll.vertical = true;
+        scroll.scrollSensitivity = 32f;
+
+        var viewportRect = NewRect(templateRect, "Viewport", new Vector2(.035f, .035f), new Vector2(.90f, .965f));
+        var viewportImage = viewportRect.gameObject.AddComponent<Image>();
+        viewportImage.color = Color.white;
+        var mask = viewportRect.gameObject.AddComponent<Mask>();
+        mask.showMaskGraphic = false;
+        scroll.viewport = viewportRect;
+
+        var scrollbarRect = NewRect(templateRect, "Barra de rolagem", new Vector2(.92f, .045f), new Vector2(.97f, .955f));
+        var scrollbarImage = scrollbarRect.gameObject.AddComponent<Image>();
+        scrollbarImage.color = DarkWood;
+        var scrollbar = scrollbarRect.gameObject.AddComponent<Scrollbar>();
+        scrollbar.direction = Scrollbar.Direction.BottomToTop;
+        var handle = NewRect(scrollbarRect, "Alça", Vector2.zero, Vector2.one).gameObject.AddComponent<Image>();
+        handle.color = Gold;
+        scrollbar.handleRect = handle.rectTransform;
+        scrollbar.targetGraphic = handle;
+        scrollbar.numberOfSteps = 0;
+        scroll.verticalScrollbar = scrollbar;
+        scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
+        scroll.verticalScrollbarSpacing = -2f;
+
+        var content = NewRect(viewportRect, "Content", new Vector2(0, 1), new Vector2(1, 1));
+        content.pivot = new Vector2(.5f, 1f);
+        // TMP_Dropdown calcula a altura do conteúdo e posiciona as opções.
+        // O item precisa ter altura real antes da primeira abertura da lista.
+        content.sizeDelta = new Vector2(0f, 46f);
+        scroll.content = content;
+
+        var item = NewRect(content, "Opção", new Vector2(0f, .5f), new Vector2(1f, .5f));
+        item.sizeDelta = new Vector2(0f, 46f);
+        var itemBackground = item.gameObject.AddComponent<Image>();
+        itemBackground.color = new Color32(92, 42, 18, 255);
+        itemBackground.type = Image.Type.Sliced;
+        itemBackground.pixelsPerUnitMultiplier = 10f;
+        var toggle = item.gameObject.AddComponent<Toggle>();
+        toggle.targetGraphic = itemBackground;
+        toggle.transition = Selectable.Transition.None;
+        var label = MakeText(item, "Option", .08f, .78f, .10f, .90f, 23, FontStyles.Bold);
+        label.alignment = TextAlignmentOptions.MidlineLeft;
+        var check = MakeText(item, "✓", .80f, .96f, .10f, .90f, 26, FontStyles.Bold);
+        check.color = Gold;
+        toggle.graphic = check;
+        toggle.isOn = false;
+        item.gameObject.AddComponent<SettingsDropdownOptionVisual>();
+
+        resolutionDropdown.template = templateRect;
+        resolutionDropdown.itemText = label;
+    }
+
+    void AddDisplayModeButtons(RectTransform parent)
+    {
+        MakeText(parent, "MODO DE EXIBIÇÃO", .19f, .49f, .125f, .19f, 23, FontStyles.Bold)
+            .alignment = TextAlignmentOptions.MidlineLeft;
+
+        var modeIcon = NewRect(parent, "Ícone modo de exibição", new Vector2(.105f, .113f), new Vector2(.175f, .203f)).gameObject.AddComponent<Image>();
+        modeIcon.sprite = Resources.Load<Sprite>("SettingsMenu/icone_tela_cheia");
+        modeIcon.preserveAspect = true;
+        modeIcon.raycastTarget = false;
+
+        fullscreenNormal = Resources.Load<Sprite>("SettingsMenu/modo_tela_cheia_normal");
+        fullscreenSelected = Resources.Load<Sprite>("SettingsMenu/modo_tela_cheia_selecionado");
+        windowedNormal = Resources.Load<Sprite>("SettingsMenu/modo_janela_normal");
+        windowedSelected = Resources.Load<Sprite>("SettingsMenu/modo_janela_selecionado");
+
+        var fullscreenButton = AddDisplayModeButton(parent, "Modo tela cheia", .53f, .715f, fullscreenNormal);
+        fullscreenImage = fullscreenButton.targetGraphic as Image;
+        fullscreenButton.onClick.AddListener(() => SetPendingDisplayMode(true));
+
+        var windowedButton = AddDisplayModeButton(parent, "Modo janela", .725f, .91f, windowedNormal);
+        windowedImage = windowedButton.targetGraphic as Image;
+        windowedButton.onClick.AddListener(() => SetPendingDisplayMode(false));
+    }
+
+    Button AddDisplayModeButton(RectTransform parent, string name, float xMin, float xMax, Sprite normal)
+    {
+        var rect = NewRect(parent, name, new Vector2(xMin, .095f), new Vector2(xMax, .221f));
+        var image = rect.gameObject.AddComponent<Image>();
+        image.sprite = normal;
+        image.preserveAspect = true;
+        var button = rect.gameObject.AddComponent<Button>();
+        button.targetGraphic = image;
+        button.transition = Selectable.Transition.None;
+        AddHover(rect.gameObject);
+        return button;
+    }
+
+    void SetPendingDisplayMode(bool useFullscreen)
+    {
+        pendingFullscreen = useFullscreen;
         Refresh();
+        PlayClick();
+    }
+
+    void AddApplyButton()
+    {
+        var rect = NewRect(transform, "Aplicar", new Vector2(.30f, .025f), new Vector2(.49f, .115f));
+        applyImage = rect.gameObject.AddComponent<Image>();
+        var normal = Resources.Load<Sprite>("SettingsMenu/botao_aplicar_normal");
+        var selected = Resources.Load<Sprite>("SettingsMenu/botao_aplicar_selecionado");
+        applyImage.sprite = normal;
+        applyImage.preserveAspect = true;
+        applyImage.type = Image.Type.Simple;
+        applyImage.raycastTarget = true;
+        var button = rect.gameObject.AddComponent<Button>();
+        button.targetGraphic = applyImage;
+        AddHover(rect.gameObject);
+        button.transition = Selectable.Transition.SpriteSwap;
+        button.spriteState = new SpriteState { highlightedSprite = selected, selectedSprite = selected, pressedSprite = selected };
+        button.onClick.AddListener(Apply);
+        applyButton = button;
+    }
+
+    void AddBackButton(Transform canvas)
+    {
+        var rect = NewRect(canvas, "Voltar", new Vector2(.405f, .025f), new Vector2(.595f, .115f));
+        backRect = rect;
+        var image = rect.gameObject.AddComponent<Image>();
+        Sprite normal = Resources.Load<Sprite>("hud/voltar_normal");
+        Sprite selected = Resources.Load<Sprite>("hud/voltar_selecionado");
+        image.sprite = normal;
+        image.color = normal != null ? Color.white : Wood;
+        image.preserveAspect = true;
+        var button = rect.gameObject.AddComponent<Button>();
+        button.targetGraphic = image;
+        AddHover(rect.gameObject);
+        button.transition = Selectable.Transition.SpriteSwap;
+        button.spriteState = new SpriteState { highlightedSprite = selected, selectedSprite = selected, pressedSprite = selected };
+        button.onClick.AddListener(() => { PlayClick(); CloseSelf(); });
+    }
+
+    void Apply()
+    {
+        if (!HasPendingChanges()) return;
+        PlayClick();
+        GameSettings.PreviewVolumes(musicSlider.value / 100f, effectsSlider.value / 100f);
+        bool videoChanged = HasPendingVideoChanges();
+        if (videoChanged)
+        {
+            GameSettings.PreviewScreen(pendingResolution, pendingFullscreen);
+            ShowVideoConfirmation();
+        }
+        else
+        {
+            GameSettings.Persist();
+            committed = GameSettings.Capture();
+            Refresh();
+        }
+    }
+
+    void ShowVideoConfirmation()
+    {
+        confirmationRemaining = VideoConfirmSeconds;
+        confirmation = NewRect(transform, "Confirmar vídeo", Vector2.zero, Vector2.one).gameObject;
+        var overlay = confirmation.AddComponent<Image>();
+        overlay.color = new Color(0f, 0f, 0f, .72f);
+        overlay.raycastTarget = true;
+
+        var modal = NewRect(confirmation.transform, "Painel de confirmação", new Vector2(.5f, .5f), new Vector2(.5f, .5f));
+        modal.pivot = new Vector2(.5f, .5f);
+        modal.sizeDelta = new Vector2(1180f, 760f);
+        modal.anchoredPosition = Vector2.zero;
+        var modalImage = modal.gameObject.AddComponent<Image>();
+        modalImage.sprite = Resources.Load<Sprite>("SettingsMenu/Confirmacao/confirmacao_moldura_principal");
+        if (modalImage.sprite == null) modalImage.sprite = Resources.Load<Sprite>("hud/moldura_pausa");
+        modalImage.color = modalImage.sprite != null ? Color.white : Wood;
+        modalImage.preserveAspect = true;
+        modalImage.raycastTarget = true;
+
+        MakeText(modal, "Manter esta configuração?", .10f, .90f, .49f, .66f, 38, FontStyles.Bold);
+        confirmationTimer = MakeText(modal, "A tela será revertida em", .10f, .75f, .36f, .48f, 27, FontStyles.Normal);
+        confirmationTimer.alignment = TextAlignmentOptions.MidlineRight;
+        confirmationSeconds = MakeText(modal, "15 s", .76f, .91f, .36f, .48f, 32, FontStyles.Bold);
+        confirmationSeconds.color = new Color32(255, 196, 30, 255);
+        confirmationSeconds.alignment = TextAlignmentOptions.MidlineLeft;
+
+        var keep = MakeModalButton(modal, "confirmacao_manter_normal", "confirmacao_manter_selecionado",
+            .075f, .475f, .12f, .31f, ConfirmVideo);
+        MakeModalButton(modal, "confirmacao_reverter_normal", "confirmacao_reverter_selecionado",
+            .525f, .925f, .12f, .31f, RevertVideo);
+        if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(keep.gameObject);
+    }
+
+    Button MakeModalButton(RectTransform parent, string normalName, string selectedName,
+        float x0, float x1, float y0, float y1, UnityEngine.Events.UnityAction action)
+    {
+        var rect = NewRect(parent, normalName, new Vector2(x0, y0), new Vector2(x1, y1));
+        var image = rect.gameObject.AddComponent<Image>();
+        var normal = Resources.Load<Sprite>("SettingsMenu/Confirmacao/" + normalName);
+        var selected = Resources.Load<Sprite>("SettingsMenu/Confirmacao/" + selectedName);
+        image.sprite = normal;
+        image.preserveAspect = true;
+        var button = rect.gameObject.AddComponent<Button>();
+        button.targetGraphic = image;
+        AddHover(rect.gameObject);
+        button.transition = Selectable.Transition.SpriteSwap;
+        button.spriteState = new SpriteState { highlightedSprite = selected, selectedSprite = selected, pressedSprite = selected };
+        button.onClick.AddListener(action);
+        return button;
+    }
+
+    void ConfirmVideo()
+    {
+        if (confirmation != null) Destroy(confirmation);
+        confirmation = null;
+        confirmationTimer = null;
+        confirmationSeconds = null;
+        GameSettings.Persist();
+        committed = GameSettings.Capture();
+        pendingResolution = committed.resolution.x > 0 ? committed.resolution : GameSettings.CurrentResolution();
+        pendingFullscreen = committed.fullScreen;
+        Refresh();
+        PlayClick();
+        if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(resolutionDropdown != null ? resolutionDropdown.gameObject : null);
+    }
+
+    void RevertVideo()
+    {
+        PlayClick();
+        if (confirmation != null) Destroy(confirmation);
+        confirmation = null;
+        confirmationTimer = null;
+        confirmationSeconds = null;
+        GameSettings.Restore(committed);
+        pendingResolution = GameSettings.CurrentResolution();
+        pendingFullscreen = committed.fullScreen;
+        musicSlider.SetValueWithoutNotify(Mathf.Round(committed.music * 100f));
+        effectsSlider.SetValueWithoutNotify(Mathf.Round(committed.sfx * 100f));
+        resolutionDropdown.SetValueWithoutNotify(Mathf.Max(0, resolutions.IndexOf(pendingResolution)));
+        resolutionDropdown.RefreshShownValue();
+        Refresh();
+        if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(resolutionDropdown != null ? resolutionDropdown.gameObject : null);
     }
 
     void Refresh()
     {
-        musicValue.text = Mathf.RoundToInt(GameSettings.MusicVolume * 100f) + "%";
-        sfxValue.text = Mathf.RoundToInt(GameSettings.SfxVolume * 100f) + "%";
-        muteLabel.text = GameSettings.Muted ? "Som: mudo" : "Som: ligado";
-        Vector2Int r = resolutions[resolutionIndex];
-        resolutionLabel.text = r.x + " x " + r.y;
-        modeLabel.text = GameSettings.FullScreen ? "Tela cheia" : "Janela";
+        if (resolutionCaption != null)
+        {
+            resolutionCaption.text = $"{pendingResolution.x} x {pendingResolution.y}";
+            resolutionDropdown.SetValueWithoutNotify(Mathf.Max(0, resolutions.IndexOf(pendingResolution)));
+            resolutionDropdown.RefreshShownValue();
+        }
+        if (fullscreenImage != null) fullscreenImage.sprite = pendingFullscreen ? fullscreenSelected : fullscreenNormal;
+        if (windowedImage != null) windowedImage.sprite = pendingFullscreen ? windowedNormal : windowedSelected;
+        UpdateApplyButton();
     }
 
-    /// Som de teste dos efeitos: ao soltar o slider e nos botoes.
+    void UpdateApplyButton()
+    {
+        if (applyButton == null) return;
+        bool showApply = HasPendingVideoChanges();
+        applyButton.gameObject.SetActive(showApply);
+        applyButton.interactable = showApply;
+        if (backRect != null)
+        {
+            backRect.anchorMin = new Vector2(showApply ? .51f : .405f, .025f);
+            backRect.anchorMax = new Vector2(showApply ? .70f : .595f, .115f);
+        }
+        // Deixe o sprite visível mesmo quando não há alterações; o Button continua
+        // desabilitado até existir algo para aplicar.
+        applyImage.color = Color.white;
+    }
+
+    bool HasPendingChanges()
+    {
+        if (musicSlider == null || effectsSlider == null) return false;
+        return Mathf.RoundToInt(musicSlider.value) != Mathf.RoundToInt(committed.music * 100f)
+            || Mathf.RoundToInt(effectsSlider.value) != Mathf.RoundToInt(committed.sfx * 100f)
+            || HasPendingVideoChanges();
+    }
+
+    bool HasPendingVideoChanges()
+    {
+        Vector2Int savedResolution = committed.resolution.x > 0 && committed.resolution.y > 0
+            ? committed.resolution : GameSettings.CurrentResolution();
+        return pendingResolution != savedResolution || pendingFullscreen != committed.fullScreen;
+    }
+
+    void MakeSection(RectTransform parent, string title, float y0, float y1)
+    {
+        MakeText(parent, title, .11f, .89f, y0, y1, 30, FontStyles.Bold);
+        AddSeparator(parent, y0 - .012f);
+    }
+
+    void AddSeparator(RectTransform parent, float y)
+    {
+        var line = NewRect(parent, "Separador", new Vector2(.11f, y), new Vector2(.89f, y + .003f)).gameObject.AddComponent<Image>();
+        line.color = new Color32(188, 112, 48, 210);
+        line.raycastTarget = false;
+    }
+
     void PlayTest()
     {
         if (testSource != null && testClip != null) testSource.PlayOneShot(testClip, GameSettings.Sfx);
     }
 
-    // ------------------------------------------------------------------ utilitarios
+    void PlayClick()
+    {
+        if (testSource != null && clickClip != null) testSource.PlayOneShot(clickClip, GameSettings.Sfx);
+    }
+
+    void AddHover(GameObject target)
+    {
+        target.AddComponent<MenuButtonHoverSound>().Initialize(testSource, hoverClip);
+    }
 
     static RectTransform NewRect(Transform parent, string name, Vector2 min, Vector2 max)
     {
-        var r = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
-        r.SetParent(parent, false);
-        r.anchorMin = min; r.anchorMax = max; r.offsetMin = r.offsetMax = Vector2.zero;
-        return r;
+        var rect = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
+        rect.SetParent(parent, false);
+        rect.anchorMin = min;
+        rect.anchorMax = max;
+        rect.offsetMin = rect.offsetMax = Vector2.zero;
+        return rect;
     }
 
-    static Text MakeText(Transform parent, string value, float x0, float x1, float y0, float y1, int size)
+    static TMP_Text MakeText(Transform parent, string value, float x0, float x1, float y0, float y1, int size, FontStyles style)
     {
-        var t = NewRect(parent, "Texto " + value, new Vector2(x0, y0), new Vector2(x1, y1)).gameObject.AddComponent<Text>();
-        t.text = value; UiTypography.Apply(t, size);
-        t.color = Cream; t.alignment = TextAnchor.MiddleCenter; t.raycastTarget = false;
-        var shadow = t.gameObject.AddComponent<Shadow>();
-        shadow.effectColor = new Color32(49, 25, 12, 240); shadow.effectDistance = new Vector2(1, -2);
-        return t;
+        var rect = NewRect(parent, "Texto " + value, new Vector2(x0, y0), new Vector2(x1, y1));
+        var text = rect.gameObject.AddComponent<TextMeshProUGUI>();
+        text.font = TMP_Settings.defaultFontAsset;
+        text.fontSize = size;
+        text.fontStyle = style;
+        text.text = value;
+        text.color = Cream;
+        text.alignment = TextAlignmentOptions.Center;
+        text.raycastTarget = false;
+        text.enableAutoSizing = true;
+        text.fontSizeMin = Mathf.Max(14, size - 8);
+        text.fontSizeMax = size;
+        var shadow = text.gameObject.AddComponent<Shadow>();
+        shadow.effectColor = new Color32(49, 25, 12, 235);
+        shadow.effectDistance = new Vector2(1f, -2f);
+        return text;
     }
 
-    static AudioClip MakeTone()
+    static AudioClip MakeTone(float from = 520f, float to = 780f, float duration = .12f, float volume = .5f)
     {
-        const int rate = 44100; const float duration = .12f;
+        const int rate = 44100;
         var samples = new float[Mathf.CeilToInt(rate * duration)];
         for (int i = 0; i < samples.Length; i++)
         {
-            float t = i / (float)rate, progress = t / duration;
-            samples[i] = Mathf.Sin(2f * Mathf.PI * Mathf.Lerp(520f, 780f, progress) * t) * Mathf.Sin(Mathf.PI * progress) * .5f;
+            float t = i / (float)rate;
+            float progress = t / duration;
+            samples[i] = Mathf.Sin(2f * Mathf.PI * Mathf.Lerp(from, to, progress) * t) * Mathf.Sin(Mathf.PI * progress) * volume;
         }
         var clip = AudioClip.Create("Teste de volume", samples.Length, 1, rate, false);
         clip.SetData(samples, 0);
@@ -251,4 +632,5 @@ public class SettingsPanel : MonoBehaviour
         public System.Action onRelease;
         public void OnPointerUp(PointerEventData eventData) => onRelease?.Invoke();
     }
+
 }
