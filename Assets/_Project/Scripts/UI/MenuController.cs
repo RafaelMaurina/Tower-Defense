@@ -132,6 +132,12 @@ public class MenuController : MonoBehaviour
         if (bonusRankingButton.sprite == null) bonusRankingButton.color = new Color32(111, 68, 41, 245);
         MakeText(bonusRankingButton.transform, "Ranking do bônus", new Vector2(.04f, .08f), new Vector2(.96f, .92f),
             20, new Color32(255, 246, 213, 255)).raycastTarget = false;
+        var achievementsButton = CreateSpriteButton(mainMenuContent.transform, "Conquistas",
+            Resources.Load<Sprite>("hud/botao_normal"), Resources.Load<Sprite>("hud/botao_selecionado"),
+            new Vector2(.72f, .19f), new Vector2(.96f, .31f), ShowAchievements);
+        if (achievementsButton.sprite == null) achievementsButton.color = new Color32(111, 68, 41, 245);
+        MakeText(achievementsButton.transform, "Conquistas", new Vector2(.04f, .08f), new Vector2(.96f, .92f),
+            26, new Color32(255, 246, 213, 255)).raycastTarget = false;
         CreateSpriteButton(mainMenuContent.transform, "Informações", infoNormalSprite, infoSelectedSprite,
             new Vector2(.30f, .19f), new Vector2(.70f, .31f), ShowInfo);
         CreateSpriteButton(mainMenuContent.transform, "Sair", exitNormalSprite, exitSelectedSprite,
@@ -605,6 +611,18 @@ public class MenuController : MonoBehaviour
             "João (@Joao-Althaus) — Jogabilidade e Interface"
         },
         "https://github.com/RafaelMaurina/Tower-Defense");
+
+    void ShowAchievements()
+    {
+        if (loading) return;
+        GameObject panel = null;
+        panel = CreateSubmenuPanel("Conquistas", () =>
+        {
+            Destroy(panel);
+            if (mainMenuContent != null) mainMenuContent.SetActive(true);
+        });
+        AchievementsScreen.Build(panel.transform);
+    }
 
     void ShowRanking() => ShowRankingFor(false);
 

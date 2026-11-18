@@ -91,6 +91,7 @@ public class AnimalSound : MonoBehaviour
         if (!sr.bounds.Contains(p)) return;
 
         nextTime = Time.unscaledTime + cooldown;
+        Achievements.NoteAnimalClick(id);
         // dormindo: os primeiros cliques so mostram o ZZZZ; o ultimo acorda o bicho, que faz o seu barulho
         string say = word;
         bool makesSound = true, wakeNow = false;
@@ -111,16 +112,25 @@ public class AnimalSound : MonoBehaviour
         if (streak >= 5)
         {
             streak = 0;
+            Achievements.NoteHeart(id);
             SoundBank.Play(id + "_coracao");   // o gato ronrona
             EnsureRunner();
             runner.StartCoroutine(runner.Show(Heart(), above + new Vector3(0f, 9f * Pixel, 0f), "coracao"));
         }
 
         var bird = GetComponent<ChickenWander>();
-        if (flee && bird != null) bird.Flee(p);
+        if (flee && bird != null)
+        {
+            bird.Flee(p);
+            Achievements.NoteInteraction(id + "_foge");
+        }
         var cat = GetComponent<CatYarnPlay>();
         if (cat != null) cat.Startle();
-        if (wakeNow) StartCoroutine(Wake());
+        if (wakeNow)
+        {
+            Achievements.NoteInteraction(id + "_acorda");
+            StartCoroutine(Wake());
+        }
     }
 
     // a vaca que dormia levanta (some o "Z") e volta a deitar

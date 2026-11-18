@@ -25,6 +25,9 @@ public class Enemy : MonoBehaviour, IDamageable
     /// Distancia percorrida no caminho. Empurrao diminui, salto soma.
     public float Distance { get; set; }
 
+    /// Comprimento do caminho deste inimigo (Distance / PathLength = quanto ja andou, de 0 a 1).
+    public float PathLength => path != null ? path.Length : 0f;
+
     public float Health => health;
     public bool IsFlying => data != null && data.flying;
     public bool Flying => IsFlying;

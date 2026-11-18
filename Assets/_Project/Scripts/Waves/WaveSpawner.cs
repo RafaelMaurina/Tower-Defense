@@ -34,7 +34,11 @@ public class WaveSpawner : MonoBehaviour
 
     public void StartNextWave()
     {
-        if (CanStartNextWave) startRequested = true;
+        if (!CanStartNextWave) return;
+        // Com o automatico ligado, a proxima onda sai sozinha depois da pausa (pauseAfter); chamar
+        // pelo botao antes disso e "antes da hora". Sem o automatico nao ha hora marcada.
+        if (autoStart && CurrentWave > 0) Achievements.NoteEarlyWave();
+        startRequested = true;
     }
 
     public void SetAutoStart(bool enabled) => autoStart = enabled;

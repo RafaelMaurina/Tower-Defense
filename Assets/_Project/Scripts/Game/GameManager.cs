@@ -79,6 +79,7 @@ public class GameManager : MonoBehaviour
         activeLevelScene = SceneManager.GetActiveScene().name;
         BeginCampaignRun(string.IsNullOrEmpty(pendingRunStartScene) ? activeLevelScene : pendingRunStartScene);
         pendingRunStartScene = null;
+        Achievements.BeginLevel();
         Enemy.OnDied += HandleEnemyDied;
         Enemy.OnReachedBase += HandleEnemyReachedBase;
         SceneManager.sceneLoaded += HandleSceneLoaded;
@@ -155,6 +156,7 @@ public class GameManager : MonoBehaviour
         topDamage = 0f;
         topDamageSprite = null;
         damageByTower.Clear();
+        Achievements.BeginLevel();
     }
 
     public void CompleteLevel()
@@ -162,6 +164,7 @@ public class GameManager : MonoBehaviour
         if (state != GameState.Playing) return;
         string current = SceneManager.GetActiveScene().name;
         CampaignProgress.Complete(current);
+        Achievements.LevelWon(current, startingMoney);
         if (campaignRunEligible)
         {
             if (current != expectedCampaignScene) campaignRunEligible = false;
@@ -216,6 +219,7 @@ public class GameManager : MonoBehaviour
     {
         if (amount < 0 || money < amount || state != GameState.Playing) return false;
         money -= amount;
+        Achievements.NoteSpent(amount);
         OnMoneyChanged?.Invoke(money);
         return true;
     }
@@ -293,6 +297,7 @@ public class GameManager : MonoBehaviour
             fullCampaign = won && campaignRunEligible && campaignLevelsCompleted == 3
         };
         LocalRanking.Record(result);
+        Achievements.GameWon(result);
         SetState(won ? GameState.Victory : GameState.Defeat);
         OnGameEnded?.Invoke(result);
     }
@@ -334,6 +339,7 @@ public class GameManager : MonoBehaviour
         }
 
         activeLevelScene = scene.name;
+        Achievements.BeginLevel();
         if (!string.IsNullOrEmpty(pendingRunStartScene))
         {
             BeginCampaignRun(pendingRunStartScene);

@@ -98,6 +98,7 @@ public class Guardian : MonoBehaviour
         if (damage > 0f && GameManager.Instance != null)
             GameManager.Instance.RegisterTowerDamage(tower, damage);
         if (damage > 0f) OnBite?.Invoke(this, where);
+        if (damage > 0f && !biteTarget.IsAlive) Achievements.NoteGuardianKill();   // conquista: o cao deu a mordida que matou
     }
 
     void Animate(bool moved)
