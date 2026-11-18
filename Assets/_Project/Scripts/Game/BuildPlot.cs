@@ -63,6 +63,7 @@ public class BuildPlot : MonoBehaviour
         }
 
         placed.Init(data);
+        SoundBank.Play("constroi_" + data.name.Replace("Tower_", "").ToLowerInvariant());   // por enquanto so a colmeia tem som
         // com torre em cima, o carrinho de mao da lugar ao canteiro so de terra
         if (ferramentas != null) { ferramentas.SetActive(false); return true; }
         var sr = GetComponent<SpriteRenderer>();
