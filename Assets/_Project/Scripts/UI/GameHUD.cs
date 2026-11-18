@@ -134,7 +134,8 @@ public class GameHUD : MonoBehaviour
         if (name.StartsWith("inferior_")) return "hud_inferior/" + name.Substring(9);
         if (name.StartsWith("final_")) return "finais_submenu/" + name.Substring(6);
         if (name == "moldura_pausa_titulo" || name.StartsWith("continuar_") ||
-            name.StartsWith("recomecar_") || name.StartsWith("menu_"))
+            name.StartsWith("recomecar_") || name.StartsWith("menu_") ||
+            name.StartsWith("configuracoes_"))
             return "jogo_pausado_submenu/" + name;
         if (name.StartsWith("melhorar_") || name.StartsWith("vender_") ||
             name.StartsWith("prioridade_") || name == "moldura_melhorar" ||
@@ -299,16 +300,23 @@ public class GameHUD : MonoBehaviour
         }
         return t;
     }
-    Button MakeButton(Transform parent, Action action, Vector2 min, Vector2 max)
+    Button MakeButton(Transform parent, Action action, Vector2 min, Vector2 max, float visualAspect = 0f)
     {
         bool baked = action.art != "construir";
         var holder = Rect(parent, action.text, min, max);
         var image = Picture(holder, "Sprite", action.art + "_normal", new Vector2(0, string.IsNullOrEmpty(action.detail) ? 0 : .28f), Vector2.one, true);
+        if (visualAspect > 0f && image.sprite != null && image.sprite.rect.height > 0f)
+        {
+            float sourceAspect = image.sprite.rect.width / image.sprite.rect.height;
+            image.rectTransform.localScale = new Vector3(visualAspect / sourceAspect, 1f, 1f);
+        }
         image.raycastTarget = true;
         var b = holder.gameObject.AddComponent<Button>(); b.targetGraphic = image;
         b.transition = Selectable.Transition.None;
         var feedback = holder.gameObject.AddComponent<HudButtonFeedback>();
-        feedback.Configure(image, Art(action.art + "_normal"), Art(action.art + "_selecionado"));
+        Sprite normalSprite = Art(action.art + "_normal");
+        Sprite selectedSprite = Art(action.art + "_selecionado");
+        feedback.Configure(image, normalSprite, selectedSprite);
         feedback.ConfigureSound(uiAudio, hoverSound);
         if (!baked)
         {
@@ -1022,13 +1030,26 @@ public class GameHUD : MonoBehaviour
         rows.anchorMax = new Vector2(horizontalActions ? .91f : isTower ? .84f : .76f,
             horizontalActions ? .47f : isTower ? .53f : .60f);
         int n = Mathf.Max(1,actions.Length);
+        float commonPauseButtonAspect = paused ? PauseButtonAspect() : 0f;
         for (int i=0;i<actions.Length;i++)
             MakeButton(rows,actions[i],horizontalActions
                 ? new Vector2(i/(float)n+.008f,.02f)
                 : new Vector2(0,1f-(i+1f)/n+.015f),horizontalActions
                 ? new Vector2((i+1f)/n-.008f,.98f)
-                : new Vector2(1,1f-i/(float)n-.015f));
+                : new Vector2(1,1f-i/(float)n-.015f), commonPauseButtonAspect);
         if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
+    }
+    float PauseButtonAspect()
+    {
+        float aspect = 0f;
+        string[] art = { "continuar", "recomecar", "configuracoes", "menu" };
+        foreach (string name in art)
+        {
+            Sprite sprite = Art(name + "_normal");
+            if (sprite != null && sprite.rect.height > 0f)
+                aspect = Mathf.Max(aspect, sprite.rect.width / sprite.rect.height);
+        }
+        return aspect;
     }
     void Close()
     {
@@ -1288,7 +1309,7 @@ public class GameHUD : MonoBehaviour
             Show("JOGO PAUSADO","A colheita pode esperar um pouquinho.\nRetome a defesa quando estiver pronto.",false,
                 new Action("Continuar","continuar","continuar",()=>GameManager.Instance?.TogglePause()),
                 new Action("Recomeçar nível","recomecar","voltar",()=>GameManager.Instance?.RestartCurrentLevel()),
-                new Action("Configurações","construir",null,()=>SettingsPanel.Open(overlay)),
+                new Action("Configurações","configuracoes",null,()=>SettingsPanel.Open(overlay)),
                 new Action("Voltar ao menu","menu","voltar",ToMenu));
         }
         else if (state == GameState.Playing) Close();
