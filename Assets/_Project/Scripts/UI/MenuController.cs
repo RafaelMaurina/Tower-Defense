@@ -74,6 +74,8 @@ public class MenuController : MonoBehaviour
     string selectedLevel;
     bool loading;
     GameDifficulty difficulty = GameDifficulty.Easy;
+    GameDifficulty? pendingDifficultySelection;
+    MenuButtonVisualState pendingDifficultyVisualState;
 
     class PhaseCard
     {
@@ -113,34 +115,40 @@ public class MenuController : MonoBehaviour
             Resources.Load<Sprite>("Informacoes/informacoes_github_selecionado"),
             Resources.Load<Sprite>("Informacoes/icone_paleta"),
             Resources.Load<Sprite>("hud/melhorar_submenu/icone_dano"),
-            Resources.Load<Sprite>("Informacoes/informacoes_icone_programacao"));
+            Resources.Load<Sprite>("Informacoes/informacoes_icone_programacao"),
+            hoverSound, clickSound);
 
         if (backgroundSprite != null) AddImage(root, "Fundo da fazenda", backgroundSprite, Vector2.zero, Vector2.one, Color.white, true);
         else AddImage(root, "Fundo de reserva", null, Vector2.zero, Vector2.one, new Color32(115, 183, 205, 255), false);
 
         // O novo logo já contém o nome do jogo; a sombra adicional foi removida.
-        AddImage(mainMenuContent.transform, "Letreiro Defesa da Colheita", logoSprite, new Vector2(.28f, .72f), new Vector2(.72f, .99f), Color.white, true);
+        AddImage(mainMenuContent.transform, "Letreiro Defesa da Colheita", logoSprite,
+            new Vector2(.28f, .72f), new Vector2(.72f, .99f), Color.white, true);
 
-        CreateSpriteButton(mainMenuContent.transform, "Jogar", playNormalSprite, playSelectedSprite,
+        var mainButtons = new GameObject("BotoesPrincipais", typeof(RectTransform));
+        mainButtons.transform.SetParent(mainMenuContent.transform, false);
+        var buttonsRect = mainButtons.GetComponent<RectTransform>();
+        buttonsRect.anchorMin = Vector2.zero;
+        buttonsRect.anchorMax = Vector2.one;
+        buttonsRect.offsetMin = buttonsRect.offsetMax = Vector2.zero;
+
+        CreateSpriteButton(mainButtons.transform, "Jogar", playNormalSprite, playSelectedSprite,
             new Vector2(.30f, .53f), new Vector2(.70f, .65f), StartGame);
-
-        CreateSpriteButton(mainMenuContent.transform, "Ranking", rankingNormalSprite, rankingSelectedSprite,
+        CreateSpriteButton(mainButtons.transform, "Ranking", rankingNormalSprite, rankingSelectedSprite,
             new Vector2(.30f, .36f), new Vector2(.70f, .48f), ShowRanking);
-        var bonusRankingButton = CreateSpriteButton(mainMenuContent.transform, "Ranking do bônus",
-            Resources.Load<Sprite>("hud/botao_normal"), Resources.Load<Sprite>("hud/botao_selecionado"),
-            new Vector2(.72f, .36f), new Vector2(.96f, .48f), () => ShowRankingFor(true));
-        if (bonusRankingButton.sprite == null) bonusRankingButton.color = new Color32(111, 68, 41, 245);
-        MakeText(bonusRankingButton.transform, "Ranking do bônus", new Vector2(.04f, .08f), new Vector2(.96f, .92f),
-            20, new Color32(255, 246, 213, 255)).raycastTarget = false;
-        CreateSpriteButton(mainMenuContent.transform, "Informações", infoNormalSprite, infoSelectedSprite,
+        CreateSpriteButton(mainButtons.transform, "Informações", infoNormalSprite, infoSelectedSprite,
             new Vector2(.30f, .19f), new Vector2(.70f, .31f), ShowInfo);
-        CreateSpriteButton(mainMenuContent.transform, "Sair", exitNormalSprite, exitSelectedSprite,
+        CreateSpriteButton(mainButtons.transform, "Sair", exitNormalSprite, exitSelectedSprite,
             new Vector2(.30f, .02f), new Vector2(.70f, .14f), ExitGame);
         // O acesso à fase bônus fica integrado à tela de seleção de fases.
         var settings = CreateSpriteButton(mainMenuContent.transform, "Configurações",
-            Resources.Load<Sprite>("hud/botao_normal"), Resources.Load<Sprite>("hud/botao_selecionado"),
-            new Vector2(.04f,.02f), new Vector2(.27f,.12f), () => { if (!loading) SettingsPanel.Open(mainMenuContent); });
-        MakeText(settings.transform, "Configurações", new Vector2(.08f,.1f), new Vector2(.92f,.9f), 28, Color.white).raycastTarget = false;
+            Resources.Load<Sprite>("hud/hud_superior/botao_configuracoes_normal"),
+            Resources.Load<Sprite>("hud/hud_superior/botao_configuracoes_selecionado"),
+            new Vector2(.93f, .90f), new Vector2(.985f, .975f), () => { if (!loading) SettingsPanel.Open(mainMenuContent); });
+        settings.rectTransform.anchorMin = settings.rectTransform.anchorMax = Vector2.one;
+        settings.rectTransform.pivot = Vector2.one;
+        settings.rectTransform.sizeDelta = new Vector2(129.2f, 122.4f);
+        settings.rectTransform.anchoredPosition = new Vector2(-22f, -20f);
         // O fundo é filho direto do Canvas e deve ficar atrás do conteúdo principal.
         mainMenuContent.transform.SetAsLastSibling();
     }
@@ -167,7 +175,7 @@ public class MenuController : MonoBehaviour
         if (bonusPreviewSprite == null) bonusPreviewSprite = Resources.Load<Sprite>("MenuPhase/fase_bonus_preview");
         if (bonusLockedPreviewSprite == null) bonusLockedPreviewSprite = Resources.Load<Sprite>("MenuPhase/fase_bonus_preview_bloqueada");
         if (bonusLockSprite == null) bonusLockSprite = Resources.Load<Sprite>("MenuPhase/fase_cadeado");
-        if (difficultyMainFrameSprite == null) difficultyMainFrameSprite = Resources.Load<Sprite>("MenuDifficulty/dificuldade_moldura_principal");
+        if (difficultyMainFrameSprite == null) difficultyMainFrameSprite = Resources.Load<Sprite>("MenuDificuldade/dificuldade_moldura_principal");
         if (rankingFrameSprite == null) rankingFrameSprite = Resources.Load<Sprite>("Ranking/ranking_moldura_principal");
         if (rankingHeaderSprite == null) rankingHeaderSprite = Resources.Load<Sprite>("Ranking/ranking_cabecalho");
         if (rankingRowSprite == null) rankingRowSprite = Resources.Load<Sprite>("Ranking/ranking_linha_padrao");
@@ -239,13 +247,6 @@ public class MenuController : MonoBehaviour
         if (bonusCardPreview == null) bonusCardPreview = bonusPreviewSprite;
         AddPhaseCard("BÔNUS", CampaignProgress.BonusScene, bonusCardPreview, bonusCardFrameSprite,
             bonusLocked, true, new Vector2(.51f, .22f), new Vector2(.79f, .50f));
-
-        string progressMessage = $"Bônus: vença Primavera, Verão e Outono uma vez em qualquer dificuldade ({CampaignProgress.CompletedCampaignLevelCount}/3).\n" +
-            "O ranking da campanha registra vitórias completas iniciadas na Primavera.";
-        var progressHint = MakeText(phaseSelectionMenu.transform, "Progresso e ranking da campanha",
-            new Vector2(.16f, .105f), new Vector2(.84f, .195f), 17, new Color32(255, 246, 213, 255));
-        progressHint.text = progressMessage;
-        progressHint.raycastTarget = false;
 
         CreateSpriteButton(phaseSelectionMenu.transform, "Voltar", backButtonSprite, backButtonSelectedSprite,
             new Vector2(.39f, .005f), new Vector2(.61f, .09f), ClosePhaseSelection);
@@ -493,6 +494,8 @@ public class MenuController : MonoBehaviour
     void OpenDifficultyMenu()
     {
         if (difficultyMenu != null) return;
+        pendingDifficultySelection = null;
+        pendingDifficultyVisualState = null;
         difficultyMenu = new GameObject("Seleção de dificuldade", typeof(RectTransform));
         difficultyMenu.transform.SetParent(menuRoot, false);
         SetFullRect(difficultyMenu.GetComponent<RectTransform>());
@@ -505,12 +508,15 @@ public class MenuController : MonoBehaviour
         AddDifficultyPhaseCard(difficultyMenu.transform, selectedPhaseCard,
             new Vector2(.13f, .30f), new Vector2(.49f, .73f));
 
-        var easy = CreateSpriteButton(difficultyMenu.transform, "Fácil — manhã", difficultyEasyBadge, difficultyEasyBadgeSelected,
-            new Vector2(.50f, .61f), new Vector2(.93f, .73f), () => SelectDifficulty(GameDifficulty.Easy));
-        var normal = CreateSpriteButton(difficultyMenu.transform, "Normal — pôr do sol", difficultyNormalBadge, difficultyNormalBadgeSelected,
-            new Vector2(.50f, .455f), new Vector2(.93f, .575f), () => SelectDifficulty(GameDifficulty.Normal));
-        var hard = CreateSpriteButton(difficultyMenu.transform, "Difícil — noite", difficultyHardBadge, difficultyHardBadgeSelected,
-            new Vector2(.50f, .30f), new Vector2(.93f, .42f), () => SelectDifficulty(GameDifficulty.Hard));
+        Image easy = null;
+        easy = CreateSpriteButton(difficultyMenu.transform, "Fácil — manhã", difficultyEasyBadge, difficultyEasyBadgeSelected,
+            new Vector2(.50f, .61f), new Vector2(.93f, .73f), () => SelectDifficulty(GameDifficulty.Easy, easy));
+        Image normal = null;
+        normal = CreateSpriteButton(difficultyMenu.transform, "Normal — pôr do sol", difficultyNormalBadge, difficultyNormalBadgeSelected,
+            new Vector2(.50f, .455f), new Vector2(.93f, .575f), () => SelectDifficulty(GameDifficulty.Normal, normal));
+        Image hard = null;
+        hard = CreateSpriteButton(difficultyMenu.transform, "Difícil — noite", difficultyHardBadge, difficultyHardBadgeSelected,
+            new Vector2(.50f, .30f), new Vector2(.93f, .42f), () => SelectDifficulty(GameDifficulty.Hard, hard));
         var back = CreateSpriteButton(difficultyMenu.transform, "Voltar", backButtonSprite, backButtonSelectedSprite,
             new Vector2(.40f, .025f), new Vector2(.60f, .12f), CloseDifficultyMenu).GetComponent<Button>();
 
@@ -563,10 +569,23 @@ public class MenuController : MonoBehaviour
             back.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnUp = hardButton };
     }
 
-    void SelectDifficulty(GameDifficulty selectedDifficulty)
+    void SelectDifficulty(GameDifficulty selectedDifficulty, Image selectedOption)
     {
         if (loading) return;
         if (selectedLevel == CampaignProgress.BonusScene && !CampaignProgress.BonusUnlocked) return;
+
+        // O primeiro clique escolhe a dificuldade; o segundo clique na mesma opção confirma.
+        if (pendingDifficultySelection != selectedDifficulty)
+        {
+            pendingDifficultyVisualState?.SetSelectedState(false);
+            pendingDifficultySelection = selectedDifficulty;
+            pendingDifficultyVisualState = selectedOption != null
+                ? selectedOption.GetComponent<MenuButtonVisualState>()
+                : null;
+            pendingDifficultyVisualState?.SetSelectedState(true);
+            return;
+        }
+
         if (!Application.CanStreamedLevelBeLoaded(selectedLevel))
         {
             CloseDifficultyMenu();
@@ -775,6 +794,13 @@ public class MenuButtonVisualState : MonoBehaviour, IPointerEnterHandler, IPoint
         RefreshSprite();
     }
 
+    public void SetSelectedState(bool value)
+    {
+        ignoreInitialSelection = false;
+        selected = value;
+        RefreshSprite();
+    }
+
     void OnDisable()
     {
         pointerInside = false;
@@ -885,9 +911,13 @@ public class InfoPanel : MonoBehaviour
     static Sprite combatIconSprite;
     static Sprite gameplayIconSprite;
     static GameObject mainMenuContent;
+    static AudioClip hoverSound;
+    static AudioClip clickSound;
+    static AudioSource uiAudioSource;
 
     public static void Configure(Sprite submenuPanel, Sprite backButton, Sprite backButtonSelected, Sprite repositoryButton, GameObject content,
-        Sprite informationFrame, Sprite teamPlaque, Sprite repositorySelected, Sprite artistIcon, Sprite combatIcon, Sprite gameplayIcon)
+        Sprite informationFrame, Sprite teamPlaque, Sprite repositorySelected, Sprite artistIcon, Sprite combatIcon, Sprite gameplayIcon,
+        AudioClip menuHoverSound, AudioClip menuClickSound)
     {
         panelSprite = submenuPanel;
         backSprite = backButton;
@@ -902,6 +932,17 @@ public class InfoPanel : MonoBehaviour
         artistIconSprite = artistIcon;
         combatIconSprite = combatIcon;
         gameplayIconSprite = gameplayIcon;
+        hoverSound = menuHoverSound;
+        clickSound = menuClickSound;
+
+        Transform audioRoot = content != null ? content.transform.parent : null;
+        if (audioRoot != null)
+        {
+            uiAudioSource = audioRoot.GetComponent<AudioSource>();
+            if (uiAudioSource == null) uiAudioSource = audioRoot.gameObject.AddComponent<AudioSource>();
+            uiAudioSource.playOnAwake = false;
+            uiAudioSource.spatialBlend = 0f;
+        }
     }
 
     public static void ShowInformation(string presentation, string[] creditLines, string repositoryUrl)
@@ -939,16 +980,22 @@ public class InfoPanel : MonoBehaviour
                 new Vector2(.365f, bottom), new Vector2(.70f, bottom + .07f), 28);
         }
 
+        Button repositoryButton = null;
         if (repositorySprite != null)
         {
-            var repositoryButton = AddSpriteSwapButton(screen.transform, "GitHub do projeto", repositorySprite,
+            repositoryButton = AddSpriteSwapButton(screen.transform, "GitHub do projeto", repositorySprite,
                 repositorySelectedSprite, new Vector2(.40f, .22f), new Vector2(.60f, .33f),
                 () => Application.OpenURL(repositoryUrl));
-            if (EventSystem.current != null)
-                EventSystem.current.SetSelectedGameObject(repositoryButton.gameObject);
+            bool pointerOpensOverRepository = false;
+            var mouse = UnityEngine.InputSystem.Mouse.current;
+            if (mouse != null)
+                pointerOpensOverRepository = RectTransformUtility.RectangleContainsScreenPoint(
+                    repositoryButton.GetComponent<RectTransform>(), mouse.position.ReadValue(), null);
+            repositoryButton.GetComponent<MenuButtonVisualState>().SuppressInitialFeedback(
+                ignoreSelection: true, ignorePointerEnter: pointerOpensOverRepository);
         }
 
-        AddInformationBackButton(screen.transform, () =>
+        var backButton = AddInformationBackButton(screen.transform, () =>
         {
             Object.Destroy(screen);
             if (mainMenuContent != null) mainMenuContent.SetActive(true);
@@ -958,6 +1005,17 @@ public class InfoPanel : MonoBehaviour
             if (EventSystem.current != null)
                 EventSystem.current.SetSelectedGameObject(mainInfoButton != null ? mainInfoButton.gameObject : null);
         });
+
+        if (repositoryButton != null)
+        {
+            var repositoryNavigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnDown = backButton };
+            repositoryButton.navigation = repositoryNavigation;
+            backButton.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnUp = repositoryButton };
+        }
+        if (EventSystem.current != null)
+            EventSystem.current.SetSelectedGameObject(repositoryButton != null
+                ? repositoryButton.gameObject
+                : null);
     }
 
     static Image AddImage(Transform parent, string name, Sprite sprite, Vector2 min, Vector2 max, Color color, bool preserveAspect)
@@ -1014,25 +1072,27 @@ public class InfoPanel : MonoBehaviour
         image.sprite = normal; image.preserveAspect = true; image.raycastTarget = true;
         var button = buttonObject.GetComponent<Button>();
         button.targetGraphic = image;
-        button.transition = Selectable.Transition.SpriteSwap;
+        button.transition = Selectable.Transition.None;
         button.navigation = new Navigation { mode = Navigation.Mode.Automatic };
-        var state = button.spriteState;
-        state.highlightedSprite = selected;
-        state.selectedSprite = selected;
-        state.pressedSprite = selected;
-        button.spriteState = state;
+        var visualState = buttonObject.AddComponent<MenuButtonVisualState>();
+        visualState.Initialize(image, normal, selected);
+        if (uiAudioSource != null)
+        {
+            if (clickSound != null)
+                button.onClick.AddListener(() => uiAudioSource.PlayOneShot(clickSound, GameSettings.Sfx));
+            buttonObject.AddComponent<MenuButtonHoverSound>().Initialize(uiAudioSource, hoverSound);
+        }
         button.onClick.AddListener(action);
         return button;
     }
 
-    static void AddInformationBackButton(Transform parent, UnityEngine.Events.UnityAction action)
+    static Button AddInformationBackButton(Transform parent, UnityEngine.Events.UnityAction action)
     {
         if (backSprite != null)
         {
-            AddSpriteSwapButton(parent, "Voltar", backSprite,
+            return AddSpriteSwapButton(parent, "Voltar", backSprite,
                 backSelectedSprite != null ? backSelectedSprite : backSprite,
                 new Vector2(.40f, .015f), new Vector2(.60f, .115f), action);
-            return;
         }
         var label = MakeInfoTmpText(parent, "Voltar", "VOLTAR",
             new Vector2(.40f, .015f), new Vector2(.60f, .115f), 30);
@@ -1040,6 +1100,7 @@ public class InfoPanel : MonoBehaviour
         button.targetGraphic = label;
         button.navigation = new Navigation { mode = Navigation.Mode.Automatic };
         button.onClick.AddListener(action);
+        return button;
     }
 
     public static void Show(string message, string repositoryUrl = null, string[] creditLines = null, string title = "Informações")
