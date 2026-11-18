@@ -134,7 +134,8 @@ public class GameHUD : MonoBehaviour
         if (name.StartsWith("inferior_")) return "hud_inferior/" + name.Substring(9);
         if (name.StartsWith("final_")) return "finais_submenu/" + name.Substring(6);
         if (name == "moldura_pausa_titulo" || name.StartsWith("continuar_") ||
-            name.StartsWith("recomecar_") || name.StartsWith("menu_"))
+            name.StartsWith("recomecar_") || name.StartsWith("menu_") ||
+            name.StartsWith("configuracoes_"))
             return "jogo_pausado_submenu/" + name;
         if (name.StartsWith("melhorar_") || name.StartsWith("vender_") ||
             name.StartsWith("prioridade_") || name == "moldura_melhorar" ||
@@ -303,12 +304,15 @@ public class GameHUD : MonoBehaviour
     {
         bool baked = action.art != "construir";
         var holder = Rect(parent, action.text, min, max);
+        // preserveAspect mantem a proporcao do sprite sem esticar
         var image = Picture(holder, "Sprite", action.art + "_normal", new Vector2(0, string.IsNullOrEmpty(action.detail) ? 0 : .28f), Vector2.one, true);
         image.raycastTarget = true;
         var b = holder.gameObject.AddComponent<Button>(); b.targetGraphic = image;
         b.transition = Selectable.Transition.None;
         var feedback = holder.gameObject.AddComponent<HudButtonFeedback>();
-        feedback.Configure(image, Art(action.art + "_normal"), Art(action.art + "_selecionado"));
+        Sprite normalSprite = Art(action.art + "_normal");
+        Sprite selectedSprite = Art(action.art + "_selecionado");
+        feedback.Configure(image, normalSprite, selectedSprite);
         feedback.ConfigureSound(uiAudio, hoverSound);
         if (!baked)
         {
@@ -1288,7 +1292,7 @@ public class GameHUD : MonoBehaviour
             Show("JOGO PAUSADO","A colheita pode esperar um pouquinho.\nRetome a defesa quando estiver pronto.",false,
                 new Action("Continuar","continuar","continuar",()=>GameManager.Instance?.TogglePause()),
                 new Action("Recomeçar nível","recomecar","voltar",()=>GameManager.Instance?.RestartCurrentLevel()),
-                new Action("Configurações","construir",null,()=>SettingsPanel.Open(overlay)),
+                new Action("Configurações","configuracoes",null,()=>SettingsPanel.Open(overlay)),
                 new Action("Voltar ao menu","menu","voltar",ToMenu));
         }
         else if (state == GameState.Playing) Close();
