@@ -10,6 +10,7 @@ public static class MenuArtSetup
     const string ScenePath = "Assets/_Project/Scenes/Menu.unity";
     const string ArtFolder = "Assets/_Project/Art/Sprites/Menu/";
     const string PhaseArtFolder = "Assets/_Project/Resources/MenuPhase/";
+    const string DifficultyArtFolder = "Assets/_Project/Resources/MenuDifficulty/";
     const string RankingArtFolder = "Assets/_Project/Resources/Ranking/";
 
     static MenuArtSetup() => EditorApplication.delayCall += ConfigureResourceImporters;
@@ -75,6 +76,7 @@ public static class MenuArtSetup
     static void ConfigureResourceImporters()
     {
         ConfigureImportersIn(PhaseArtFolder);
+        ConfigureImportersIn(DifficultyArtFolder);
         ConfigureImportersIn(RankingArtFolder);
     }
 

@@ -31,6 +31,8 @@ public class MenuController : MonoBehaviour
     [SerializeField] Sprite bonusLockedPreviewSprite;
     [SerializeField] Sprite bonusLockSprite;
     bool springPreviewIsProvisional;
+    [Header("Tela de dificuldade")]
+    [SerializeField] Sprite difficultyMainFrameSprite;
     [Header("Indicadores de dificuldade")]
     [SerializeField] Sprite difficultyEasyBadge;
     [SerializeField] Sprite difficultyEasyBadgeSelected;
@@ -75,7 +77,11 @@ public class MenuController : MonoBehaviour
 
     class PhaseCard
     {
+        public string label;
         public string scene;
+        public Sprite preview;
+        public Sprite frame;
+        public bool provisional;
         public Button button;
         public Image outline;
     }
@@ -161,6 +167,7 @@ public class MenuController : MonoBehaviour
         if (bonusPreviewSprite == null) bonusPreviewSprite = Resources.Load<Sprite>("MenuPhase/fase_bonus_preview");
         if (bonusLockedPreviewSprite == null) bonusLockedPreviewSprite = Resources.Load<Sprite>("MenuPhase/fase_bonus_preview_bloqueada");
         if (bonusLockSprite == null) bonusLockSprite = Resources.Load<Sprite>("MenuPhase/fase_cadeado");
+        if (difficultyMainFrameSprite == null) difficultyMainFrameSprite = Resources.Load<Sprite>("MenuDifficulty/dificuldade_moldura_principal");
         if (rankingFrameSprite == null) rankingFrameSprite = Resources.Load<Sprite>("Ranking/ranking_moldura_principal");
         if (rankingHeaderSprite == null) rankingHeaderSprite = Resources.Load<Sprite>("Ranking/ranking_cabecalho");
         if (rankingRowSprite == null) rankingRowSprite = Resources.Load<Sprite>("Ranking/ranking_linha_padrao");
@@ -274,7 +281,7 @@ public class MenuController : MonoBehaviour
             preview != null ? Color.white : PhaseColor(label), true);
         previewImage.raycastTarget = false;
 
-        var card = new PhaseCard { scene = scene, button = button };
+        var card = new PhaseCard { label = label, scene = scene, preview = preview, frame = frame, provisional = provisional, button = button };
         if (locked)
         {
             var tint = AddImage(cardObject.transform, "Escurecimento de fase bloqueada", null,
@@ -486,13 +493,74 @@ public class MenuController : MonoBehaviour
     void OpenDifficultyMenu()
     {
         if (difficultyMenu != null) return;
-        difficultyMenu = CreateSubmenuPanel("Dificuldade", CloseDifficultyMenu);
-        CreateSpriteButton(difficultyMenu.transform, "Fácil", difficultyEasyBadge, difficultyEasyBadgeSelected,
-            new Vector2(.35f, .65f), new Vector2(.65f, .77f), () => SelectDifficulty(GameDifficulty.Easy));
-        CreateSpriteButton(difficultyMenu.transform, "Normal", difficultyNormalBadge, difficultyNormalBadgeSelected,
-            new Vector2(.35f, .43f), new Vector2(.65f, .55f), () => SelectDifficulty(GameDifficulty.Normal));
-        CreateSpriteButton(difficultyMenu.transform, "Difícil", difficultyHardBadge, difficultyHardBadgeSelected,
-            new Vector2(.35f, .21f), new Vector2(.65f, .33f), () => SelectDifficulty(GameDifficulty.Hard));
+        difficultyMenu = new GameObject("Seleção de dificuldade", typeof(RectTransform));
+        difficultyMenu.transform.SetParent(menuRoot, false);
+        SetFullRect(difficultyMenu.GetComponent<RectTransform>());
+
+        var frame = AddImage(difficultyMenu.transform, "Moldura principal da dificuldade",
+            difficultyMainFrameSprite != null ? difficultyMainFrameSprite : submenuPanelSprite,
+            new Vector2(.045f, .14f), new Vector2(.955f, .98f), Color.white, true);
+        frame.raycastTarget = false;
+
+        AddDifficultyPhaseCard(difficultyMenu.transform, selectedPhaseCard,
+            new Vector2(.13f, .30f), new Vector2(.49f, .73f));
+
+        var easy = CreateSpriteButton(difficultyMenu.transform, "Fácil — manhã", difficultyEasyBadge, difficultyEasyBadgeSelected,
+            new Vector2(.50f, .61f), new Vector2(.93f, .73f), () => SelectDifficulty(GameDifficulty.Easy));
+        var normal = CreateSpriteButton(difficultyMenu.transform, "Normal — pôr do sol", difficultyNormalBadge, difficultyNormalBadgeSelected,
+            new Vector2(.50f, .455f), new Vector2(.93f, .575f), () => SelectDifficulty(GameDifficulty.Normal));
+        var hard = CreateSpriteButton(difficultyMenu.transform, "Difícil — noite", difficultyHardBadge, difficultyHardBadgeSelected,
+            new Vector2(.50f, .30f), new Vector2(.93f, .42f), () => SelectDifficulty(GameDifficulty.Hard));
+        var back = CreateSpriteButton(difficultyMenu.transform, "Voltar", backButtonSprite, backButtonSelectedSprite,
+            new Vector2(.40f, .025f), new Vector2(.60f, .12f), CloseDifficultyMenu).GetComponent<Button>();
+
+        ConfigureDifficultyNavigation(easy, normal, hard, back);
+        difficultyMenu.transform.SetAsLastSibling();
+        if (EventSystem.current != null && easy != null)
+        {
+            easy.GetComponent<MenuButtonVisualState>()?.SuppressInitialFeedback(true, false);
+            EventSystem.current.SetSelectedGameObject(easy.gameObject);
+        }
+    }
+
+    static void AddDifficultyPhaseCard(Transform parent, PhaseCard phase,
+        Vector2 min, Vector2 max)
+    {
+        if (phase == null) return;
+        var card = new GameObject("Prévia da fase " + phase.label, typeof(RectTransform));
+        card.transform.SetParent(parent, false);
+        var rect = card.GetComponent<RectTransform>();
+        rect.anchorMin = min; rect.anchorMax = max; rect.offsetMin = Vector2.zero; rect.offsetMax = Vector2.zero;
+
+        var preview = AddImage(card.transform, "Imagem da fase " + phase.label,
+            phase.preview, new Vector2(.08f, .20f), new Vector2(.92f, .86f),
+            phase.preview != null ? Color.white : PhaseColor(phase.label), true);
+        preview.raycastTarget = false;
+        if (phase.provisional)
+        {
+            var provisionalText = MakeText(card.transform, "PRÉVIA PROVISÓRIA",
+                new Vector2(.18f, .72f), new Vector2(.82f, .80f), 17, new Color32(255, 244, 220, 255));
+            provisionalText.raycastTarget = false;
+            var outline = provisionalText.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color32(43, 31, 22, 255);
+            outline.effectDistance = new Vector2(1.5f, -1.5f);
+        }
+        var frame = AddImage(card.transform, "Moldura da fase " + phase.label,
+            phase.frame, Vector2.zero, Vector2.one, Color.white, true);
+        frame.raycastTarget = false;
+    }
+
+    static void ConfigureDifficultyNavigation(Image easy, Image normal, Image hard, Button back)
+    {
+        if (easy == null || normal == null || hard == null) return;
+        var easyButton = easy.GetComponent<Button>();
+        var normalButton = normal.GetComponent<Button>();
+        var hardButton = hard.GetComponent<Button>();
+        easyButton.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnDown = normalButton };
+        normalButton.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnUp = easyButton, selectOnDown = hardButton };
+        hardButton.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnUp = normalButton, selectOnDown = back };
+        if (back != null)
+            back.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnUp = hardButton };
     }
 
     void SelectDifficulty(GameDifficulty selectedDifficulty)
@@ -519,7 +587,12 @@ public class MenuController : MonoBehaviour
         if (difficultyMenu == null) return;
         Destroy(difficultyMenu);
         difficultyMenu = null;
-        if (phaseSelectionMenu != null) phaseSelectionMenu.SetActive(true);
+        if (phaseSelectionMenu != null)
+        {
+            phaseSelectionMenu.SetActive(true);
+            if (EventSystem.current != null && selectedPhaseCard != null)
+                EventSystem.current.SetSelectedGameObject(selectedPhaseCard.button.gameObject);
+        }
         else if (mainMenuContent != null) mainMenuContent.SetActive(true);
     }
 
@@ -663,23 +736,40 @@ public class MenuButtonHoverSound : MonoBehaviour, IPointerEnterHandler
     }
 }
 
-public class MenuButtonVisualState : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
+public class MenuButtonVisualState : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler, ISelectHandler, IDeselectHandler
 {
     Image image;
     Sprite normalSprite;
     Sprite highlightedSprite;
     bool pointerInside;
     bool pointerDown;
+    bool selected;
+    bool ignoreInitialSelection;
+    bool ignoreFirstPointerEnter;
 
-    public void Initialize(Image targetImage, Sprite normal, Sprite highlighted)
+    public void Initialize(Image targetImage, Sprite normal, Sprite highlighted,
+        bool suppressInitialSelection = false, bool suppressFirstPointerEnter = false)
     {
         image = targetImage;
         normalSprite = normal;
         highlightedSprite = highlighted;
+        ignoreInitialSelection = suppressInitialSelection;
+        ignoreFirstPointerEnter = suppressFirstPointerEnter;
     }
 
     void OnEnable()
     {
+        pointerInside = false;
+        pointerDown = false;
+        selected = false;
+        RefreshSprite();
+    }
+
+    public void SuppressInitialFeedback(bool ignoreSelection, bool ignorePointerEnter)
+    {
+        ignoreInitialSelection = ignoreSelection;
+        ignoreFirstPointerEnter = ignorePointerEnter;
+        selected = false;
         pointerInside = false;
         pointerDown = false;
         RefreshSprite();
@@ -689,11 +779,17 @@ public class MenuButtonVisualState : MonoBehaviour, IPointerEnterHandler, IPoint
     {
         pointerInside = false;
         pointerDown = false;
+        selected = false;
         RefreshSprite();
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        if (ignoreFirstPointerEnter)
+        {
+            ignoreFirstPointerEnter = false;
+            return;
+        }
         pointerInside = true;
         RefreshSprite();
     }
@@ -718,9 +814,26 @@ public class MenuButtonVisualState : MonoBehaviour, IPointerEnterHandler, IPoint
         RefreshSprite();
     }
 
+    public void OnSelect(BaseEventData eventData)
+    {
+        if (ignoreInitialSelection)
+        {
+            ignoreInitialSelection = false;
+            return;
+        }
+        selected = true;
+        RefreshSprite();
+    }
+
+    public void OnDeselect(BaseEventData eventData)
+    {
+        selected = false;
+        RefreshSprite();
+    }
+
     void RefreshSprite()
     {
-        if (image != null) image.sprite = pointerInside || pointerDown ? highlightedSprite : normalSprite;
+        if (image != null) image.sprite = pointerInside || pointerDown || selected ? highlightedSprite : normalSprite;
     }
 }
 
