@@ -494,8 +494,7 @@ public class MenuController : MonoBehaviour
     void OpenDifficultyMenu()
     {
         if (difficultyMenu != null) return;
-        pendingDifficultySelection = null;
-        pendingDifficultyVisualState = null;
+        ClearPendingDifficulty();
         difficultyMenu = new GameObject("Seleção de dificuldade", typeof(RectTransform));
         difficultyMenu.transform.SetParent(menuRoot, false);
         SetFullRect(difficultyMenu.GetComponent<RectTransform>());
@@ -577,12 +576,12 @@ public class MenuController : MonoBehaviour
         // O primeiro clique escolhe a dificuldade; o segundo clique na mesma opção confirma.
         if (pendingDifficultySelection != selectedDifficulty)
         {
-            pendingDifficultyVisualState?.SetSelectedState(false);
+            ClearPendingDifficulty();
             pendingDifficultySelection = selectedDifficulty;
             pendingDifficultyVisualState = selectedOption != null
                 ? selectedOption.GetComponent<MenuButtonVisualState>()
                 : null;
-            pendingDifficultyVisualState?.SetSelectedState(true);
+            if (pendingDifficultyVisualState != null) pendingDifficultyVisualState.SetPending(true);
             return;
         }
 
@@ -601,8 +600,16 @@ public class MenuController : MonoBehaviour
         StartCoroutine(LoadGameAfterClick());
     }
 
+    void ClearPendingDifficulty()
+    {
+        if (pendingDifficultyVisualState != null) pendingDifficultyVisualState.SetPending(false);
+        pendingDifficultySelection = null;
+        pendingDifficultyVisualState = null;
+    }
+
     void CloseDifficultyMenu()
     {
+        ClearPendingDifficulty();
         if (difficultyMenu == null) return;
         Destroy(difficultyMenu);
         difficultyMenu = null;
@@ -763,6 +770,9 @@ public class MenuButtonVisualState : MonoBehaviour, IPointerEnterHandler, IPoint
     bool pointerInside;
     bool pointerDown;
     bool selected;
+    // escolha aguardando confirmacao, separada do foco e do hover
+    bool pending;
+    Outline pendingOutline;
     bool ignoreInitialSelection;
     bool ignoreFirstPointerEnter;
 
@@ -794,10 +804,17 @@ public class MenuButtonVisualState : MonoBehaviour, IPointerEnterHandler, IPoint
         RefreshSprite();
     }
 
-    public void SetSelectedState(bool value)
+    public void SetPending(bool value)
     {
-        ignoreInitialSelection = false;
-        selected = value;
+        pending = value;
+        if (pending && pendingOutline == null && image != null)
+        {
+            // contorno no formato do sprite, nao muda a area clicavel
+            pendingOutline = image.gameObject.AddComponent<Outline>();
+            pendingOutline.effectColor = new Color32(255, 222, 89, 255);
+            pendingOutline.effectDistance = new Vector2(5f, -5f);
+        }
+        if (pendingOutline != null) pendingOutline.enabled = pending;
         RefreshSprite();
     }
 
@@ -859,7 +876,7 @@ public class MenuButtonVisualState : MonoBehaviour, IPointerEnterHandler, IPoint
 
     void RefreshSprite()
     {
-        if (image != null) image.sprite = pointerInside || pointerDown || selected ? highlightedSprite : normalSprite;
+        if (image != null) image.sprite = pointerInside || pointerDown || selected || pending ? highlightedSprite : normalSprite;
     }
 }
 
@@ -983,7 +1000,7 @@ public class InfoPanel : MonoBehaviour
         Button repositoryButton = null;
         if (repositorySprite != null)
         {
-            repositoryButton = AddSpriteSwapButton(screen.transform, "GitHub do projeto", repositorySprite,
+            repositoryButton = AddVisualStateButton(screen.transform, "GitHub do projeto", repositorySprite,
                 repositorySelectedSprite, new Vector2(.40f, .22f), new Vector2(.60f, .33f),
                 () => Application.OpenURL(repositoryUrl));
             bool pointerOpensOverRepository = false;
@@ -1060,7 +1077,7 @@ public class InfoPanel : MonoBehaviour
         return text;
     }
 
-    static Button AddSpriteSwapButton(Transform parent, string name, Sprite normal, Sprite selected,
+    static Button AddVisualStateButton(Transform parent, string name, Sprite normal, Sprite selected,
         Vector2 min, Vector2 max, UnityEngine.Events.UnityAction action)
     {
         var buttonObject = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
@@ -1075,7 +1092,8 @@ public class InfoPanel : MonoBehaviour
         button.transition = Selectable.Transition.None;
         button.navigation = new Navigation { mode = Navigation.Mode.Automatic };
         var visualState = buttonObject.AddComponent<MenuButtonVisualState>();
-        visualState.Initialize(image, normal, selected);
+        // sem sprite selecionado o hover mantem o normal
+        visualState.Initialize(image, normal, selected != null ? selected : normal);
         if (uiAudioSource != null)
         {
             if (clickSound != null)
@@ -1090,7 +1108,7 @@ public class InfoPanel : MonoBehaviour
     {
         if (backSprite != null)
         {
-            return AddSpriteSwapButton(parent, "Voltar", backSprite,
+            return AddVisualStateButton(parent, "Voltar", backSprite,
                 backSelectedSprite != null ? backSelectedSprite : backSprite,
                 new Vector2(.40f, .015f), new Vector2(.60f, .115f), action);
         }
