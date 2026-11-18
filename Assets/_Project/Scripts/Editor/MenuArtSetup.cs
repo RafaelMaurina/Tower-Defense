@@ -79,10 +79,10 @@ public static class MenuArtSetup
         ConfigureImportersIn(PhaseArtFolder);
         ConfigureImportersIn(DifficultyArtFolder);
         ConfigureImportersIn(RankingArtFolder);
-        ConfigureImportersIn(SettingsArtFolder);
+        ConfigureImportersIn(SettingsArtFolder, 1024);
     }
 
-    static void ConfigureImportersIn(string folder)
+    static void ConfigureImportersIn(string folder, int maxTextureSize = 0)
     {
         foreach (string guid in AssetDatabase.FindAssets("t:Texture2D", new[] { folder.TrimEnd('/') }))
         {
@@ -94,13 +94,15 @@ public static class MenuArtSetup
                 || importer.filterMode != FilterMode.Point
                 || importer.mipmapEnabled
                 || !importer.alphaIsTransparency
-                || importer.textureCompression != TextureImporterCompression.Uncompressed;
+                || importer.textureCompression != TextureImporterCompression.Uncompressed
+                || (maxTextureSize > 0 && importer.maxTextureSize != maxTextureSize);
             importer.textureType = TextureImporterType.Sprite;
             importer.spriteImportMode = SpriteImportMode.Single;
             importer.filterMode = FilterMode.Point;
             importer.mipmapEnabled = false;
             importer.alphaIsTransparency = true;
             importer.textureCompression = TextureImporterCompression.Uncompressed;
+            if (maxTextureSize > 0) importer.maxTextureSize = maxTextureSize;
             if (changed) importer.SaveAndReimport();
         }
     }

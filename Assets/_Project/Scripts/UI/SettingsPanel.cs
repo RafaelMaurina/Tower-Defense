@@ -33,10 +33,12 @@ public class SettingsPanel : MonoBehaviour
     RectTransform backRect;
     System.Action onClosed;
     CanvasGroup blocked;
+    CanvasGroup frameGroup;
     GameObject confirmation;
     TMP_Text confirmationTimer, confirmationSeconds;
     float confirmationRemaining;
     bool closed;
+    int altEnterFrame = -10;
 
     public static bool IsOpenOrJustClosed => instance != null || closedFrame == Time.frameCount;
 
@@ -65,7 +67,8 @@ public class SettingsPanel : MonoBehaviour
         closed = true;
         closedFrame = Time.frameCount;
         instance = null;
-        GameSettings.Restore(committed);
+        if (confirmation != null) GameSettings.Restore(committed);
+        GameSettings.PersistAudio();
         if (blocked != null) { blocked.interactable = true; blocked.blocksRaycasts = true; }
         if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
         onClosed?.Invoke();
@@ -79,6 +82,17 @@ public class SettingsPanel : MonoBehaviour
     {
         if (closed) return;
         var keyboard = Keyboard.current;
+        if (keyboard != null && keyboard.altKey.isPressed &&
+            (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame))
+            altEnterFrame = Time.frameCount;
+        if (confirmation == null && altEnterFrame > 0 && Time.frameCount >= altEnterFrame + 2)
+        {
+            altEnterFrame = -10;
+            GameSettings.SyncFullScreen();
+            committed.fullScreen = GameSettings.FullScreen;
+            pendingFullscreen = committed.fullScreen;
+            Refresh();
+        }
         if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
         {
             if (confirmation != null) RevertVideo();
@@ -128,7 +142,7 @@ public class SettingsPanel : MonoBehaviour
         var dim = NewRect(transform, "Fundo", Vector2.zero, Vector2.one).gameObject.AddComponent<Image>();
         dim.color = new Color(.035f, .018f, .008f, .78f);
 
-        // Reutiliza a moldura de madeira do HUD, sem duplicar arte.
+        // Usa a arte propria do painel e a moldura de pausa como alternativa.
         var frame = NewRect(transform, "Moldura de configurações", new Vector2(.5f, .5f), new Vector2(.5f, .5f));
         frame.pivot = new Vector2(.5f, .5f);
         frame.sizeDelta = new Vector2(1080f, 800f);
@@ -139,6 +153,8 @@ public class SettingsPanel : MonoBehaviour
         frameImage.color = frameImage.sprite != null ? Color.white : Wood;
         frameImage.preserveAspect = true;
         frameImage.raycastTarget = true;
+        frameGroup = frame.gameObject.AddComponent<CanvasGroup>();
+        frame.anchoredPosition = new Vector2(0f, 32f);
 
         MakeSection(frame, "ÁUDIO", .70f, .77f);
         musicSlider = AddAudioRow(frame, "MÚSICA", .60f, committed.music, "icone_musica", "icone_musica_mutado", out musicIcon, out musicValue);
@@ -147,8 +163,8 @@ public class SettingsPanel : MonoBehaviour
         MakeSection(frame, "VÍDEO", .37f, .43f);
         AddResolutionRow(frame);
         AddDisplayModeButtons(frame);
-        AddApplyButton();
-        AddBackButton(transform);
+        AddApplyButton(frame);
+        AddBackButton(frame);
 
         Refresh();
         if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(musicSlider.gameObject);
@@ -189,7 +205,7 @@ public class SettingsPanel : MonoBehaviour
         slider.maxValue = 100;
         slider.SetValueWithoutNotify(Mathf.Round(value * 100f));
         slider.onValueChanged.AddListener(_ => PreviewAudio());
-        root.gameObject.AddComponent<SliderRelease>().onRelease = PlayTest;
+        root.gameObject.AddComponent<SliderRelease>().onRelease = () => { GameSettings.PersistAudio(); PlayTest(); };
 
         Image iconRef = icon;
         TMP_Text percentageRef = percentage;
@@ -210,7 +226,6 @@ public class SettingsPanel : MonoBehaviour
         GameSettings.PreviewVolumes(musicSlider.value / 100f, effectsSlider.value / 100f);
         committed.music = musicSlider.value / 100f;
         committed.sfx = effectsSlider.value / 100f;
-        GameSettings.Persist();
         UpdateApplyButton();
     }
 
@@ -358,7 +373,17 @@ public class SettingsPanel : MonoBehaviour
         image.preserveAspect = true;
         var button = rect.gameObject.AddComponent<Button>();
         button.targetGraphic = image;
-        button.transition = Selectable.Transition.None;
+        button.transition = Selectable.Transition.ColorTint;
+        button.colors = new ColorBlock
+        {
+            normalColor = Color.white,
+            highlightedColor = new Color32(255, 225, 170, 255),
+            selectedColor = new Color32(255, 225, 170, 255),
+            pressedColor = new Color32(255, 210, 140, 255),
+            disabledColor = Color.gray,
+            colorMultiplier = 1f,
+            fadeDuration = .08f
+        };
         AddHover(rect.gameObject);
         return button;
     }
@@ -370,9 +395,11 @@ public class SettingsPanel : MonoBehaviour
         PlayClick();
     }
 
-    void AddApplyButton()
+    void AddApplyButton(RectTransform frame)
     {
-        var rect = NewRect(transform, "Aplicar", new Vector2(.30f, .025f), new Vector2(.49f, .115f));
+        var rect = NewRect(frame, "Aplicar", new Vector2(.16f, 0f), new Vector2(.49f, 0f));
+        rect.offsetMin = new Vector2(0f, -82f);
+        rect.offsetMax = new Vector2(0f, -12f);
         applyImage = rect.gameObject.AddComponent<Image>();
         var normal = Resources.Load<Sprite>("SettingsMenu/botao_aplicar_normal");
         var selected = Resources.Load<Sprite>("SettingsMenu/botao_aplicar_selecionado");
@@ -389,9 +416,11 @@ public class SettingsPanel : MonoBehaviour
         applyButton = button;
     }
 
-    void AddBackButton(Transform canvas)
+    void AddBackButton(RectTransform frame)
     {
-        var rect = NewRect(canvas, "Voltar", new Vector2(.405f, .025f), new Vector2(.595f, .115f));
+        var rect = NewRect(frame, "Voltar", new Vector2(.51f, 0f), new Vector2(.84f, 0f));
+        rect.offsetMin = new Vector2(0f, -82f);
+        rect.offsetMax = new Vector2(0f, -12f);
         backRect = rect;
         var image = rect.gameObject.AddComponent<Image>();
         Sprite normal = Resources.Load<Sprite>("hud/voltar_normal");
@@ -409,13 +438,15 @@ public class SettingsPanel : MonoBehaviour
 
     void Apply()
     {
-        if (!HasPendingChanges()) return;
+        if (confirmation != null || !HasPendingChanges()) return;
         PlayClick();
         GameSettings.PreviewVolumes(musicSlider.value / 100f, effectsSlider.value / 100f);
         bool videoChanged = HasPendingVideoChanges();
         if (videoChanged)
         {
-            GameSettings.PreviewScreen(pendingResolution, pendingFullscreen);
+            Vector2Int previewResolution = committed.resolution == Vector2Int.zero &&
+                pendingResolution == GameSettings.CurrentResolution() ? Vector2Int.zero : pendingResolution;
+            GameSettings.PreviewScreen(previewResolution, pendingFullscreen);
             ShowVideoConfirmation();
         }
         else
@@ -428,6 +459,9 @@ public class SettingsPanel : MonoBehaviour
 
     void ShowVideoConfirmation()
     {
+        if (confirmation != null) return;
+        frameGroup.interactable = false;
+        frameGroup.blocksRaycasts = false;
         confirmationRemaining = VideoConfirmSeconds;
         confirmation = NewRect(transform, "Confirmar vídeo", Vector2.zero, Vector2.one).gameObject;
         var overlay = confirmation.AddComponent<Image>();
@@ -479,10 +513,14 @@ public class SettingsPanel : MonoBehaviour
 
     void ConfirmVideo()
     {
+        if (confirmation == null) return;
         if (confirmation != null) Destroy(confirmation);
         confirmation = null;
         confirmationTimer = null;
         confirmationSeconds = null;
+        frameGroup.interactable = true;
+        frameGroup.blocksRaycasts = true;
+        altEnterFrame = -10;
         GameSettings.Persist();
         committed = GameSettings.Capture();
         pendingResolution = committed.resolution.x > 0 ? committed.resolution : GameSettings.CurrentResolution();
@@ -494,11 +532,15 @@ public class SettingsPanel : MonoBehaviour
 
     void RevertVideo()
     {
+        if (confirmation == null) return;
         PlayClick();
         if (confirmation != null) Destroy(confirmation);
         confirmation = null;
         confirmationTimer = null;
         confirmationSeconds = null;
+        frameGroup.interactable = true;
+        frameGroup.blocksRaycasts = true;
+        altEnterFrame = -10;
         GameSettings.Restore(committed);
         pendingResolution = GameSettings.CurrentResolution();
         pendingFullscreen = committed.fullScreen;
@@ -531,11 +573,9 @@ public class SettingsPanel : MonoBehaviour
         applyButton.interactable = showApply;
         if (backRect != null)
         {
-            backRect.anchorMin = new Vector2(showApply ? .51f : .405f, .025f);
-            backRect.anchorMax = new Vector2(showApply ? .70f : .595f, .115f);
+            backRect.anchorMin = new Vector2(showApply ? .51f : .335f, 0f);
+            backRect.anchorMax = new Vector2(showApply ? .84f : .665f, 0f);
         }
-        // Deixe o sprite visível mesmo quando não há alterações; o Button continua
-        // desabilitado até existir algo para aplicar.
         applyImage.color = Color.white;
     }
 
