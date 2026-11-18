@@ -68,7 +68,7 @@ public static class MontarNiveis
             canteiros = P(4,13, 7,10, 10,6, 12,4, 14,6, 17,9, 19,12, 20,10, 22,7),
             plantacao = P(2,2, 4,2),
             poco = new Vector2Int(11, 8), casa = new Vector2(26f, 12.4f),
-            cogumelos = P(7,3, 18,2, 13,11, 28,10),
+            cogumelos = P(9,3, 18,2, 13,11, 28,10),
             milho     = P(), milharal = new Vector2Int(10, 21),
             macieiras = P(0,8, 7,13), laranjeiras = P(19,6),
             galinheiro = new Vector2Int(13,1), galinha = new Vector2Int(11,1), galo = new Vector2Int(16,2),
@@ -82,7 +82,7 @@ public static class MontarNiveis
             plantacao = P(20,1, 22,1),
             poco = new Vector2Int(13, 9), casa = new Vector2(1.4f, 13.4f),
             cogumelos = P(9,6, 8,1, 27,12, 14,12),
-            milho     = P(25,1, 26,1, 27,1, 28,1),
+            milho     = P(26,1, 27,1, 28,1, 29,1),
             macieiras = P(1,10), laranjeiras = P(27,3),
             galinheiro = new Vector2Int(13,1), galinha = new Vector2Int(12,2), galo = new Vector2Int(15,1),
             pasto = new Vector2(2.1f, 7.2f) },
@@ -494,12 +494,13 @@ public static class MontarNiveis
 
         estacaoAtual = nv.estacao;
 
-        // fazendeiro de chapeu capinando, na grama a esquerda do primeiro bloco da plantacao, no meio da fileira de baixo
-        // (o campus nao tem plantacao, entao nao tem fazendeiro). Pe a 0,42 casa do bloco, em pixel inteiro (1/32).
+        // fazendeiro de chapeu capinando dentro do cercado da plantacao, ao lado dos blocos, abrindo um canteiro novo
+        // (o campus nao tem plantacao, entao nao tem fazendeiro). Pe em pixel inteiro (1/32).
         if (nv.plantacao.Length > 0)
         {
-            Vector2Int bloco = nv.plantacao[0];
-            var fazendeiro = Sprite_(grupo, Est_(nv, "Props/prop_fazendeiro_1"), new Vector3(Mathf.Round((bloco.x - .42f) * 32f) / 32f, bloco.y + .5f, 0f), -1).AddComponent<FarmerHoe>();
+            PlantacaoLimites(nv, out _, out int fx1, out int fy0, out _);
+            var posFazendeiro = new Vector3(Mathf.Round((fx1 + .7f) * 32f) / 32f, fy0 + .9f, 0f);
+            var fazendeiro = Sprite_(grupo, Est_(nv, "Props/prop_fazendeiro_1"), posFazendeiro, -1).AddComponent<FarmerHoe>();
             fazendeiro.frames = new Sprite[7];
             for (int i = 0; i < 7; i++)
                 fazendeiro.frames[i] = Bicho_("prop_fazendeiro_" + (i + 1));
@@ -597,22 +598,28 @@ public static class MontarNiveis
         gato.facesLeft = true;
         gato.radius = .8f;
 
-        // cerquinha so no lado de tras (y maior) da plantacao: pecas _3x de 1,5 casa, centradas na largura dela
+        // cercado em volta da plantacao, com folga de meia casa e mais uma casa a direita (onde o fazendeiro abre um
+        // canteiro novo). Pecas _3x: lados de cima e de baixo de 1,5 casa, com um portao no meio de cada um; as
+        // laterais sao as pecas de frente, empilhadas.
         if (nv.plantacao.Length > 0)
         {
-            int px0 = int.MaxValue, px1 = int.MinValue, py1 = int.MinValue;
-            foreach (var c in nv.plantacao)
-            {
-                px0 = Mathf.Min(px0, c.x);
-                px1 = Mathf.Max(px1, c.x + 2);
-                py1 = Mathf.Max(py1, c.y + 2);
-            }
-            int pecas = Mathf.CeilToInt((px1 - px0) / 1.5f);
-            float inicio = (px0 + px1) / 2f - pecas * 0.75f;
-            var cercaPlantacao = new GameObject("CercaPlantacao").transform;
-            cercaPlantacao.SetParent(grupo);
-            for (int i = 0; i < pecas; i++)
-                Sprite_(cercaPlantacao, "Cerca/cerca_lado_" + (i % 3 + 1) + "_3x", new Vector3(inicio + 0.75f + i * 1.5f, py1 + 0.1f, 0f), -1);
+            PlantacaoLimites(nv, out int px0, out int px1, out int py0, out int py1);
+            float esq = px0 - .5f, dir = px1 + 1.5f, baixo = py0 - .4f, cima = py1 + .1f;
+            var cercado = new GameObject("CercadoPlantacao").transform;
+            cercado.SetParent(grupo);
+            int pecas = Mathf.CeilToInt((dir - esq) / 1.5f);
+            float inicio = (esq + dir) / 2f - pecas * .75f;
+            foreach (float y in new[] { baixo, cima })
+                for (int i = 0; i < pecas; i++)
+                {
+                    string peca = i == pecas / 2 ? "Cerca/portao_" + nv.estacao + "_3x" : "Cerca/cerca_lado_" + nv.estacao + "_3x";
+                    Sprite_(cercado, peca, new Vector3(inicio + .75f + i * 1.5f, y, 0f), -1);
+                }
+            int trechos = Mathf.CeilToInt((cima - baixo) / 1.64f);
+            float passo = (cima - baixo) / trechos;
+            foreach (float x in new[] { esq, dir })
+                for (int j = 0; j < trechos; j++)
+                    Sprite_(cercado, "Cerca/cerca_frente_" + nv.estacao + "_3x", new Vector3(x, baixo + j * passo, 0f), -1);
         }
 
         if (nv.campus) CriarPostes(nv, grupo);
@@ -721,6 +728,19 @@ public static class MontarNiveis
 
 // Desenho da estacao do nivel: a sombra de cada um combina com a grama da fase (estacao 2 e 3 usam
     // o arquivo com sufixo _2 ou _3; a estacao 1 usa o nome puro). Sem o arquivo da estacao, cai no puro.
+    // Limites da plantacao em casas: x de px0 a px1, y de py0 a py1 (borda de cima).
+    static void PlantacaoLimites(Nivel nv, out int px0, out int px1, out int py0, out int py1)
+    {
+        px0 = int.MaxValue; px1 = int.MinValue; py0 = int.MaxValue; py1 = int.MinValue;
+        foreach (var c in nv.plantacao)
+        {
+            px0 = Mathf.Min(px0, c.x);
+            px1 = Mathf.Max(px1, c.x + 2);
+            py0 = Mathf.Min(py0, c.y);
+            py1 = Mathf.Max(py1, c.y + 2);
+        }
+    }
+
     static string Est_(Nivel nv, string caminho)
     {
         if (nv.estacao > 1 && AssetDatabase.LoadAssetAtPath<Sprite>(SPR + caminho + "_" + nv.estacao + ".png") != null)
