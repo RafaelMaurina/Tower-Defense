@@ -32,6 +32,8 @@ public class CameraZoom : MonoBehaviour
     static readonly Color DayBorder = new Color32(52, 92, 40, 255), NightBorder = new Color32(8, 10, 18, 255);
 
     float baseSize, targetZoom = 1f, currentZoom = 1f;
+    float viewAspect = 16f / 9f;   // proporcao da janela (de Screen); fonte unica de homeHalf e Half(), nunca cam.aspect
+    static CameraZoom owner;       // so a camera atual zera o Zoom estatico ao ser destruida
     Vector2Int lastScreen;
     Vector2 focusNdc;
     Vector3 homePosition;
@@ -47,15 +49,21 @@ public class CameraZoom : MonoBehaviour
         cam.clearFlags = CameraClearFlags.SolidColor;
         bool night = SceneManager.GetActiveScene().name == CampaignProgress.BonusScene || GameManager.Difficulty == GameDifficulty.Hard;
         cam.backgroundColor = night ? NightBorder : DayBorder;
+        owner = this;
         RefreshFraming();
         Zoom = 1f;
     }
 
+    // No Windows a janela/tela cheia pode ainda estar mudando durante o Awake: reenquadra no primeiro quadro.
+    void Start() => RefreshFraming();
+
     /// Escolhe entre pixel perfect (janela multiplo exato do 960x540) e ajuste continuo ao mapa inteiro.
     void RefreshFraming()
     {
+        if (Screen.width <= 0 || Screen.height <= 0) return;   // janela minimizada: tenta de novo quando voltar
         lastScreen = new Vector2Int(Screen.width, Screen.height);
         float aspect = (float)Screen.width / Screen.height;
+        viewAspect = aspect;
         float scale = Mathf.Min(Screen.width / RefWidth, Screen.height / RefHeight);
         bool exact = Mathf.Abs(scale - Mathf.Round(scale)) < .001f && Mathf.Abs(aspect - RefWidth / RefHeight) < .01f;
 
@@ -70,12 +78,19 @@ public class CameraZoom : MonoBehaviour
         if (pixelPerfect != null) pixelPerfect.enabled = exact && currentZoom <= 1f;
         exactFraming = exact;
         cam.orthographicSize = baseSize / currentZoom;
-        homeHalf = new Vector2(baseSize * cam.aspect, baseSize);
+        homeHalf = new Vector2(baseSize * viewAspect, baseSize);
+        Debug.Log($"[CameraZoom] tela {Screen.width}x{Screen.height} cam.aspect {cam.aspect:0.000} aspect {viewAspect:0.000} " +
+            $"baseSize {baseSize:0.000} homeHalf {homeHalf} exato {exact}");
         Place((Vector2)transform.position);
     }
     bool exactFraming;
 
-    void OnDestroy() => Zoom = 1f;
+    void OnDestroy()
+    {
+        if (owner != this) return;
+        owner = null;
+        Zoom = 1f;
+    }
 
     void Update()
     {
@@ -108,6 +123,8 @@ public class CameraZoom : MonoBehaviour
         currentZoom = Mathf.Lerp(currentZoom, targetZoom, 1f - Mathf.Exp(-Smoothing * Time.unscaledDeltaTime));
         if (Mathf.Abs(currentZoom - targetZoom) < .002f) currentZoom = targetZoom;
         Zoom = currentZoom;
+        if (previous <= 1f && currentZoom > 1f)
+            Debug.Log($"[CameraZoom] ampliando: alvo {targetZoom:0.00} folga max {Vector2.Max(Vector2.zero, Vector2.Min(homeHalf, new Vector2(MapWidth / 2f, MapHeight / 2f)) - Half(targetZoom))}");
 
         // mantem o ponto do mapa sob o cursor no mesmo lugar da tela
         Vector2 focus = (Vector2)transform.position + Vector2.Scale(focusNdc, Half(previous));
@@ -128,22 +145,22 @@ public class CameraZoom : MonoBehaviour
             if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) move.y -= 1f;
             if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed) move.y += 1f;
         }
-        Vector2 position = (Vector2)transform.position + move * (KeyPanSpeed / Zoom * Time.unscaledDeltaTime);
+        Vector2 position = (Vector2)transform.position + move * (KeyPanSpeed / currentZoom * Time.unscaledDeltaTime);
         if (Mouse.current != null && Mouse.current.middleButton.isPressed)
         {
-            float worldPerPixel = 2f * Half(Zoom).y / Screen.height;
+            float worldPerPixel = 2f * Half(currentZoom).y / Screen.height;
             position -= Mouse.current.delta.ReadValue() * worldPerPixel;
         }
         Place(position);
     }
 
-    Vector2 Half(float zoom) => new Vector2(baseSize * cam.aspect, baseSize) / zoom;
+    Vector2 Half(float zoom) => new Vector2(baseSize * viewAspect, baseSize) / zoom;
 
     void Place(Vector2 position)
     {
         // o limite e o mapa (30x17), nao o enquadramento de 1x: onde sobra faixa (ultrawide, 16:10), com zoom
         // nao da para arrastar a camera para dentro dela. O Max(0) evita min maior que max no Clamp.
-        Vector2 room = Vector2.Max(Vector2.zero, Vector2.Min(homeHalf, new Vector2(MapWidth / 2f, MapHeight / 2f)) - Half(Zoom));
+        Vector2 room = Vector2.Max(Vector2.zero, Vector2.Min(homeHalf, new Vector2(MapWidth / 2f, MapHeight / 2f)) - Half(currentZoom));
         position.x = Mathf.Clamp(position.x, homePosition.x - room.x, homePosition.x + room.x);
         position.y = Mathf.Clamp(position.y, homePosition.y - room.y, homePosition.y + room.y);
         transform.position = new Vector3(position.x, position.y, homePosition.z);
