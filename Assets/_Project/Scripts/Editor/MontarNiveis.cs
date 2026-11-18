@@ -39,6 +39,7 @@ public static class MontarNiveis
         public Vector2Int poco;
         public Vector2 casa;      // casa da fazenda, no alto do cenario (pe no meio da base); fora do campus
         public RectInt celeiro;   // area reservada para o celeiro, encostada no fim do caminho
+        public Vector2Int milharal; // de x a y (casas): milharal em 2 fileiras desencontradas na frente da cerca de cima; 0,0 = sem
         public bool campus;       // fase bonus: asfalto com meio-fio, postes com luz, sem plantacao, galinheiro nem milho
         public Vector2Int[] postes;   // so no campus: casa de grama de cada poste; o pe fica a 1/4 de casa da base dela
     }
@@ -60,16 +61,16 @@ public static class MontarNiveis
     // Deixe 2 casas de grama entre ela e a estrada: a grama em volta ganha borda de terra.
     static readonly Nivel[] NIVEIS =
     {
-        // Primavera: zigue-zague com 6 curvas. 10 canteiros.
+        // Primavera: zigue-zague com 6 curvas. 9 canteiros.
         new Nivel { id = 1, nome = "Primavera", estacao = 1, cultura = "tile_cenoura",
             caminhos  = new[] { P(-1,12, 8,12, 8,5, 16,5, 16,11, 23,11, 23,5, 25,5) },
             celeiro   = new RectInt(26, 4, 4, 4),
-            canteiros = P(4,13, 7,10, 10,6, 12,4, 14,6, 17,9, 19,12, 20,10, 22,7, 24,2),
+            canteiros = P(4,13, 7,10, 10,6, 12,4, 14,6, 17,9, 19,12, 20,10, 22,7),
             plantacao = P(2,2, 4,2),
             poco = new Vector2Int(11, 8), casa = new Vector2(26f, 12.4f),
             cogumelos = P(7,3, 18,2, 13,11, 28,10),
-            milho     = P(26,1, 27,1, 28,1, 29,1),
-            macieiras = P(0,8), laranjeiras = P(19,6),
+            milho     = P(), milharal = new Vector2Int(10, 21),
+            macieiras = P(0,8, 7,13), laranjeiras = P(19,6),
             galinheiro = new Vector2Int(13,1), galinha = new Vector2Int(11,1), galo = new Vector2Int(16,2),
             pasto = new Vector2(4.9f, 7.6f) },
 
@@ -492,6 +493,17 @@ public static class MontarNiveis
                 }
 
         estacaoAtual = nv.estacao;
+
+        // fazendeiro de chapeu capinando, na grama a esquerda do primeiro bloco da plantacao, no meio da fileira de baixo
+        // (o campus nao tem plantacao, entao nao tem fazendeiro). Pe a 0,42 casa do bloco, em pixel inteiro (1/32).
+        if (nv.plantacao.Length > 0)
+        {
+            Vector2Int bloco = nv.plantacao[0];
+            var fazendeiro = Sprite_(grupo, Est_(nv, "Props/prop_fazendeiro_1"), new Vector3(Mathf.Round((bloco.x - .42f) * 32f) / 32f, bloco.y + .5f, 0f), -1).AddComponent<FarmerHoe>();
+            fazendeiro.frames = new Sprite[7];
+            for (int i = 0; i < 7; i++)
+                fazendeiro.frames[i] = Bicho_("prop_fazendeiro_" + (i + 1));
+        }
         // props de pivo no pe apoiam na base da casa; o poco (2x2, PPU 32) centra entre as duas casas
         Sprite_(grupo, Est_(nv, "Props/prop_poco"), new Vector3(nv.poco.x + 1f, nv.poco.y, 0f), -1);
         // casa da fazenda no alto do cenario, maior que o celeiro (PPU 8: uns 7,3 x 5,4 casas); encostada no canto, o que
@@ -508,6 +520,18 @@ public static class MontarNiveis
             vento.fixedFraction = .25f;
             vento.frameTime = .28f;
         }
+
+        // milharal na frente da cerca de cima: fileira de tras numa casa inteira, a da frente meia casa adiantada e
+        // meia casa mais baixa, para nao formar grade; passa por baixo da HUD, e so enfeite
+        if (nv.milharal != Vector2Int.zero)
+            for (int fileira = 0; fileira < 2; fileira++)
+                for (int x = nv.milharal.x; x <= nv.milharal.y - fileira; x++)
+                {
+                    var pe = Sprite_(grupo, "Props/prop_milho", new Vector3(x + .5f + fileira * .5f, 15.1f - fileira * .5f, 0f), -1).AddComponent<PixelSway>();
+                    pe.amplitude = 2;
+                    pe.fixedFraction = .25f;
+                    pe.frameTime = .28f;
+                }
 
         // galinheiro (PPU 21,33) ocupa uns 2,3 x 2,6 casas, pe no meio de c.x + 1; galinha e galo, uma casa.
         // arvores: desenho de 64 px em PPU 16, uns 2,8 casas de copa por 3,6 de altura, pe no meio de c.x + 1
