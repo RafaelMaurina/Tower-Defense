@@ -26,6 +26,7 @@ public class CameraZoom : MonoBehaviour
     // O mapa tem 30x17 casas em todas as fases (fixo de proposito: a posicao da camera nao e fonte confiavel).
     // A altura (17) entra pelo piso de baseSize, ver RefreshFraming.
     const float MapWidth = 30f;
+    const float MapHeight = 17f;
     // Onde sobrar tela: verde de grama de dia; de noite (Campus e dificuldade Dificil) a luz nao alcanca
     // o fundo, entao ele e quase preto para nao brilhar fora do mapa.
     static readonly Color DayBorder = new Color32(52, 92, 40, 255), NightBorder = new Color32(8, 10, 18, 255);
@@ -140,7 +141,9 @@ public class CameraZoom : MonoBehaviour
 
     void Place(Vector2 position)
     {
-        Vector2 room = homeHalf - Half(Zoom);
+        // o limite e o mapa (30x17), nao o enquadramento de 1x: onde sobra faixa (ultrawide, 16:10), com zoom
+        // nao da para arrastar a camera para dentro dela. O Max(0) evita min maior que max no Clamp.
+        Vector2 room = Vector2.Max(Vector2.zero, Vector2.Min(homeHalf, new Vector2(MapWidth / 2f, MapHeight / 2f)) - Half(Zoom));
         position.x = Mathf.Clamp(position.x, homePosition.x - room.x, homePosition.x + room.x);
         position.y = Mathf.Clamp(position.y, homePosition.y - room.y, homePosition.y + room.y);
         transform.position = new Vector3(position.x, position.y, homePosition.z);
