@@ -61,7 +61,8 @@ public class Guardian : MonoBehaviour
         if (tower == null) { Destroy(gameObject); return; }
 
         // Mantem o alvo enquanto ele vive e esta no alcance; senao pede outro para a torre.
-        if (target == null || !target.IsAlive ||
+        if (tower.Zeroed) target = null;   // nota 0 do Rieder: volta para a casinha e nao morde
+        else if (target == null || !target.IsAlive ||
             Vector3.Distance(tower.transform.position, target.Transform.position) > tower.Stats.range)
             target = tower.FindTarget();
 
