@@ -44,6 +44,7 @@ public class Tower : MonoBehaviour
         if (value)
         {
             if (zeroMark == null) zeroMark = ZeroMark.Create(transform);
+            else ZeroMark.Place(zeroMark, transform);
             zeroMark.SetActive(true);
         }
         else if (zeroMark != null) zeroMark.SetActive(false);
