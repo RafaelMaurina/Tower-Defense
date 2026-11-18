@@ -89,20 +89,27 @@ public static class MenuArtSetup
             string path = AssetDatabase.GUIDToAssetPath(guid);
             var importer = AssetImporter.GetAtPath(path) as TextureImporter;
             if (importer == null) continue;
+            int textureLimit = maxTextureSize;
+            if (folder == SettingsArtFolder)
+            {
+                string file = System.IO.Path.GetFileName(path);
+                textureLimit = file.StartsWith("icone_") ? 128 :
+                    file.Contains("moldura_principal") ? 1024 : 512;
+            }
             bool changed = importer.textureType != TextureImporterType.Sprite
                 || importer.spriteImportMode != SpriteImportMode.Single
                 || importer.filterMode != FilterMode.Point
                 || importer.mipmapEnabled
                 || !importer.alphaIsTransparency
                 || importer.textureCompression != TextureImporterCompression.Uncompressed
-                || (maxTextureSize > 0 && importer.maxTextureSize != maxTextureSize);
+                || (textureLimit > 0 && importer.maxTextureSize != textureLimit);
             importer.textureType = TextureImporterType.Sprite;
             importer.spriteImportMode = SpriteImportMode.Single;
             importer.filterMode = FilterMode.Point;
             importer.mipmapEnabled = false;
             importer.alphaIsTransparency = true;
             importer.textureCompression = TextureImporterCompression.Uncompressed;
-            if (maxTextureSize > 0) importer.maxTextureSize = maxTextureSize;
+            if (textureLimit > 0) importer.maxTextureSize = textureLimit;
             if (changed) importer.SaveAndReimport();
         }
     }
