@@ -12,6 +12,7 @@ public static class MenuArtSetup
     const string PhaseArtFolder = "Assets/_Project/Resources/MenuPhase/";
     const string DifficultyArtFolder = "Assets/_Project/Resources/MenuDificuldade/";
     const string RankingArtFolder = "Assets/_Project/Resources/Ranking/";
+    const string SettingsArtFolder = "Assets/_Project/Resources/SettingsMenu/";
 
     static MenuArtSetup() => EditorApplication.delayCall += ConfigureResourceImporters;
 
@@ -78,27 +79,37 @@ public static class MenuArtSetup
         ConfigureImportersIn(PhaseArtFolder);
         ConfigureImportersIn(DifficultyArtFolder);
         ConfigureImportersIn(RankingArtFolder);
+        ConfigureImportersIn(SettingsArtFolder, 1024);
     }
 
-    static void ConfigureImportersIn(string folder)
+    static void ConfigureImportersIn(string folder, int maxTextureSize = 0)
     {
         foreach (string guid in AssetDatabase.FindAssets("t:Texture2D", new[] { folder.TrimEnd('/') }))
         {
             string path = AssetDatabase.GUIDToAssetPath(guid);
             var importer = AssetImporter.GetAtPath(path) as TextureImporter;
             if (importer == null) continue;
+            int textureLimit = maxTextureSize;
+            if (folder == SettingsArtFolder)
+            {
+                string file = System.IO.Path.GetFileName(path);
+                textureLimit = file.StartsWith("icone_") ? 128 :
+                    file.Contains("moldura_principal") ? 1024 : 512;
+            }
             bool changed = importer.textureType != TextureImporterType.Sprite
                 || importer.spriteImportMode != SpriteImportMode.Single
                 || importer.filterMode != FilterMode.Point
                 || importer.mipmapEnabled
                 || !importer.alphaIsTransparency
-                || importer.textureCompression != TextureImporterCompression.Uncompressed;
+                || importer.textureCompression != TextureImporterCompression.Uncompressed
+                || (textureLimit > 0 && importer.maxTextureSize != textureLimit);
             importer.textureType = TextureImporterType.Sprite;
             importer.spriteImportMode = SpriteImportMode.Single;
             importer.filterMode = FilterMode.Point;
             importer.mipmapEnabled = false;
             importer.alphaIsTransparency = true;
             importer.textureCompression = TextureImporterCompression.Uncompressed;
+            if (textureLimit > 0) importer.maxTextureSize = textureLimit;
             if (changed) importer.SaveAndReimport();
         }
     }

@@ -1,59 +1,107 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// Configuracoes do jogador (volume de musica, volume de efeitos, mudo, resolucao e modo de tela),
+/// Configuracoes do jogador (volume de musica, volume de efeitos, resolucao e modo de tela),
 /// guardadas em PlayerPrefs e aplicadas ao abrir o jogo. Padrao: tela cheia na resolucao do monitor,
 /// musica em 60% e efeitos em 80%.
 /// Efeitos: SoundBank e os sons da interface multiplicam o volume por GameSettings.Sfx.
 /// Musica: MusicPlayer usa GameSettings.Music.
 public static class GameSettings
 {
-    const string MusicKey = "cfg_musica", SfxKey = "cfg_efeitos", MuteKey = "cfg_mudo",
+    const string MusicKey = "cfg_musica", SfxKey = "cfg_efeitos",
         WidthKey = "cfg_res_w", HeightKey = "cfg_res_h", FullKey = "cfg_tela_cheia";
     public const float DefaultMusic = .6f, DefaultSfx = .8f;
     const float WindowLimit = .85f;   // fracao maxima do monitor que a janela ocupa
 
     public static event System.Action OnChanged;
 
+    public struct Snapshot
+    {
+        public float music, sfx;
+        public bool fullScreen;
+        public Vector2Int resolution;
+    }
+
     static float music = DefaultMusic, sfx = DefaultSfx;
-    static bool muted, fullScreen = true;
+    static bool fullScreen = true;
     static Vector2Int resolution;   // (0,0) = resolucao da area de trabalho
 
     /// 0..1
-    /// Os volumes so mudam em memoria (o slider dispara a cada passo); chame Persist() ao soltar o slider.
+    /// Os volumes so mudam em memoria (o slider dispara a cada passo); chame Persist() para gravar.
     public static float MusicVolume { get => music; set { music = Mathf.Clamp01(value); OnChanged?.Invoke(); } }
     /// 0..1
     public static float SfxVolume { get => sfx; set { sfx = Mathf.Clamp01(value); OnChanged?.Invoke(); } }
-    public static bool Muted { get => muted; set { muted = value; Save(); } }
     public static bool FullScreen => fullScreen;
     public static Vector2Int Resolution => resolution;
 
-    /// Volume final da musica, ja com o mudo.
-    public static float Music => muted ? 0f : music;
-    /// Multiplicador final dos efeitos, ja com o mudo.
-    public static float Sfx => muted ? 0f : sfx;
+    public static Snapshot Capture() => new Snapshot
+    {
+        music = music, sfx = sfx, fullScreen = fullScreen, resolution = resolution
+    };
+
+    /// Pre-visualiza volumes sem salvar. O painel grava ao soltar o slider ou fechar.
+    public static void PreviewVolumes(float musicValue, float sfxValue)
+    {
+        music = Mathf.Clamp01(musicValue);
+        sfx = Mathf.Clamp01(sfxValue);
+        OnChanged?.Invoke();
+    }
+
+    /// Pre-visualiza video sem salvar para permitir a confirmacao temporaria da tela.
+    public static void PreviewScreen(Vector2Int size, bool useFullScreen)
+    {
+        resolution = size;
+        fullScreen = useFullScreen;
+        ApplyScreen();
+        OnChanged?.Invoke();
+    }
+
+    /// Restaura uma captura anterior, aplicando novamente o modo de tela.
+    public static void Restore(Snapshot snapshot)
+    {
+        music = snapshot.music;
+        sfx = snapshot.sfx;
+        fullScreen = snapshot.fullScreen;
+        resolution = snapshot.resolution;
+        ApplyScreen();
+        OnChanged?.Invoke();
+    }
+
+    /// O volume zero de cada slider silencia o canal correspondente.
+    public static float Music => music;
+    public static float Sfx => sfx;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void Init()
     {
         music = PlayerPrefs.GetFloat(MusicKey, DefaultMusic);
         sfx = PlayerPrefs.GetFloat(SfxKey, DefaultSfx);
-        muted = PlayerPrefs.GetInt(MuteKey, 0) == 1;
         fullScreen = PlayerPrefs.GetInt(FullKey, 1) == 1;
         resolution = new Vector2Int(PlayerPrefs.GetInt(WidthKey, 0), PlayerPrefs.GetInt(HeightKey, 0));
         ApplyScreen();
     }
 
-    /// Grava tudo em PlayerPrefs (volumes: chamar ao soltar o slider ou fechar o painel).
+    /// Grava tudo em PlayerPrefs quando o jogador confirma as alterações.
     public static void Persist()
     {
-        PlayerPrefs.SetFloat(MusicKey, music);
-        PlayerPrefs.SetFloat(SfxKey, sfx);
-        PlayerPrefs.SetInt(MuteKey, muted ? 1 : 0);
+        WriteAudioPreferences();
         PlayerPrefs.SetInt(FullKey, fullScreen ? 1 : 0);
         PlayerPrefs.SetInt(WidthKey, resolution.x);
         PlayerPrefs.SetInt(HeightKey, resolution.y);
         PlayerPrefs.Save();
+    }
+
+    /// Salva o audio sem gravar uma resolucao ainda em confirmacao.
+    public static void PersistAudio()
+    {
+        WriteAudioPreferences();
+        PlayerPrefs.Save();
+    }
+
+    static void WriteAudioPreferences()
+    {
+        PlayerPrefs.SetFloat(MusicKey, music);
+        PlayerPrefs.SetFloat(SfxKey, sfx);
     }
 
     static void Save()
@@ -98,20 +146,6 @@ public static class GameSettings
     {
         if (resolution.x > 0 && resolution.y > 0) return resolution;
         return Desktop();
-    }
-
-    public static void SetResolution(Vector2Int size)
-    {
-        resolution = size;
-        ApplyScreen();
-        Save();
-    }
-
-    public static void SetFullScreen(bool value)
-    {
-        fullScreen = value;
-        ApplyScreen();
-        Save();
     }
 
     static void ApplyScreen()
