@@ -13,6 +13,9 @@ public class AnimalWander : MonoBehaviour
     public float radius = .9f;           // ate onde se afasta do ponto inicial, em casas
     public float speed = .35f;           // casas por segundo (vaca anda devagar)
     public float frameTime = .26f;       // tempo de cada quadro do andar
+    // limites onde ele pode estar (cerca do cercado, borda do mapa) e retangulos que ele nao atravessa (tronco de arvore)
+    public Vector2 minPos = new Vector2(.6f, 1.15f), maxPos = new Vector2(29.4f, 15.3f);
+    public Rect[] blocks;
 
     static readonly float[] Waits = { 3f, 5f, 10f };
 
@@ -71,12 +74,26 @@ public class AnimalWander : MonoBehaviour
         if (r.sqrMagnitude < .09f)                                       // caminhada minima: 0,3 casa
             r = (r.sqrMagnitude < 1e-6f ? Vector2.right : r.normalized) * .3f;
         goal = home + new Vector3(r.x, r.y * .5f, 0f);
-        goal.x = Mathf.Clamp(goal.x, .6f, 29.4f);   // nunca passa da cerca nem da borda
-        goal.y = Mathf.Clamp(goal.y, 1.15f, 15.3f);
+        goal.x = Mathf.Clamp(goal.x, minPos.x, maxPos.x);   // nunca passa da cerca nem da borda
+        goal.y = Mathf.Clamp(goal.y, minPos.y, maxPos.y);
+        if (PathBlocked(goal)) { Rest(); return; }          // tronco no caminho: fica onde esta
         if (Mathf.Abs(goal.x - position.x) > .01f)
             sr.flipX = (goal.x < position.x) != facesLeft;
         state = State.Walk;
         clock = 0f;
+    }
+
+    // O caminho reto ate o destino cruza algum retangulo bloqueado?
+    bool PathBlocked(Vector3 to)
+    {
+        if (blocks == null) return false;
+        for (int i = 0; i <= 8; i++)
+        {
+            Vector2 p = Vector2.Lerp(position, to, i / 8f);
+            foreach (Rect r in blocks)
+                if (r.Contains(p)) return true;
+        }
+        return false;
     }
 
     void StartGraze()

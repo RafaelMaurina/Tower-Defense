@@ -47,12 +47,27 @@ public static class MontarNiveis
         public Vector2Int[] cenourasNaTerra; // canteiros (de 1 casa) do bloco so de terra que levam cenoura; o resto fica de terra limpa
         public Vector4[] cercasFinas;      // cercas descendo (peca de frente inteira de 3 casas, presa pelo topo): (x, -, -, y do topo)
         public int linhaOculta = -1;       // fileira (y) de canteiros da plantacao que nao entra: a do alto, sem cenoura
+        public Vector2[] baldes;           // baldes soltos (pe)
         public Vector2[] cochos;           // cochos de agua soltos (pe)
         public Vector2[] macieirasSoltas;  // macieiras em posicao exata (pe), para o pomar nao ficar na regua
         public Vector2[] postesCurtos;     // meia peca de frente (poste liso de 1,5 casa): (x, y do pe)
         public Vector2[] fazendeiroParado; // fazendeiro sem enxada, parado (pe)
         public Vector4[] cercasAtras;      // cercas horizontais desenhadas atras das plantacoes (o trigo passa na frente)
         public Vector4 areaGalinhas;       // (x min, y min, x max, y max) onde galinha e galo ciscam; zero = livre
+        public Vector2Int[] plantioExtra;  // canteiros (de 1 casa) a mais da cultura da fase, fora dos blocos 2x2
+        public Vector2[] fenos, porcos;    // fardos de feno e porcos soltos (pe)
+        public Vector2[] porcosDireita;    // porcos soltos que comecam virados para a direita
+        public Vector2Int[] plantioVazio;  // canteiros (de 1 casa) so de terra arada, sem planta
+        public Vector4[] cercasPortao;     // cercas horizontais (x0, y, x1, y) com um portao no meio
+        public bool fazendeiroEspelhado;   // o fazendeiro capina para a esquerda (desenho espelhado)
+        public Vector4[] cercasDoisPortoes; // cercas horizontais (x0, y, x1, y) com dois portoes juntos no meio
+        public Vector2[] vacasPretas;      // vacas pretas passeando e pastando (pe)
+        public Vector2[] vacasPretasDormindo; // vacas pretas deitadas dormindo (pe)
+        public Vector2[] vacasClaras;      // vacas claras (creme) de pe, acordadas, passeando e pastando (pe)
+        public Vector4 areaVacas;          // (x min, y min, x max, y max) onde as vacas andam (dentro do cercado); zero = livre
+        public Vector4[] bloqueiosVacas;   // retangulos (x, y, largura, altura) que as vacas nao atravessam (tronco de arvore)
+        public bool semOvelhaNoPasto;      // o cantinho das vacas nao leva a ovelha
+        public bool semPorcoNoPasto;       // o cantinho das vacas nao leva o porco
         public bool semFazendeiro;         // a fase nao tem o fazendeiro animado capinando
         public bool semCercado;            // a plantacao nao ganha o cercado automatico (a fase desenha as cercas em "cercas")
         public float portaoAberto = -1f; // x onde o lado de baixo do cercado fica sem peca (portao aberto); -1 = nenhum
@@ -115,7 +130,7 @@ public static class MontarNiveis
             macieiras = P(1,10), laranjeiras = P(20,6),
             // pomarzinho no alto: alguns pixels (1/32 de casa) para cima e para baixo entre elas
             macieirasSoltas = new[] { new Vector2(6.4f, 14.19f), new Vector2(8.4f, 13.84f), new Vector2(10.4f, 14.22f), new Vector2(12.8f, 13.76f), new Vector2(14.6f, 14.24f) },
-            fazendeiroParado = new[] { new Vector2(1.95f, 13.4f) },
+            fazendeiroParado = new[] { new Vector2(4.1f, 12.9f) },
             galinhas = new[] { new Vector2(8.6f, 3.6f) },
             galinheiro = new Vector2Int(8,5), galinha = new Vector2Int(7,4), galo = new Vector2Int(9,4), areaGalinhas = new Vector4(6.9f, 3.4f, 10.4f, 4.9f),
             pasto = new Vector2(2.1f, 7.2f),
@@ -131,14 +146,36 @@ public static class MontarNiveis
             caminhos  = new[] { P(-1,13, 7,13, 7,8, 15,8, 15,4, 22,4, 22,9, 25,9),
                                 P(-1,3, 7,3, 7,8, 15,8, 15,4, 22,4, 22,9, 25,9) },
             celeiro   = new RectInt(26, 8, 4, 4),
-            canteiros = P(5,12, 5,4, 8,11, 6,7, 10,9, 12,7, 14,5, 16,6, 18,5, 20,3, 21,7, 23,11),
-            plantacao = P(1,6, 3,6),
-            poco = new Vector2Int(10, 11), casa = new Vector2(26f, 12.4f),
-            cogumelos = P(9,13, 13,12, 27,2, 12,2),
-            milho     = P(22,1, 23,1, 24,1, 25,1),
-            macieiras = P(1,9), laranjeiras = P(26,4),
-            galinheiro = new Vector2Int(9,1), galinha = new Vector2Int(8,2), galo = new Vector2Int(13,1),
-            pasto = new Vector2(18.5f, 10.5f) },
+            canteiros = P(5,12, 5,2, 8,11, 6,7, 10,9, 12,7, 14,5, 16,6, 18,5, 20,3, 21,7, 23,11),
+            // abobora maior: 2 blocos e mais 6 canteiros (coluna da esquerda e fileira de baixo), num cercado com portao
+            plantacao = P(1,6, 3,6), plantioExtra = P(0,6, 0,7, 0,5, 1,5, 2,5, 3,5), plantioVazio = P(4,5),
+            semCercado = true, fazendeiro = new Vector2(5.05f, 5.2f), fazendeiroEspelhado = true, semPorcoNoPasto = true, semOvelhaNoPasto = true,
+            poco = new Vector2Int(18, 7), casa = new Vector2(26f, 12.4f),
+            cogumelos = P(8,14, 13,12, 7,1, 9,2),
+            milho     = P(22,1, 23,1, 24,1, 25,1, 26,1, 27,1, 28,1, 29,1, 25,2, 26,2, 27,2, 28,2, 29,2, 28,3, 29,3, 28,4, 29,4),
+            macieiras = P(1,9, 16,13), laranjeiras = P(24,4, 13,1),
+            galinheiro = new Vector2Int(10,4), galinha = new Vector2Int(9,5), galo = new Vector2Int(12,6),
+            galinhas = new[] { new Vector2(12.5f, 5f), new Vector2(11.5f, 4.2f), new Vector2(9.5f, 6.5f) },
+            areaGalinhas = new Vector4(8.3f, 3.2f, 14.7f, 7.6f),
+            pasto = new Vector2(15.5f, 12f),
+            // cercado de grade para as vacas e os animais, no alto; as vacas e o feno ficam dentro
+            vacas = new[] { new Vector2(12f, 14.3f), new Vector2(13.6f, 14.6f), new Vector2(11.8f, 11.6f) },
+            porcos = new[] { new Vector2(1.9f, 1.4f), new Vector2(3.9f, 1.5f) },
+            porcosDireita = new[] { new Vector2(2.9f, 1.6f) },
+            cercas = new[] {
+                new Vector4(0.1f, 12f, 4.6f, 12f),
+                new Vector4(-0.7f, 8.2f, 5.3f, 8.2f), new Vector4(-0.5f, 4.1f, 4f, 4.1f), new Vector4(5.3f, 5.6f, 5.3f, 8.6f),
+                new Vector4(10.63f, 10.6f, 10.63f, 16.2f), new Vector4(19.17f, 10.6f, 19.17f, 16.2f),
+                new Vector4(16.4f, 3f, 19.4f, 3f),
+                new Vector4(0.1f, 2.05f, 3.6f, 2.05f) },
+            cercasDoisPortoes = new[] { new Vector4(10.4f, 10.2f, 19.4f, 10.2f) },
+            vacasPretas = new[] { new Vector2(15.3f, 14.2f), new Vector2(14.6f, 13.5f) },
+            areaVacas = new Vector4(11.1f, 11.1f, 18.8f, 15.3f),
+            bloqueiosVacas = new[] { new Vector4(16.9f, 12.7f, 1.0f, 1.3f) },
+            baldes = new[] { new Vector2(20.05f, 7.2f) },
+            vacasPretasDormindo = new[] { new Vector2(18.2f, 11.4f) },
+            vacasClaras = new[] { new Vector2(12.8f, 12.8f) },
+            cercasPortao = new Vector4[0] },
         // Campus (bonus, #50): noite no campus. Asfalto com meio-fio, postes com luz, sem plantacao, galinheiro nem milho.
         // Canteiros a 2 casas da estrada (1 casa de grama no meio); o caminho dos inimigos e o do Joao, sem mudanca.
         new Nivel { id = 4, nome = "Campus", estacao = 3, cultura = "tile_abobora", campus = true,
@@ -341,6 +378,8 @@ public static class MontarNiveis
                 for (int dy = 0; dy < 2; dy++)
                     if (c.y + dy != nv.linhaOculta)
                         r.Add(new Vector2Int(c.x + dx, c.y + dy));
+        if (nv.plantioExtra != null) r.UnionWith(nv.plantioExtra);
+        if (nv.plantioVazio != null) r.UnionWith(nv.plantioVazio);
         return r;
     }
 
@@ -542,6 +581,13 @@ public static class MontarNiveis
                     if (System.Array.IndexOf(nv.cenourasNaTerra ?? new Vector2Int[0], cel) >= 0) continue;   // a cenoura ja traz a terra
                     Sprite_(grupo, "Tiles/canteiro_horta", Centro(cel), ORDEM_DECALQUE);
                 }
+        foreach (var cel in nv.plantioExtra ?? new Vector2Int[0])
+        {
+            Sprite_(grupo, "Tiles/canteiro_horta", Centro(cel), ORDEM_DECALQUE);
+            Sprite_(grupo, "Tiles/" + nv.cultura.Replace("tile_", "planta_"), Centro(cel), 2 + (H - 1 - cel.y)).AddComponent<PixelSway>();
+        }
+        foreach (var cel in nv.plantioVazio ?? new Vector2Int[0])
+            Sprite_(grupo, "Tiles/canteiro_horta", Centro(cel), ORDEM_DECALQUE);
         foreach (var c in nv.cenourasNaTerra ?? new Vector2Int[0])
             Sprite_(grupo, "Tiles/tile_cenoura", Centro(c), ORDEM_DECALQUE).AddComponent<PixelSway>().background = terra;
         foreach (var c in nv.plantacaoAbobora ?? new Vector2Int[0])
@@ -569,6 +615,7 @@ public static class MontarNiveis
                 posFazendeiro = new Vector3(Mathf.Round((fx1 + .7f) * 32f) / 32f, fy0 + .9f, 0f);
             }
             var fazendeiro = Sprite_(grupo, Est_(nv, "Props/prop_fazendeiro_1"), posFazendeiro, -1).AddComponent<FarmerHoe>();
+            if (nv.fazendeiroEspelhado) fazendeiro.GetComponent<SpriteRenderer>().flipX = true;
             fazendeiro.frames = new Sprite[7];
             for (int i = 0; i < 7; i++)
                 fazendeiro.frames[i] = Bicho_("prop_fazendeiro_" + (i + 1));
@@ -624,16 +671,22 @@ public static class MontarNiveis
         Vector3 pasto = nv.pasto;
         foreach (var f in new[] { new Vector2(-1.4f, .4f), new Vector2(-1.1f, -.15f) })
             Sprite_(grupo, "Props/prop_feno", pasto + (Vector3)f, -1);
-        VacaMarrom_(grupo, pasto + new Vector3(-.25f, .25f, 0f));
+        VacaMarrom_(grupo, pasto + new Vector3(-.25f, .25f, 0f), nv);
         VacaDormindo_(grupo, pasto + new Vector3(.75f, -.45f, 0f));
         Sprite_(grupo, "Props/prop_cocho_agua", pasto + new Vector3(1.5f, .1f, 0f), -1);
         // porco e ovelha pastam por perto (andam pouco, para nao pisar na estrada)
-        var porco = Ave_(grupo, "Props/prop_porco", pasto + new Vector3(-.7f, 1.15f, 0f), true);
-        porco.radius = .22f;
-        Som_(porco.gameObject, "porco", "OINK");
-        var ovelha = Ave_(grupo, "Props/prop_ovelha", pasto + new Vector3(.55f, 1.05f, 0f), true);
-        ovelha.radius = .22f;
-        Som_(ovelha.gameObject, "ovelha", "MEE");
+        if (!nv.semPorcoNoPasto)
+        {
+            var porco = Ave_(grupo, "Props/prop_porco", pasto + new Vector3(-.7f, 1.15f, 0f), true);
+            porco.radius = .22f;
+            Som_(porco.gameObject, "porco", "OINK");
+        }
+        if (!nv.semOvelhaNoPasto)
+        {
+            var ovelha = Ave_(grupo, "Props/prop_ovelha", pasto + new Vector3(.55f, 1.05f, 0f), true);
+            ovelha.radius = .22f;
+            Som_(ovelha.gameObject, "ovelha", "MEE");
+        }
 
         // gato brincando com o novelo na frente da porta do celeiro; o novelo nasce a esquerda dele
         Vector3 gatoPos = new Vector3(nv.celeiro.x + 1.3f, nv.celeiro.y - .5f, 0f);
@@ -697,7 +750,7 @@ public static class MontarNiveis
             {
                 var v = new Vector3(nv.vacas[i].x, nv.vacas[i].y, 0f);
                 if (i == nv.vacas.Length - 1) VacaDormindo_(grupo, v);
-                else VacaMarrom_(grupo, v);
+                else VacaMarrom_(grupo, v, nv);
             }
         if (nv.cercasFinas != null)
         {
@@ -722,6 +775,51 @@ public static class MontarNiveis
             foreach (var c in nv.cercasAtras)
                 CercaHorizontal(atras, nv, c.x, c.z, c.y, 0, -1f, 2);
         }
+        if (nv.cercasDoisPortoes != null)
+        {
+            var doisPortoes = new GameObject("CercasComDoisPortoes").transform;
+            doisPortoes.SetParent(grupo);
+            foreach (var c in nv.cercasDoisPortoes)
+                CercaHorizontal(doisPortoes, nv, c.x, c.z, c.y, 2);
+        }
+        if (nv.vacasPretas != null)
+            foreach (var v in nv.vacasPretas)
+                VacaAnda_(grupo, new Vector3(v.x, v.y, 0f), "preta", nv);
+        if (nv.vacasPretasDormindo != null)
+            foreach (var v in nv.vacasPretasDormindo)
+                VacaDormindo_(grupo, new Vector3(v.x, v.y, 0f), "preta");
+        if (nv.vacasClaras != null)
+            foreach (var v in nv.vacasClaras)
+                VacaAnda_(grupo, new Vector3(v.x, v.y, 0f), "creme", nv);
+        if (nv.cercasPortao != null)
+        {
+            var comPortao = new GameObject("CercasComPortao").transform;
+            comPortao.SetParent(grupo);
+            foreach (var c in nv.cercasPortao)
+                CercaHorizontal(comPortao, nv, c.x, c.z, c.y, 1);
+        }
+        if (nv.fenos != null)
+            foreach (var f in nv.fenos)
+                Sprite_(grupo, "Props/prop_feno", new Vector3(f.x, f.y, 0f), -1);
+        if (nv.porcos != null)
+            foreach (var p in nv.porcos)
+            {
+                var porquinho = Ave_(grupo, "Props/prop_porco", new Vector3(p.x, p.y, 0f), true);
+                porquinho.radius = .22f;
+                Som_(porquinho.gameObject, "porco", "OINK");
+            }
+        if (nv.porcosDireita != null)
+            foreach (var p in nv.porcosDireita)
+            {
+                // o desenho olha para a esquerda: espelhado comeca olhando para a direita
+                var porquinho = Ave_(grupo, "Props/prop_porco", new Vector3(p.x, p.y, 0f), true);
+                porquinho.GetComponent<SpriteRenderer>().flipX = true;
+                porquinho.radius = .22f;
+                Som_(porquinho.gameObject, "porco", "OINK");
+            }
+        if (nv.baldes != null)
+            foreach (var b in nv.baldes)
+                Sprite_(grupo, "Props/prop_balde", new Vector3(b.x, b.y, 0f), -1);
         if (nv.cochos != null)
             foreach (var c in nv.cochos)
                 Sprite_(grupo, "Props/prop_cocho_agua", new Vector3(c.x, c.y, 0f), -1);
@@ -851,9 +949,14 @@ public static class MontarNiveis
         return ave;
     }
 
+    // Lado em que o bicho comeca virado: alterna pela posicao, para nao ficar todo mundo olhando para o mesmo lado
+    // (depois eles viram para onde andam).
+    static bool LadoInicial(Vector3 pos) => Mathf.FloorToInt(pos.x * 3f + pos.y * 5f) % 2 == 0;
+
     static ChickenWander Ave_(Transform pai, string caminho, Vector3 pos, bool olhaParaEsquerda)
     {
         var ave = Sprite_(pai, caminho, pos, -1).AddComponent<ChickenWander>();
+        ave.GetComponent<SpriteRenderer>().flipX = LadoInicial(pos);
         ave.stepFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + Pasta_(caminho + "_passo") + ".png");
         ave.peckFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SPR + Pasta_(caminho + "_bicando") + ".png");
         ave.facesLeft = olhaParaEsquerda;
@@ -861,14 +964,26 @@ public static class MontarNiveis
     }
 
     // Vaca marrom que passeia e pasta por perto (bichos em PPU 21,33, o mesmo grao do gato e da galinha).
-    static void VacaMarrom_(Transform grupo, Vector3 pos)
+    static void VacaMarrom_(Transform grupo, Vector3 pos, Nivel nv = null) => VacaAnda_(grupo, pos, "marrom", nv);
+
+    // Vaca que passeia e pasta por perto; cor = marrom ou preta (desenhos prop_vaca_<cor>_*).
+    static void VacaAnda_(Transform grupo, Vector3 pos, string cor, Nivel nv = null)
     {
-        var vaca = Sprite_(grupo, "Props/prop_vaca_marrom_em_pe", pos, -1).AddComponent<AnimalWander>();
+        var vaca = Sprite_(grupo, "Props/prop_vaca_" + cor + "_em_pe", pos, -1).AddComponent<AnimalWander>();
         vaca.walkFrames = new Sprite[4];
         for (int i = 0; i < 4; i++)
-            vaca.walkFrames[i] = Bicho_("prop_vaca_marrom_anda_" + (i + 1));
-        vaca.grazeFrame = Bicho_("prop_vaca_marrom_pasta");
-        vaca.chewFrame = Bicho_("prop_vaca_marrom_pasta_2");
+            vaca.walkFrames[i] = Bicho_("prop_vaca_" + cor + "_anda_" + (i + 1));
+        vaca.grazeFrame = Bicho_("prop_vaca_" + cor + "_pasta");
+        vaca.chewFrame = Bicho_("prop_vaca_" + cor + "_pasta_2");
+        vaca.GetComponent<SpriteRenderer>().flipX = LadoInicial(pos);
+        if (nv != null && nv.areaVacas != Vector4.zero)
+        {
+            vaca.minPos = new Vector2(nv.areaVacas.x, nv.areaVacas.y);
+            vaca.maxPos = new Vector2(nv.areaVacas.z, nv.areaVacas.w);
+            var rects = new System.Collections.Generic.List<Rect>();
+            foreach (var b in nv.bloqueiosVacas ?? new Vector4[0]) rects.Add(new Rect(b.x, b.y, b.z, b.w));
+            vaca.blocks = rects.ToArray();
+        }
         vaca.facesLeft = true;
         vaca.radius = .3f;
         vaca.speed = .35f;
@@ -876,10 +991,10 @@ public static class MontarNiveis
     }
 
     // Vaca creme dormindo: 2 cliques ZZZZ, no 3o levanta uns segundos e faz MUU.
-    static void VacaDormindo_(Transform grupo, Vector3 pos)
+    static void VacaDormindo_(Transform grupo, Vector3 pos, string cor = "creme")
     {
-        var dorme = Sprite_(grupo, "Props/prop_vaca_creme_deitada", pos, -1);
-        Som_(dorme, "vaca", "MUU").awakeSprite = Bicho_("prop_vaca_creme_em_pe");
+        var dorme = Sprite_(grupo, "Props/prop_vaca_" + cor + "_deitada", pos, -1);
+        Som_(dorme, "vaca", "MUU").awakeSprite = Bicho_("prop_vaca_" + cor + "_em_pe");
         var zz = Sprite_(dorme.transform, "Props/fx_zz", dorme.transform.position + new Vector3(-.15f, .7f, 0f), -1);
         zz.GetComponent<SpriteRenderer>().sortingOrder = dorme.GetComponent<SpriteRenderer>().sortingOrder + 1;
         zz.AddComponent<SleepZ>();
