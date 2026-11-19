@@ -48,6 +48,13 @@ public static class MontarNiveis
         public Vector4[] cercasFinas;      // cercas descendo (peca de frente inteira de 3 casas, presa pelo topo): (x, -, -, y do topo)
         public int linhaOculta = -1;       // fileira (y) de canteiros da plantacao que nao entra: a do alto, sem cenoura
         public Vector2[] cochos;           // cochos de agua soltos (pe)
+        public Vector2[] macieirasSoltas;  // macieiras em posicao exata (pe), para o pomar nao ficar na regua
+        public Vector2[] postesCurtos;     // meia peca de frente (poste liso de 1,5 casa): (x, y do pe)
+        public Vector2[] fazendeiroParado; // fazendeiro sem enxada, parado (pe)
+        public Vector4[] cercasAtras;      // cercas horizontais desenhadas atras das plantacoes (o trigo passa na frente)
+        public Vector4 areaGalinhas;       // (x min, y min, x max, y max) onde galinha e galo ciscam; zero = livre
+        public bool semFazendeiro;         // a fase nao tem o fazendeiro animado capinando
+        public bool semCercado;            // a plantacao nao ganha o cercado automatico (a fase desenha as cercas em "cercas")
         public float portaoAberto = -1f; // x onde o lado de baixo do cercado fica sem peca (portao aberto); -1 = nenhum
         public Vector2Int[] plantacaoTerra, plantacaoAbobora; // blocos 2x2: so terra (onde o fazendeiro capina) e de abobora
         public Vector2[] vacas;    // vacas marrons extras passeando e pastando; a ultima da lista e a creme dormindo
@@ -94,18 +101,30 @@ public static class MontarNiveis
             ovelhasDireita = new[] { new Vector2(24.3f, 1.2f) },
             cochos = new[] { new Vector2(22.5f, 1f) } },
 
-        // Verao: serpentina longa. 12 canteiros.
+        // Verao: serpentina longa. 11 canteiros.
         new Nivel { id = 2, nome = "Verao", estacao = 2, cultura = "tile_trigo",
             caminhos  = new[] { P(-1,3, 5,3, 5,13, 11,13, 11,4, 17,4, 17,13, 23,13, 23,8, 25,8) },
             celeiro   = new RectInt(26, 7, 4, 4),
-            canteiros = P(3,4, 6,7, 6,11, 8,11, 10,10, 12,8, 14,5, 16,10, 18,7, 20,11, 22,10, 24,5),
-            plantacao = P(20,1, 22,1),
-            poco = new Vector2Int(13, 9), casa = new Vector2(1.4f, 13.4f),
-            cogumelos = P(9,6, 8,1, 27,12, 14,12),
-            milho     = P(26,1, 27,1, 28,1, 29,1),
-            macieiras = P(1,10), laranjeiras = P(27,3),
-            galinheiro = new Vector2Int(13,1), galinha = new Vector2Int(12,2), galo = new Vector2Int(15,1),
-            pasto = new Vector2(2.1f, 7.2f) },
+            canteiros = P(3,4, 6,7, 6,11, 8,11, 10,10, 12,8, 14,5, 16,10, 18,7, 20,11, 22,10),
+            // trigo: um campo embaixo a esquerda e outro na frente do celeiro (4 + 10 blocos de 2x2)
+            plantacao = P(0,1, 2,1, 4,1, 6,1, 20,1, 22,1, 24,1, 26,1, 28,1, 20,3, 22,3, 24,3, 26,3, 28,3),
+            semCercado = true, semFazendeiro = true,
+            poco = new Vector2Int(13, 10), casa = new Vector2(1.4f, 13.4f),
+            cogumelos = P(9,6, 8,1, 24,14, 14,12),
+            milho     = P(25,12, 26,12, 27,12, 28,12, 29,12, 25,13, 26,13, 27,13, 28,13, 29,13, 25,14, 26,14, 27,14, 28,14, 29,14, 25,15, 26,15, 27,15, 28,15, 29,15),
+            macieiras = P(1,10), laranjeiras = P(20,6),
+            // pomarzinho no alto: alguns pixels (1/32 de casa) para cima e para baixo entre elas
+            macieirasSoltas = new[] { new Vector2(6.4f, 14.19f), new Vector2(8.4f, 13.84f), new Vector2(10.4f, 14.22f), new Vector2(12.8f, 13.76f), new Vector2(14.6f, 14.24f) },
+            fazendeiroParado = new[] { new Vector2(1.95f, 13.4f) },
+            galinhas = new[] { new Vector2(8.6f, 3.6f) },
+            galinheiro = new Vector2Int(8,5), galinha = new Vector2Int(7,4), galo = new Vector2Int(9,4), areaGalinhas = new Vector4(6.9f, 3.4f, 10.4f, 4.9f),
+            pasto = new Vector2(2.1f, 7.2f),
+            cercas = new[] {
+                new Vector4(4.6f, 6f, 4.6f, 10.3f), new Vector4(6.56f, 3.2f, 6.56f, 6.2f), new Vector4(0f, 4.6f, 2.6f, 4.6f),
+                new Vector4(20.3f, 14.1f, 23.8f, 14.1f),
+                new Vector4(10.86f, 3.2f, 19.86f, 3.2f) },
+            cercasAtras = new[] { new Vector4(19.4f, 4.6f, 30f, 4.6f) },
+            postesCurtos = new[] { new Vector2(19.63f, 3.6f) } },
 
         // Outono: duas entradas que se juntam em (7,8). 12 canteiros.
         new Nivel { id = 3, nome = "Outono", estacao = 3, cultura = "tile_abobora",
@@ -539,7 +558,7 @@ public static class MontarNiveis
         // fazendeiro de chapeu capinando dentro do cercado da plantacao: na grama, ao lado do bloco so de terra, se a fase
         // tem um (a enxada bate na terra); senao, ao lado dos blocos, abrindo um canteiro novo. Pe em pixel inteiro (1/32).
         // (o campus nao tem plantacao, entao nao tem fazendeiro)
-        if (nv.plantacao.Length > 0)
+        if (nv.plantacao.Length > 0 && !nv.semFazendeiro)
         {
             Vector3 posFazendeiro;
             if (nv.fazendeiro != Vector2.zero)
@@ -593,8 +612,8 @@ public static class MontarNiveis
         {
             Sprite_(grupo, Est_(nv, "Props/prop_galinheiro"), new Vector3(nv.galinheiro.x + 1f, nv.galinheiro.y, 0f), -1);
             // galinha e galo ciscam em volta de onde nascem; a galinha olha para a esquerda no desenho
-            Som_(Ave_(grupo, Est_(nv, "Props/prop_galinha"), new Vector3(nv.galinha.x + 0.5f, nv.galinha.y + 0.1f, 0f), true).gameObject, "galinha", "COCO").flee = true;
-            var cantoDoGalo = Som_(Ave_(grupo, Est_(nv, "Props/prop_galo"), new Vector3(nv.galo.x + 0.5f, nv.galo.y + 0.1f, 0f), false).gameObject, "galo", "COCORICO");
+            Som_(Area_(nv, Ave_(grupo, Est_(nv, "Props/prop_galinha"), new Vector3(nv.galinha.x + 0.5f, nv.galinha.y + 0.1f, 0f), true)).gameObject, "galinha", "COCO").flee = true;
+            var cantoDoGalo = Som_(Area_(nv, Ave_(grupo, Est_(nv, "Props/prop_galo"), new Vector3(nv.galo.x + 0.5f, nv.galo.y + 0.1f, 0f), false)).gameObject, "galo", "COCORICO");
             cantoDoGalo.flee = true;
             cantoDoGalo.crowsOnWave = true;   // canta no comeco de cada onda
         }
@@ -637,7 +656,7 @@ public static class MontarNiveis
         // cercado em volta da plantacao, com folga e mais uma casa e meia a direita (onde o fazendeiro abre um canteiro
         // novo). Lados de cima e de baixo com pecas _3x e 2 portoes no meio do de cima; as laterais sao pecas de frente.
         // Se o lado de baixo cairia colado na cerca do fim do mapa, ele nao e desenhado: a do mapa faz esse papel.
-        if (nv.plantacao.Length > 0)
+        if (nv.plantacao.Length > 0 && !nv.semCercado)
         {
             PlantacaoLimites(nv, out int px0, out int px1, out int py0, out int py1);
             // largura em pecas inteiras de 1,5 casa, com meia casa de folga de cada lado (e mais uma casa a direita se
@@ -687,12 +706,28 @@ public static class MontarNiveis
             foreach (var c in nv.cercasFinas)
                 CercaDescendo(finas, nv, c.x, c.w);
         }
+        if (nv.macieirasSoltas != null)
+            foreach (var m in nv.macieirasSoltas)
+                Sprite_(grupo, Est_(nv, "Props/prop_arvore_maca"), new Vector3(m.x, m.y, 0f), -1).AddComponent<FallingLeaves>();
+        if (nv.postesCurtos != null)
+            foreach (var p in nv.postesCurtos)
+                Sprite_(grupo, "Cerca/cerca_frente_" + nv.estacao + "_meia", new Vector3(p.x, p.y, 0f), -1);
+        if (nv.fazendeiroParado != null)
+            foreach (var f in nv.fazendeiroParado)
+                Sprite_(grupo, "Props/prop_fazendeiro_parado", new Vector3(f.x, f.y, 0f), -1).AddComponent<FarmerIdle>();
+        if (nv.cercasAtras != null)
+        {
+            var atras = new GameObject("CercasAtrasDoTrigo").transform;
+            atras.SetParent(grupo);
+            foreach (var c in nv.cercasAtras)
+                CercaHorizontal(atras, nv, c.x, c.z, c.y, 0, -1f, 2);
+        }
         if (nv.cochos != null)
             foreach (var c in nv.cochos)
                 Sprite_(grupo, "Props/prop_cocho_agua", new Vector3(c.x, c.y, 0f), -1);
         if (nv.galinhas != null)
             foreach (var g in nv.galinhas)
-                Som_(Ave_(grupo, Est_(nv, "Props/prop_galinha"), new Vector3(g.x, g.y, 0f), true).gameObject, "galinha", "COCO").flee = true;
+                Som_(Area_(nv, Ave_(grupo, Est_(nv, "Props/prop_galinha"), new Vector3(g.x, g.y, 0f), true)).gameObject, "galinha", "COCO").flee = true;
         if (nv.ovelhasDireita != null)
             foreach (var o in nv.ovelhasDireita)
             {
@@ -805,6 +840,17 @@ public static class MontarNiveis
         return som;
     }
 
+    // Prende a galinha na area da fase (para nao atravessar trigo, cerca e galinheiro), se ela tem uma.
+    static ChickenWander Area_(Nivel nv, ChickenWander ave)
+    {
+        if (nv.areaGalinhas != Vector4.zero)
+        {
+            ave.minPos = new Vector2(nv.areaGalinhas.x, nv.areaGalinhas.y);
+            ave.maxPos = new Vector2(nv.areaGalinhas.z, nv.areaGalinhas.w);
+        }
+        return ave;
+    }
+
     static ChickenWander Ave_(Transform pai, string caminho, Vector3 pos, bool olhaParaEsquerda)
     {
         var ave = Sprite_(pai, caminho, pos, -1).AddComponent<ChickenWander>();
@@ -841,8 +887,8 @@ public static class MontarNiveis
 
     // Cerca horizontal a partir de x0 na altura y: pecas _3x de 1,5 casa em fila (a sombra e a da estacao da fase);
     // a ultima pode passar de x1. portoes = quantos portoes entram, nas pecas do meio; abrirEm = x onde uma peca
-    // fica de fora (portao aberto).
-    static void CercaHorizontal(Transform pai, Nivel nv, float x0, float x1, float y, int portoes, float abrirEm = -1f)
+    // fica de fora (portao aberto); ordem >= 0 fixa a ordem de desenho (baixa = atras de plantas e bichos).
+    static void CercaHorizontal(Transform pai, Nivel nv, float x0, float x1, float y, int portoes, float abrirEm = -1f, int ordem = -1)
     {
         int pecas = Mathf.Max(1, Mathf.CeilToInt((x1 - x0 - .01f) / 1.5f));
         int primeiro = (pecas - portoes) / 2;
@@ -852,17 +898,21 @@ public static class MontarNiveis
             if (abrirEm >= ini && abrirEm < ini + 1.5f) continue;   // portao aberto: fica o vao
             bool portao = portoes > 0 && i >= primeiro && i < primeiro + portoes;
             string peca = portao ? "Cerca/portao_" + nv.estacao + "_3x" : "Cerca/cerca_lado_" + nv.estacao + "_3x";
-            Sprite_(pai, peca, new Vector3(x0 + .75f + i * 1.5f, y, 0f), -1);
+            Sprite_(pai, peca, new Vector3(x0 + .75f + i * 1.5f, y, 0f), ordem);
         }
     }
+
+    // Cercas verticais sao altas e finas: ordenadas pelo pe elas cobriam galinhas e bichos que passam ao lado (a sombra
+    // do desenho sobrepunha o bicho). Com ordem fixa baixa ficam atras de bichos, arvores e construcoes.
+    const int OrdemCercaVertical = 3;
 
     // Cerca descendo: duas pecas duplas de frente (3 casas de altura, pivo na base) sobrepostas, a de cima com o topo
     // em y1; a sobreposicao tampa o vao do meio do desenho, como nas laterais do cercado de abobora.
     static void CercaDescendo(Transform pai, Nivel nv, float x, float y1)
     {
         string peca = "Cerca/cerca_frente_dupla_" + nv.estacao + "_3x";
-        Sprite_(pai, peca, new Vector3(x, y1 - 3f - 1.72f, 0f), -1);
-        Sprite_(pai, peca, new Vector3(x, y1 - 3f, 0f), -1);
+        Sprite_(pai, peca, new Vector3(x, y1 - 3f - 1.72f, 0f), OrdemCercaVertical);
+        Sprite_(pai, peca, new Vector3(x, y1 - 3f, 0f), OrdemCercaVertical);
     }
 
     // Cerca vertical em x de y0 a y1: pecas duplas de frente (2,48 casas de altura, pivo na base do desenho).
@@ -873,7 +923,7 @@ public static class MontarNiveis
         int pecas = Mathf.Max(1, Mathf.CeilToInt(comprimento / Altura));
         float passo = pecas > 1 ? (comprimento - Altura) / (pecas - 1) : 0f;
         for (int j = 0; j < pecas; j++)
-            Sprite_(pai, "Cerca/cerca_frente_dupla_" + nv.estacao + "_3x", new Vector3(x, y0 + j * passo, 0f), -1);
+            Sprite_(pai, "Cerca/cerca_frente_dupla_" + nv.estacao + "_3x", new Vector3(x, y0 + j * passo, 0f), OrdemCercaVertical);
     }
 
     // Todos os blocos 2x2 da fase: cenoura (ou a cultura da fase), so de terra e abobora.
