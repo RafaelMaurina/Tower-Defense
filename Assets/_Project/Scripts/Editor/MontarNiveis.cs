@@ -902,13 +902,17 @@ public static class MontarNiveis
         }
     }
 
+    // Cercas verticais sao altas e finas: ordenadas pelo pe elas cobriam galinhas e bichos que passam ao lado (a sombra
+    // do desenho sobrepunha o bicho). Com ordem fixa baixa ficam atras de bichos, arvores e construcoes.
+    const int OrdemCercaVertical = 3;
+
     // Cerca descendo: duas pecas duplas de frente (3 casas de altura, pivo na base) sobrepostas, a de cima com o topo
     // em y1; a sobreposicao tampa o vao do meio do desenho, como nas laterais do cercado de abobora.
     static void CercaDescendo(Transform pai, Nivel nv, float x, float y1)
     {
         string peca = "Cerca/cerca_frente_dupla_" + nv.estacao + "_3x";
-        Sprite_(pai, peca, new Vector3(x, y1 - 3f - 1.72f, 0f), -1);
-        Sprite_(pai, peca, new Vector3(x, y1 - 3f, 0f), -1);
+        Sprite_(pai, peca, new Vector3(x, y1 - 3f - 1.72f, 0f), OrdemCercaVertical);
+        Sprite_(pai, peca, new Vector3(x, y1 - 3f, 0f), OrdemCercaVertical);
     }
 
     // Cerca vertical em x de y0 a y1: pecas duplas de frente (2,48 casas de altura, pivo na base do desenho).
@@ -919,7 +923,7 @@ public static class MontarNiveis
         int pecas = Mathf.Max(1, Mathf.CeilToInt(comprimento / Altura));
         float passo = pecas > 1 ? (comprimento - Altura) / (pecas - 1) : 0f;
         for (int j = 0; j < pecas; j++)
-            Sprite_(pai, "Cerca/cerca_frente_dupla_" + nv.estacao + "_3x", new Vector3(x, y0 + j * passo, 0f), -1);
+            Sprite_(pai, "Cerca/cerca_frente_dupla_" + nv.estacao + "_3x", new Vector3(x, y0 + j * passo, 0f), OrdemCercaVertical);
     }
 
     // Todos os blocos 2x2 da fase: cenoura (ou a cultura da fase), so de terra e abobora.
