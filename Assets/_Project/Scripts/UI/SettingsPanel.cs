@@ -35,7 +35,7 @@ public class SettingsPanel : MonoBehaviour
     CanvasGroup blocked;
     CanvasGroup frameGroup;
     GameObject confirmation;
-    TMP_Text confirmationTimer, confirmationSeconds;
+    TMP_Text confirmationTimer;
     float confirmationRemaining;
     bool closed;
     int altEnterFrame = -10;
@@ -104,9 +104,7 @@ public class SettingsPanel : MonoBehaviour
         {
             confirmationRemaining -= Time.unscaledDeltaTime;
             if (confirmationTimer != null)
-                confirmationTimer.text = "A tela será revertida em";
-            if (confirmationSeconds != null)
-                confirmationSeconds.text = $"{Mathf.CeilToInt(Mathf.Max(0f, confirmationRemaining))} s";
+                confirmationTimer.text = ConfirmationCountdownText(confirmationRemaining);
             if (confirmationRemaining <= 0f) RevertVideo();
         }
     }
@@ -480,17 +478,20 @@ public class SettingsPanel : MonoBehaviour
         modalImage.raycastTarget = true;
 
         MakeText(modal, "Manter esta configuração?", .10f, .90f, .49f, .66f, 38, FontStyles.Bold);
-        confirmationTimer = MakeText(modal, "A tela será revertida em", .10f, .75f, .36f, .48f, 27, FontStyles.Normal);
-        confirmationTimer.alignment = TextAlignmentOptions.MidlineRight;
-        confirmationSeconds = MakeText(modal, "15 s", .76f, .91f, .36f, .48f, 32, FontStyles.Bold);
-        confirmationSeconds.color = new Color32(255, 196, 30, 255);
-        confirmationSeconds.alignment = TextAlignmentOptions.MidlineLeft;
+        confirmationTimer = MakeText(modal, ConfirmationCountdownText(VideoConfirmSeconds), .10f, .90f, .36f, .48f, 29, FontStyles.Normal);
+        confirmationTimer.alignment = TextAlignmentOptions.Center;
 
         var keep = MakeModalButton(modal, "confirmacao_manter_normal", "confirmacao_manter_selecionado",
             .075f, .475f, .12f, .31f, ConfirmVideo);
         MakeModalButton(modal, "confirmacao_reverter_normal", "confirmacao_reverter_selecionado",
             .525f, .925f, .12f, .31f, RevertVideo);
         if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(keep.gameObject);
+    }
+
+    static string ConfirmationCountdownText(float seconds)
+    {
+        int remaining = Mathf.CeilToInt(Mathf.Max(0f, seconds));
+        return $"A tela será revertida em <color=#FFC41E><b>{remaining} s</b></color>";
     }
 
     Button MakeModalButton(RectTransform parent, string normalName, string selectedName,
@@ -517,7 +518,6 @@ public class SettingsPanel : MonoBehaviour
         if (confirmation != null) Destroy(confirmation);
         confirmation = null;
         confirmationTimer = null;
-        confirmationSeconds = null;
         frameGroup.interactable = true;
         frameGroup.blocksRaycasts = true;
         altEnterFrame = -10;
@@ -537,7 +537,6 @@ public class SettingsPanel : MonoBehaviour
         if (confirmation != null) Destroy(confirmation);
         confirmation = null;
         confirmationTimer = null;
-        confirmationSeconds = null;
         frameGroup.interactable = true;
         frameGroup.blocksRaycasts = true;
         altEnterFrame = -10;
