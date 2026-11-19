@@ -60,12 +60,12 @@ public class CameraZoom : MonoBehaviour
         bool exact = Mathf.Abs(scale - Mathf.Round(scale)) < .001f && Mathf.Abs(aspect - RefWidth / RefHeight) < .01f;
 
         if (exact)
-            baseSize = RefHeight / 2f / (RefPpu * 2f);   // 540 / 64 = 8,4375 unidades
+            baseSize = RefHeight / (RefPpu * 2f);   // 540 / 64 = 8,4375 unidades
         else
         {
             // mapa inteiro: cabe pela altura ou pela largura, o que apertar mais. O piso e a altura do modo
             // exato (8,4375): em 16:9 fica igual a ele e enche a tela (8,5 deixaria uma faixa fina dos lados).
-            baseSize = Mathf.Max(RefHeight / 2f / (RefPpu * 2f), MapWidth / 2f / aspect);
+            baseSize = Mathf.Max(RefHeight / (RefPpu * 2f), MapWidth / 2f / aspect);
         }
         if (pixelPerfect != null) pixelPerfect.enabled = exact && currentZoom <= 1f;
         exactFraming = exact;
