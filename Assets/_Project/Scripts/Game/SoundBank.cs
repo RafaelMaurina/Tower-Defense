@@ -59,14 +59,53 @@ public static class SoundBank
         return index;
     }
 
+    // sons que tocam inteiros, sem o limite de 1 segundo com fadeout: o cocorico, a moedinha, a vitoria e a melhoria de torre
+    static readonly HashSet<string> TocaInteiro = new HashSet<string> { "galo", "inimigo_morre", "vitoria", "torre_melhora" };
+
     public static void Play(string id, float volume = 1f)
     {
         if (!Has(id)) return;
         List<AudioClip> list = groups[id];
         AudioClip clip = list[PickIndex(id, list.Count)];
         if (clip == null) return;
-        Camera cam = Camera.main;
-        AudioSource.PlayClipAtPoint(clip, cam != null ? cam.transform.position : Vector3.zero, volume * GameSettings.Sfx);
+        SomCurto.Tocar(clip, volume * GameSettings.Sfx, limitar: !TocaInteiro.Contains(id));
+    }
+}
+
+/// Toca um som solto e o encerra com um fadeout: o som corre normal ate 1 segundo; dai o volume cai de forma suave em
+/// 0,3 s e o som para. Sons mais curtos que 1 segundo tocam inteiros. Usa tempo real (nao para com o jogo pausado).
+public class SomCurto : MonoBehaviour
+{
+    const float Duracao = 1f, Fade = .3f;
+
+    AudioSource fonte;
+    float volume, tempo;
+    bool limitar = true;
+
+    public static void Tocar(AudioClip clip, float volume, bool limitar = true)
+    {
+        var go = new GameObject("Som " + clip.name);
+        var fonte = go.AddComponent<AudioSource>();
+        fonte.clip = clip;
+        fonte.volume = volume;
+        fonte.spatialBlend = 0f;                 // 2D: nao muda com a posicao da camera
+        fonte.playOnAwake = false;
+        fonte.Play();
+        var som = go.AddComponent<SomCurto>();
+        som.fonte = fonte;
+        som.volume = volume;
+        som.limitar = limitar;
+    }
+
+    void Update()
+    {
+        tempo += Time.unscaledDeltaTime;
+        if (fonte == null || !fonte.isPlaying || (limitar && tempo >= Duracao + Fade)) { Destroy(gameObject); return; }
+        if (limitar && tempo > Duracao)
+        {
+            float t = (tempo - Duracao) / Fade;           // 0 -> 1
+            fonte.volume = volume * (1f - t * t * (3f - 2f * t));   // queda suave (smoothstep), sem corte seco
+        }
     }
 }
 
@@ -86,14 +125,29 @@ public static class CombatSounds
         Guardian.OnBite += HandleBite;
         WaveSpawner.OnEnemySpawned -= HandleSpawned;
         WaveSpawner.OnEnemySpawned += HandleSpawned;
+        Tower.OnUpgraded -= HandleUpgraded;
+        Tower.OnUpgraded += HandleUpgraded;
         SceneManager.sceneLoaded -= HandleSceneLoaded;
         SceneManager.sceneLoaded += HandleSceneLoaded;
+    }
+
+    static void HandleUpgraded(Tower t) => SoundBank.Play("torre_melhora");
+
+    // o GameManager zera os seus eventos ao sair da fase: a cada fase carregada liga de novo
+    static void HandleState(GameState state)
+    {
+        if (state == GameState.Victory) SoundBank.Play("vitoria");
     }
 
     // tipos de inimigo que ja se apresentaram nesta fase; recomeca a cada fase carregada
     static readonly HashSet<string> introduced = new HashSet<string>();
 
-    static void HandleSceneLoaded(Scene scene, LoadSceneMode mode) => introduced.Clear();
+    static void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        introduced.Clear();
+        GameManager.OnStateChanged -= HandleState;
+        GameManager.OnStateChanged += HandleState;
+    }
 
     // o primeiro inimigo de cada tipo faz o som de nascimento; os seguintes do mesmo tipo ficam em silencio
     static void HandleSpawned(Enemy e)
@@ -104,7 +158,7 @@ public static class CombatSounds
         SoundBank.Play(id, .7f);
     }
 
-    static void HandleDied(Enemy e) => SoundBank.Play("inimigo_morre");
+    static void HandleDied(Enemy e) => SoundBank.Play("inimigo_morre", .5f);   // a moedinha: toca a cada inimigo, entao mais baixa
     static void HandleReachedBase(Enemy e) => SoundBank.Play("inimigo_chega");
     static void HandleBite(Guardian g, Vector3 where) => SoundBank.Play("tufao_morde");
 
