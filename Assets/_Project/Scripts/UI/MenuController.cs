@@ -134,21 +134,18 @@ public class MenuController : MonoBehaviour
         buttonsRect.offsetMin = buttonsRect.offsetMax = Vector2.zero;
 
         CreateSpriteButton(mainButtons.transform, "Jogar", playNormalSprite, playSelectedSprite,
-            new Vector2(.30f, .53f), new Vector2(.70f, .65f), StartGame);
+            new Vector2(.30f, .56f), new Vector2(.70f, .66f), StartGame);
         CreateSpriteButton(mainButtons.transform, "Ranking", rankingNormalSprite, rankingSelectedSprite,
-            new Vector2(.30f, .36f), new Vector2(.70f, .48f), ShowRanking);
-        // canto de baixo a esquerda, onde ficava o botao de configuracoes
-        var achievementsButton = CreateSpriteButton(mainMenuContent.transform, "Conquistas",
-            Resources.Load<Sprite>("hud/botao_normal"), Resources.Load<Sprite>("hud/botao_selecionado"),
-            new Vector2(.03f, .03f), new Vector2(.27f, .15f), ShowAchievements);
-        if (achievementsButton.sprite == null) achievementsButton.color = new Color32(111, 68, 41, 245);
+            new Vector2(.30f, .43f), new Vector2(.70f, .53f), ShowRanking);
+        var achievementsButton = CreateSpriteButton(mainButtons.transform, "Conquistas",
+            Resources.Load<Sprite>("Conquistas/botao_conquistas_normal"),
+            Resources.Load<Sprite>("Conquistas/botao_conquistas_selecionado"),
+            new Vector2(.30f, .30f), new Vector2(.70f, .40f), ShowAchievements);
         achievementsMenuButton = achievementsButton.GetComponent<Button>();
-        MakeText(achievementsButton.transform, "Conquistas", new Vector2(.04f, .08f), new Vector2(.96f, .92f),
-            26, new Color32(255, 246, 213, 255)).raycastTarget = false;
         CreateSpriteButton(mainButtons.transform, "Informações", infoNormalSprite, infoSelectedSprite,
-            new Vector2(.30f, .19f), new Vector2(.70f, .31f), ShowInfo);
+            new Vector2(.30f, .17f), new Vector2(.70f, .27f), ShowInfo);
         CreateSpriteButton(mainButtons.transform, "Sair", exitNormalSprite, exitSelectedSprite,
-            new Vector2(.30f, .02f), new Vector2(.70f, .14f), ExitGame);
+            new Vector2(.30f, .04f), new Vector2(.70f, .14f), ExitGame);
         // O acesso à fase bônus fica integrado à tela de seleção de fases.
         var settings = CreateSpriteButton(mainMenuContent.transform, "Configurações",
             Resources.Load<Sprite>("hud/hud_superior/botao_configuracoes_normal"),
