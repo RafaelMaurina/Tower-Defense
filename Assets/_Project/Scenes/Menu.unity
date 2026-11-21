@@ -260,6 +260,9 @@ MonoBehaviour:
   infoSelectedSprite: {fileID: 21300000, guid: eea814a57250ee441b57059f72b1f846, type: 3}
   exitNormalSprite: {fileID: 21300000, guid: f6032f845331deb4a9ffef192827153d, type: 3}
   exitSelectedSprite: {fileID: 21300000, guid: a295da1ce3acb1c4da755c3f9fd700e8, type: 3}
+  springCardFrameSprite: {fileID: 21300000, guid: c69ae57f7a324cee9fb1353489cf4618, type: 3}
+  springPreviewSprite: {fileID: 21300000, guid: 0cef5caad735430e8a92f810d81f944c, type: 3}
+  difficultyMainFrameSprite: {fileID: 21300000, guid: 4d92b1e3a60b4bf6b83bcf303c1007ee, type: 3}
   hoverSound: {fileID: 0}
   clickSound: {fileID: 0}
 --- !u!4 &1269117960

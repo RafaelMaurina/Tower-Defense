@@ -6,7 +6,17 @@ using UnityEditor;
 [InitializeOnLoad]
 static class GerarNiveisAoAbrir
 {
-    static GerarNiveisAoAbrir() => EditorApplication.delayCall += Tentar;
+    static GerarNiveisAoAbrir()
+    {
+        EditorApplication.delayCall += Tentar;
+        EditorApplication.playModeStateChanged += SincronizarCenasAntesDeJogar;
+    }
+
+    static void SincronizarCenasAntesDeJogar(PlayModeStateChange change)
+    {
+        if (change == PlayModeStateChange.ExitingEditMode && !MontarNiveis.FaltaAlgum())
+            MontarNiveis.AtualizarBuild();
+    }
 
     static void Tentar()
     {
