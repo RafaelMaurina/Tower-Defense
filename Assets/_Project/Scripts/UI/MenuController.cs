@@ -171,18 +171,15 @@ public class MenuController : MonoBehaviour
         if (bonusCardFrameSprite == null) bonusCardFrameSprite = Resources.Load<Sprite>("MenuPhase/fase_bonus_moldura");
         if (phaseSelectionOutlineSprite == null) phaseSelectionOutlineSprite = Resources.Load<Sprite>("MenuPhase/fase_contorno_selecionado");
         if (summerPreviewSprite == null) summerPreviewSprite = Resources.Load<Sprite>("MenuPhase/fase_verao_preview");
-        var finalSpringPreview = Resources.Load<Sprite>("MenuPhase/fase_primavera_preview");
-        if (finalSpringPreview != null)
+        if (springPreviewSprite == null)
         {
-            springPreviewSprite = finalSpringPreview;
-            springPreviewIsProvisional = false;
+            springPreviewSprite = Resources.Load<Sprite>("MenuPhase/fase_primavera_preview");
+            if (springPreviewSprite == null)
+            {
+                springPreviewSprite = Resources.Load<Sprite>("MenuPhase/fase_primavera_preview_provisoria");
+                springPreviewIsProvisional = springPreviewSprite != null;
+            }
         }
-        else if (springPreviewSprite == null)
-        {
-            springPreviewSprite = Resources.Load<Sprite>("MenuPhase/fase_primavera_preview_provisoria");
-            springPreviewIsProvisional = springPreviewSprite != null;
-        }
-        else springPreviewIsProvisional = springPreviewSprite.name == "fase_primavera_preview_provisoria";
         if (autumnPreviewSprite == null) autumnPreviewSprite = Resources.Load<Sprite>("MenuPhase/fase_outono_preview");
         if (bonusPreviewSprite == null) bonusPreviewSprite = Resources.Load<Sprite>("MenuPhase/fase_bonus_preview");
         if (bonusLockedPreviewSprite == null) bonusLockedPreviewSprite = Resources.Load<Sprite>("MenuPhase/fase_bonus_preview_bloqueada");
@@ -290,15 +287,16 @@ public class MenuController : MonoBehaviour
 
         var previewImage = AddImage(cardObject.transform,
             preview != null ? "Imagem " + label : "Área de prévia " + label,
-            preview, new Vector2(.06f, .14f), new Vector2(.94f, .89f),
-            preview != null ? Color.white : PhaseColor(label), false);
+            preview, new Vector2(.08f, .20f), new Vector2(.92f, .86f),
+            preview != null ? Color.white : PhaseColor(label), true);
         previewImage.raycastTarget = false;
 
         var card = new PhaseCard { label = label, scene = scene, preview = preview, frame = frame, provisional = provisional, button = button };
         if (locked)
         {
             var tint = AddImage(cardObject.transform, "Escurecimento de fase bloqueada", null,
-                new Vector2(.08f, .20f), new Vector2(.92f, .86f), new Color(0.23f, 0.24f, 0.24f, .78f), false);
+                previewImage.rectTransform.anchorMin, previewImage.rectTransform.anchorMax,
+                new Color(0.23f, 0.24f, 0.24f, .78f), false);
             tint.raycastTarget = false;
             if (bonusLockSprite != null)
                 AddImage(cardObject.transform, "Cadeado da fase bônus", bonusLockSprite,
@@ -565,8 +563,8 @@ public class MenuController : MonoBehaviour
         rect.anchorMin = min; rect.anchorMax = max; rect.offsetMin = Vector2.zero; rect.offsetMax = Vector2.zero;
 
         var preview = AddImage(card.transform, "Imagem da fase " + phase.label,
-            phase.preview, new Vector2(.06f, .14f), new Vector2(.94f, .89f),
-            phase.preview != null ? Color.white : PhaseColor(phase.label), false);
+            phase.preview, new Vector2(.08f, .20f), new Vector2(.92f, .86f),
+            phase.preview != null ? Color.white : PhaseColor(phase.label), true);
         preview.raycastTarget = false;
         if (phase.provisional)
         {

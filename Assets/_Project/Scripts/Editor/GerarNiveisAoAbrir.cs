@@ -14,6 +14,8 @@ static class GerarNiveisAoAbrir
 
     static void SincronizarCenasAntesDeJogar(PlayModeStateChange change)
     {
+        // As cenas locais podem ter sido recriadas depois da verificacao inicial.
+        // Reconstroi o Build Settings pelos caminhos antes do menu carregar a fase.
         if (change == PlayModeStateChange.ExitingEditMode && !MontarNiveis.FaltaAlgum())
             MontarNiveis.AtualizarBuild();
     }

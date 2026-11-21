@@ -62,7 +62,6 @@ public static class MenuArtSetup
         AssignIfPresent(serialized, "bonusPreviewSprite", "fase_bonus_preview.png");
         AssignIfPresent(serialized, "bonusLockedPreviewSprite", "fase_bonus_preview_bloqueada.png");
         AssignIfPresent(serialized, "bonusLockSprite", "fase_cadeado.png");
-        AssignIfPresent(serialized, "difficultyMainFrameSprite", DifficultyArtFolder, "dificuldade_moldura_principal.png");
         serialized.ApplyModifiedPropertiesWithoutUndo();
         EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
         EditorSceneManager.SaveScene(SceneManager.GetActiveScene());
@@ -128,12 +127,9 @@ public static class MenuArtSetup
     }
 
     static void AssignIfPresent(SerializedObject serialized, string field, string file)
-        => AssignIfPresent(serialized, field, PhaseArtFolder, file);
-
-    static void AssignIfPresent(SerializedObject serialized, string field, string folder, string file)
     {
         var property = serialized.FindProperty(field);
-        var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(folder + file);
+        var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(PhaseArtFolder + file);
         if (property == null || sprite == null) return;
         property.objectReferenceValue = sprite;
     }
