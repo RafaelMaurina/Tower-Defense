@@ -55,8 +55,12 @@ public class Enemy : MonoBehaviour, IDamageable
     void OnDisable() => EnemyRegistry.Unregister(this);
 
     /// Coloca o inimigo no inicio do caminho com a vida cheia.
+    /// O tufao so faz "nhac" na primeira mordida em cada inimigo (volta a valer quando o inimigo e reaproveitado).
+    [System.NonSerialized] public bool mordidoTocou;
+
     public void Init(WaypointPath caminho)
     {
+        mordidoTocou = false;
         path = caminho;
         Distance = 0f;
         health = data.health;

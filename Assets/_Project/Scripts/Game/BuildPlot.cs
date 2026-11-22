@@ -64,7 +64,17 @@ public class BuildPlot : MonoBehaviour
 
         placed.Init(data);
         Achievements.NoteTowerBuilt(data);
-        SoundBank.Play("constroi_" + data.name.Replace("Tower_", "").ToLowerInvariant());   // por enquanto so a colmeia tem som
+        string somConstroi = "constroi_" + data.name.Replace("Tower_", "").ToLowerInvariant();
+        SoundBank.Play(somConstroi, somConstroi == "constroi_colmeia" ? .4f : 1f);   // a colmeia, mais suave
+        if (somConstroi == "constroi_espantalho")      // a palha e o corvo que ele espanta, baixinho
+        {
+            SoundBank.Play("constroi_espantalho_palha");
+            SoundBank.Play("constroi_espantalho_corvo", .35f);
+        }
+        else if (somConstroi == "constroi_metralhadorauvas")      // o disparo da montagem e a recarga, mais baixinha
+            SoundBank.Play("constroi_metralhadorauvas_recarrega", .6f);
+        else if (somConstroi == "constroi_canhaoabobora")         // o canhao montando e a abobora entrando, mais baixinha
+            SoundBank.Play("constroi_canhaoabobora_abobora", .6f);
         // com torre em cima, o carrinho de mao da lugar ao canteiro so de terra
         if (ferramentas != null) { ferramentas.SetActive(false); return true; }
         var sr = GetComponent<SpriteRenderer>();
@@ -100,6 +110,7 @@ public class BuildPlot : MonoBehaviour
     {
         if (placed == null || GameManager.Instance == null || GameManager.State != GameState.Playing) return false;
         GameManager.Instance.AddMoney(GetSellRefund());
+        SoundBank.Play("vende_torre");
         Destroy(placed.gameObject);
         placed = null;
         if (ferramentas != null) { ferramentas.SetActive(true); return true; }

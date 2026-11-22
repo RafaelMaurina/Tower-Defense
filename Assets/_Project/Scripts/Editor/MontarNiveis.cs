@@ -615,6 +615,7 @@ public static class MontarNiveis
                 posFazendeiro = new Vector3(Mathf.Round((fx1 + .7f) * 32f) / 32f, fy0 + .9f, 0f);
             }
             var fazendeiro = Sprite_(grupo, Est_(nv, "Props/prop_fazendeiro_1"), posFazendeiro, -1).AddComponent<FarmerHoe>();
+            Som_(fazendeiro.gameObject, "fazendeiro", "HMM").words = FalasFazendeiro;   // clicar nele: uma fala de aldeao
             if (nv.fazendeiroEspelhado) fazendeiro.GetComponent<SpriteRenderer>().flipX = true;
             fazendeiro.frames = new Sprite[7];
             for (int i = 0; i < 7; i++)
@@ -767,7 +768,11 @@ public static class MontarNiveis
                 Sprite_(grupo, "Cerca/cerca_frente_" + nv.estacao + "_meia", new Vector3(p.x, p.y, 0f), -1);
         if (nv.fazendeiroParado != null)
             foreach (var f in nv.fazendeiroParado)
-                Sprite_(grupo, "Props/prop_fazendeiro_parado", new Vector3(f.x, f.y, 0f), -1).AddComponent<FarmerIdle>();
+            {
+                var parado = Sprite_(grupo, "Props/prop_fazendeiro_parado", new Vector3(f.x, f.y, 0f), -1);
+                parado.AddComponent<FarmerIdle>();
+                Som_(parado, "fazendeiro", "HMM").words = FalasFazendeiro;
+            }
         if (nv.cercasAtras != null)
         {
             var atras = new GameObject("CercasAtrasDoTrigo").transform;
@@ -930,6 +935,8 @@ public static class MontarNiveis
     }
 
     /// Clicar no bicho mostra a palavra e toca Resources/sons/<id>, se existir (ver AnimalSound).
+    static readonly string[] FalasFazendeiro = { "HMM", "HM", "UHUM" };
+
     static AnimalSound Som_(GameObject bicho, string id, string palavra)
     {
         var som = bicho.AddComponent<AnimalSound>();
