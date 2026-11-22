@@ -60,7 +60,7 @@ public static class SoundBank
     }
 
     // sons que tocam inteiros, sem o limite de 1 segundo com fadeout: o cocorico, a moedinha, a vitoria e a melhoria de torre
-    static readonly HashSet<string> TocaInteiro = new HashSet<string> { "galo", "inimigo_morre", "vitoria", "torre_melhora" };
+    static readonly HashSet<string> TocaInteiro = new HashSet<string> { "galo", "inimigo_morre", "vitoria", "torre_melhora", "derrota", "conquista" };
 
     public static void Play(string id, float volume = 1f)
     {
@@ -131,12 +131,13 @@ public static class CombatSounds
         SceneManager.sceneLoaded += HandleSceneLoaded;
     }
 
-    static void HandleUpgraded(Tower t) => SoundBank.Play("torre_melhora");
+    static void HandleUpgraded(Tower t) => SoundBank.Play("torre_melhora", .7f);
 
     // o GameManager zera os seus eventos ao sair da fase: a cada fase carregada liga de novo
     static void HandleState(GameState state)
     {
         if (state == GameState.Victory) SoundBank.Play("vitoria");
+        else if (state == GameState.Defeat) SoundBank.Play("derrota");
     }
 
     // tipos de inimigo que ja se apresentaram nesta fase; recomeca a cada fase carregada
@@ -158,14 +159,23 @@ public static class CombatSounds
         SoundBank.Play(id, .7f);
     }
 
-    static void HandleDied(Enemy e) => SoundBank.Play("inimigo_morre", .5f);   // a moedinha: toca a cada inimigo, entao mais baixa
-    static void HandleReachedBase(Enemy e) => SoundBank.Play("inimigo_chega");
-    static void HandleBite(Guardian g, Vector3 where) => SoundBank.Play("tufao_morde");
+    static void HandleDied(Enemy e) => SoundBank.Play("inimigo_morre", .08f);   // a moedinha: toca a cada inimigo, entao baixa
+    static void HandleReachedBase(Enemy e) => SoundBank.Play("inimigo_chega", .2f);   // o dano na fazenda, suave
+    static void HandleBite(Guardian g, Vector3 where)
+    {
+        var alvo = g != null ? g.BiteTarget : null;
+        if (alvo != null)
+        {
+            if (alvo.mordidoTocou) return;      // so a primeira mordida em cada inimigo faz o nhac
+            alvo.mordidoTocou = true;
+        }
+        SoundBank.Play("tufao_morde");
+    }
 
     static void HandleFired(Tower tower, Vector3 aim)
     {
         if (tower == null || tower.data == null) return;
         string id = "tiro_" + tower.data.name.Replace("Tower_", "").ToLowerInvariant();
-        SoundBank.Play(id, id == "tiro_colmeia" ? .45f : 1f);   // a colmeia atira rapido: mais baixo
+        SoundBank.Play(id, id == "tiro_colmeia" ? .2f : .45f);   // tiros das torres baixos; a colmeia atira rapido: ainda mais
     }
 }

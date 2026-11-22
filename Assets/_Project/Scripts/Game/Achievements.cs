@@ -300,6 +300,6 @@ public static class Achievements
     {
         if (!AddTo(Data.unlocked, id)) return;
         foreach (AchievementInfo info in All)
-            if (info.id == id) { AchievementToast.Show(info); return; }
+            if (info.id == id) { SoundBank.Play("conquista"); AchievementToast.Show(info); return; }
     }
 }

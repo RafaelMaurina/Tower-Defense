@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// Torre que sobe de nivel: um anel dourado no pe (3 quadros, 6 passos), setinhas e estrelas
-/// com contorno subindo em volta e a torre "pulando" 2 px e voltando. Dura ~0,6 s.
+/// com contorno subindo em volta e a torre "pulando" 2 px e voltando. Dura ~0,85 s, junto com o som.
 /// Liga sozinho: escuta Tower.OnUpgraded (so ao melhorar, nao ao construir).
 /// So mexe na posicao da torre (nunca no sprite). Se o TowerFireFx mover a torre no meio do pulo,
 /// o pulo para e no fim a altura e conferida, para a torre nunca ficar fora do lugar.
@@ -11,7 +11,7 @@ using UnityEngine;
 public class UpgradeFx : MonoBehaviour
 {
     const float Pixel = 1f / 32f;
-    const float Tick = .05f;
+    const float Tick = .07f;                // 12 passos = 0,84 s, a duracao do som de melhoria
     const int Ticks = 12;
     const int PartCount = 8;
     const int PartLife = 7;

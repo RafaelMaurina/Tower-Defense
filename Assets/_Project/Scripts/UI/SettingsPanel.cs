@@ -134,8 +134,9 @@ public class SettingsPanel : MonoBehaviour
         testSource.spatialBlend = 0f;
         testSource.ignoreListenerPause = true;
         testClip = MakeTone();
-        hoverClip = MakeTone(760f, 1120f, .11f, .22f);
-        clickClip = MakeTone(260f, 520f, .10f, .30f);
+        hoverClip = null;   // sem barulho ao passar o mouse por cima
+        clickClip = Resources.Load<AudioClip>("sons/clique_menu");   // o pop
+        if (clickClip == null) clickClip = MakeTone(260f, 520f, .10f, .30f);
 
         var dim = NewRect(transform, "Fundo", Vector2.zero, Vector2.one).gameObject.AddComponent<Image>();
         dim.color = new Color(.035f, .018f, .008f, .78f);

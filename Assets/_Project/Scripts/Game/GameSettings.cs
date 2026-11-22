@@ -163,7 +163,8 @@ public static class GameSettings
 }
 
 /// Toca a musica de fundo em loop (Assets/_Project/Resources/musica/<arquivo>) no volume das configuracoes.
-/// Sem arquivo na pasta nao faz nada: a musica entra quando a equipe adicionar o arquivo.
+/// Sem arquivo na pasta nao faz nada. Faixas: menu, manha_tarde (fases no Facil e no Normal), noite (fases no Dificil) e
+/// bonus (Campus). Na troca de cena a faixa que toca some em fadeout rapido e a nova entra.
 public class MusicPlayer : MonoBehaviour
 {
     AudioSource source;
@@ -176,20 +177,67 @@ public class MusicPlayer : MonoBehaviour
         go.AddComponent<MusicPlayer>();
     }
 
+    AudioClip[] clips;
+
     void Start()
     {
-        AudioClip[] clips = Resources.LoadAll<AudioClip>("musica");
+        clips = Resources.LoadAll<AudioClip>("musica");
         source = gameObject.AddComponent<AudioSource>();
         source.loop = true;
         source.playOnAwake = false;
         source.spatialBlend = 0f;
         source.ignoreListenerPause = true;
         source.volume = GameSettings.Music;
-        if (clips.Length > 0) { source.clip = clips[Random.Range(0, clips.Length)]; source.Play(); }
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += (cena, modo) => Trocar(cena.name);
+        Trocar(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
+    }
+
+    // "menu" toca so no menu; as outras faixas (se houver) tocam nas fases, sorteadas
+    void Trocar(string cena)
+    {
+        if (source == null) return;
+        // menu: "menu"; Campus (bonus): "bonus"; fases no Dificil (noite): "noite"; as outras: "manha_tarde"
+        string nome = null;
+        if (cena == "Menu") nome = "menu";
+        else if (cena == CampaignProgress.BonusScene) nome = "bonus";
+        else if (cena.StartsWith("Nivel_")) nome = GameManager.Difficulty == GameDifficulty.Hard ? "noite" : "manha_tarde";
+        AudioClip alvo = null;
+        foreach (var c in clips)
+            if (c.name == nome) alvo = c;
+        if (alvo == source.clip && source.isPlaying) return;      // a mesma faixa segue tocando
+        if (trocando != null) StopCoroutine(trocando);
+        trocando = StartCoroutine(FadeParaFaixa(alvo));
+    }
+
+    const float TempoFade = .5f;
+    const float GanhoNasFases = .4f;   // a musica das fases toca a 40% do volume do menu, para os efeitos aparecerem
+    float ganhoFaixa = 1f;
+    float fade = 1f;                  // 0 a 1, multiplica o volume das configuracoes
+    Coroutine trocando;
+
+    // fadeout rapido da faixa que toca, troca, e fadein da nova (tempo real: nao depende do timeScale)
+    System.Collections.IEnumerator FadeParaFaixa(AudioClip alvo)
+    {
+        while (source.isPlaying && fade > 0f)
+        {
+            fade = Mathf.Max(0f, fade - Time.unscaledDeltaTime / TempoFade);
+            yield return null;
+        }
+        source.Stop();
+        source.clip = alvo;
+        ganhoFaixa = alvo != null && alvo.name == "menu" ? 1f : GanhoNasFases;   // nas fases a musica fica por baixo dos efeitos
+        if (alvo == null) { fade = 1f; trocando = null; yield break; }
+        source.Play();
+        while (fade < 1f)
+        {
+            fade = Mathf.Min(1f, fade + Time.unscaledDeltaTime / TempoFade);
+            yield return null;
+        }
+        trocando = null;
     }
 
     void Update()
     {
-        if (source != null) source.volume = GameSettings.Music;
+        if (source != null) source.volume = GameSettings.Music * fade * ganhoFaixa;
     }
 }

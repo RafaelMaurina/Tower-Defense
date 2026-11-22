@@ -93,7 +93,8 @@ public class MenuController : MonoBehaviour
     {
         LoadPhaseArtFromResources();
         // Sons leves gerados em runtime até a equipe adicionar os efeitos finais.
-        if (hoverSound == null) hoverSound = CreateUiTone("Menu Hover", 0.11f, 760f, 1120f, 0.22f);
+        if (hoverSound == null) hoverSound = Resources.Load<AudioClip>("sons/clique_menu");   // o pop, bem baixinho ao passar o mouse
+        if (clickSound == null) clickSound = Resources.Load<AudioClip>("sons/clique_menu");   // o pop
         if (clickSound == null) clickSound = CreateUiTone("Menu Click", 0.10f, 260f, 520f, 0.30f);
         if (EventSystem.current == null) new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
         var canvasGo = new GameObject("Menu Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
@@ -811,7 +812,7 @@ public class MenuButtonHoverSound : MonoBehaviour, IPointerEnterHandler
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (source != null && clip != null) source.PlayOneShot(clip, GameSettings.Sfx);
+        if (source != null && clip != null) source.PlayOneShot(clip, GameSettings.Sfx * .3f);   // bem mais baixo que o clique
     }
 }
 

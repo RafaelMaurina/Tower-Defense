@@ -35,6 +35,7 @@ public class Guardian : MonoBehaviour
     float biteTime = -1f;             // < 0: nao esta mordendo
     bool biteLanded;
     Enemy biteTarget;
+    public Enemy BiteTarget => biteTarget;
 
     void Awake() => sr = GetComponent<SpriteRenderer>();
 

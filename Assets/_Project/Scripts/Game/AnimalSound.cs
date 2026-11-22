@@ -17,7 +17,8 @@ public class AnimalSound : MonoBehaviour
     const float Pixel = 1f / 32f;
 
     public string id;              // nome do arquivo de som
-    public string word = "MUU";    // so letras da fonte: C O M U I N K E W R F Z
+    public string word = "MUU";    // so letras da fonte: C O M U I N K E W R F Z H
+    public string[] words;         // se tiver, cada clique sorteia uma destas em vez de word
     public float cooldown = .6f;   // evita encher a tela clicando sem parar
     public Sprite awakeSprite;     // se tiver, o bicho "acorda" com este desenho por awakeTime segundos
     public float awakeTime = 2f;
@@ -46,18 +47,10 @@ public class AnimalSound : MonoBehaviour
     void Start() => sr = GetComponent<SpriteRenderer>();
 
     // inscreve por bicho, porque o GameManager zera os eventos de onda ao fim de cada partida
-    void OnEnable()
+    /// O galo canta: toca o cocorico e a fala sobe da cabeca dele. Chamado pelo WaveSpawner no comeco de cada onda.
+    public void Crow()
     {
-        if (crowsOnWave) GameManager.OnWaveChanged += HandleWave;
-    }
-
-    void OnDisable()
-    {
-        if (crowsOnWave) GameManager.OnWaveChanged -= HandleWave;
-    }
-
-    void HandleWave(int current, int total)
-    {
+        if (sr == null) sr = GetComponent<SpriteRenderer>();
         if (sr == null) return;
         SoundBank.Play(id);
         Say(word, new Vector3(sr.bounds.center.x, sr.bounds.max.y, 0f));
@@ -93,7 +86,7 @@ public class AnimalSound : MonoBehaviour
         nextTime = Time.unscaledTime + cooldown;
         Achievements.NoteAnimalClick(id);
         // dormindo: os primeiros cliques so mostram o ZZZZ; o ultimo acorda o bicho, que faz o seu barulho
-        string say = word;
+        string say = words != null && words.Length > 0 ? words[Random.Range(0, words.Length)] : word;
         bool makesSound = true, wakeNow = false;
         if (awakeSprite != null && !awake)
         {
@@ -106,7 +99,7 @@ public class AnimalSound : MonoBehaviour
         if (makesSound)
         {
             bool acordaSom = SoundBank.Has(id + "_acorda") && (wakeNow || (id == "vaca" && Random.value < .34f));
-            SoundBank.Play(acordaSom ? id + "_acorda" : id);
+            SoundBank.Play(acordaSom ? id + "_acorda" : id, id == "galo" ? .4f : 1f);   // o cocorico do clique, suave
         }
         Vector3 above = new Vector3(sr.bounds.center.x, sr.bounds.max.y, 0f);
         Say(say, above);
@@ -176,6 +169,7 @@ public class AnimalSound : MonoBehaviour
         { 'O', new[] { "XXX", "X.X", "X.X", "X.X", "XXX" } },
         { 'M', new[] { "X...X", "XX.XX", "X.X.X", "X...X", "X...X" } },
         { 'W', new[] { "X...X", "X...X", "X.X.X", "XX.XX", "X...X" } },
+        { 'H', new[] { "X.X", "X.X", "XXX", "X.X", "X.X" } },
         { 'U', new[] { "X.X", "X.X", "X.X", "X.X", "XXX" } },
         { 'I', new[] { "XXX", ".X.", ".X.", ".X.", "XXX" } },
         { 'N', new[] { "X..X", "XX.X", "X.XX", "X..X", "X..X" } },

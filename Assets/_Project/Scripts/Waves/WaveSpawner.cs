@@ -44,6 +44,8 @@ public class WaveSpawner : MonoBehaviour
 
     public void SetAutoStart(bool enabled) => autoStart = enabled;
 
+    const float PausaCocorico = 1.4f;   // duracao do galo.mp3
+
     IEnumerator Run()
     {
         // Em Play direto no nivel, GameManager.Start pode rodar depois deste Start.
@@ -88,6 +90,12 @@ public class WaveSpawner : MonoBehaviour
                     }
             GameManager.Instance?.NotifyWave(CurrentWave, waves.Length, hasFlyingEnemies);
             if (wave == null || wave.entries == null) continue;
+            // o galo canta no comeco da onda: os inimigos so entram quando o cocorico termina
+            bool galoCantou = false;
+            if (w == 0)       // o galo so canta na primeira onda
+                foreach (var bicho in FindObjectsByType<AnimalSound>(FindObjectsInactive.Exclude))
+                    if (bicho.crowsOnWave) { bicho.Crow(); galoCantou = true; }
+            if (galoCantou) yield return new WaitForSecondsRealtime(PausaCocorico);
 
             foreach (WaveEntry entry in wave.entries)
             {
