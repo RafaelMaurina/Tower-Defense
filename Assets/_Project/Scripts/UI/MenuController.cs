@@ -295,7 +295,8 @@ public class MenuController : MonoBehaviour
         if (locked)
         {
             var tint = AddImage(cardObject.transform, "Escurecimento de fase bloqueada", null,
-                new Vector2(.08f, .20f), new Vector2(.92f, .86f), new Color(0.23f, 0.24f, 0.24f, .78f), false);
+                previewImage.rectTransform.anchorMin, previewImage.rectTransform.anchorMax,
+                new Color(0.23f, 0.24f, 0.24f, .78f), false);
             tint.raycastTarget = false;
             if (bonusLockSprite != null)
                 AddImage(cardObject.transform, "Cadeado da fase bônus", bonusLockSprite,

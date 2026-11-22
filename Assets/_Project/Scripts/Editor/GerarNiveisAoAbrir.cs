@@ -6,7 +6,19 @@ using UnityEditor;
 [InitializeOnLoad]
 static class GerarNiveisAoAbrir
 {
-    static GerarNiveisAoAbrir() => EditorApplication.delayCall += Tentar;
+    static GerarNiveisAoAbrir()
+    {
+        EditorApplication.delayCall += Tentar;
+        EditorApplication.playModeStateChanged += SincronizarCenasAntesDeJogar;
+    }
+
+    static void SincronizarCenasAntesDeJogar(PlayModeStateChange change)
+    {
+        // As cenas locais podem ter sido recriadas depois da verificacao inicial.
+        // Reconstroi o Build Settings pelos caminhos antes do menu carregar a fase.
+        if (change == PlayModeStateChange.ExitingEditMode && !MontarNiveis.FaltaAlgum())
+            MontarNiveis.AtualizarBuild();
+    }
 
     static void Tentar()
     {
