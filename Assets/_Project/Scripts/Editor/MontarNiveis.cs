@@ -117,7 +117,7 @@ public static class MontarNiveis
             cochos = new[] { new Vector2(22.5f, 1f) } },
 
         // Verao: serpentina longa. 11 canteiros.
-        new Nivel { id = 2, nome = "Verao", estacao = 2, cultura = "tile_trigo",
+        new Nivel { id = 2, nome = "Verao", estacao = 3, cultura = "tile_trigo",
             caminhos  = new[] { P(-1,3, 5,3, 5,13, 11,13, 11,4, 17,4, 17,13, 23,13, 23,8, 25,8) },
             celeiro   = new RectInt(26, 7, 4, 4),
             canteiros = P(3,4, 6,7, 6,11, 8,11, 10,10, 12,8, 14,5, 16,10, 18,7, 20,11, 22,10),
@@ -142,7 +142,7 @@ public static class MontarNiveis
             postesCurtos = new[] { new Vector2(19.63f, 3.6f) } },
 
         // Outono: duas entradas que se juntam em (7,8). 12 canteiros.
-        new Nivel { id = 3, nome = "Outono", estacao = 3, cultura = "tile_abobora",
+        new Nivel { id = 3, nome = "Outono", estacao = 2, cultura = "tile_abobora",
             caminhos  = new[] { P(-1,13, 7,13, 7,8, 15,8, 15,4, 22,4, 22,9, 25,9),
                                 P(-1,3, 7,3, 7,8, 15,8, 15,4, 22,4, 22,9, 25,9) },
             celeiro   = new RectInt(26, 8, 4, 4),
