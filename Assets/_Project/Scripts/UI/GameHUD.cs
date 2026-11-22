@@ -184,8 +184,9 @@ public class GameHUD : MonoBehaviour
         uiAudio = gameObject.AddComponent<AudioSource>();
         uiAudio.playOnAwake = false;
         uiAudio.ignoreListenerPause = true;
-        hoverSound = UiTone("HUD Hover", .11f, 760f, 1120f, .22f);
-        clickSound = UiTone("HUD Click", .10f, 260f, 520f, .30f);
+        hoverSound = null;   // sem barulho ao passar o mouse por cima
+        clickSound = Resources.Load<AudioClip>("sons/clique_menu");   // o pop
+        if (clickSound == null) clickSound = UiTone("HUD Click", .10f, 260f, 520f, .30f);
         if (EventSystem.current == null)
             new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
         CreateCanvas();
