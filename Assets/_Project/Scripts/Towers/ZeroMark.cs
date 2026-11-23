@@ -19,6 +19,7 @@ public static class ZeroMark
 
         var towerSr = tower.GetComponent<SpriteRenderer>();
         Place(go, tower);
+        go.AddComponent<NotaZeroFx>().Iniciar(tower.GetComponent<Tower>());
         if (towerSr != null)
         {
             sr.sortingLayerID = towerSr.sortingLayerID;
@@ -33,7 +34,25 @@ public static class ZeroMark
     {
         var towerSr = tower.GetComponent<SpriteRenderer>();
         float top = towerSr != null ? towerSr.bounds.max.y : tower.position.y + 1f;
-        mark.transform.position = PixelSprites.Snap(new Vector3(tower.position.x, top + .45f, 0f));
+        float folga = .45f;
+        // o desenho das torres tem folga transparente em cima: poe o "0" logo acima do primeiro pixel de verdade
+        if (towerSr != null && towerSr.sprite != null)
+        {
+            Color32[] px = PixelSprites.Read(towerSr.sprite, out int w, out int h);
+            if (px != null)
+            {
+                int linha = -1;
+                for (int y = h - 1; y >= 0 && linha < 0; y--)
+                    for (int x = 0; x < w; x++)
+                        if (px[y * w + x].a > 0) { linha = y; break; }
+                if (linha >= 0)
+                {
+                    top = tower.position.y + (linha + 1 - towerSr.sprite.pivot.y) / towerSr.sprite.pixelsPerUnit;
+                    folga = 4f * Pixel;
+                }
+            }
+        }
+        mark.transform.position = PixelSprites.Snap(new Vector3(tower.position.x, top + folga, 0f));
     }
 
     static Sprite Build()

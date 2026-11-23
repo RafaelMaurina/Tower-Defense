@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4dd8e9a77973a43aa9ab44018426a540, type: 3}
   m_Name: Enemy_Chomsky
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
-  displayName: Prof Rieder
-  health: 1500
-  speed: 0.7
-  reward: 100
-  baseDamage: 999
+  displayName: Chomsky
+  health: 150
+  speed: 1.1
+  reward: 20
+  baseDamage: 5
   flying: 0
   centerOffset: {x: 0, y: 1.45}
   jumpInterval: 0
@@ -26,50 +26,45 @@ MonoBehaviour:
   zigzagPeriod: 1.6
   splitOnFirstDamage: 0
   splitOffset: 0
-  zeroInterval: 10
-  zeroCount: 1
-  zeroRecoverTick: 2
-  zeroRecoverChance: 0.15
   phases:
-  - name: Regular (Tipo 3)
+  - name: Regular
     startsBelowHealth: 1
-    speed: 0.7
+    speed: 1.1
     jumpInterval: 0
     jumpDistance: 0
     jumpDuration: 0.3
-    summonInterval: 4
+    summonInterval: 2.5
     summonEnemy: {fileID: 11400000, guid: 1ddb501067994703b5bfc17c52bb1834, type: 2}
     summonPrefab: {fileID: 445989406553587258, guid: fe9da9436b2c446a9c76294d2be1ba45, type: 3}
     shieldLayers: 0
     shieldPerLayer: 0
     healPerSecond: 0
-  - name: Livre de contexto (Tipo 2)
+  - name: Livre de contexto
     startsBelowHealth: 0.66
-    speed: 0.6
+    speed: 1.1
     jumpInterval: 0
     jumpDistance: 0
     jumpDuration: 0.3
-    summonInterval: 5
+    summonInterval: 2.5
     summonEnemy: {fileID: 11400000, guid: 3f80f5f31a3f4e258c587cf205ad55a2, type: 2}
     summonPrefab: {fileID: 411163459883138420, guid: f00f4c28ec6e4029ab34015b5552b097, type: 3}
-    shieldLayers: 3
-    shieldPerLayer: 40
-    healPerSecond: 0
-  - name: Irrestrita (Tipo 0)
-    startsBelowHealth: 0.33
-    speed: 0.6
-    jumpInterval: 2.5
-    jumpDistance: 2.5
-    jumpDuration: 0.4
-    summonInterval: 0
-    summonEnemy: {fileID: 0}
-    summonPrefab: {fileID: 0}
     shieldLayers: 0
     shieldPerLayer: 0
-    healPerSecond: 5
+    healPerSecond: 0
+  minionEnemy: {fileID: 0}
+  minionPrefab: {fileID: 0}
+  minionAtPath: []
+  zeroInterval: 0
+  zeroCount: 1
+  zeroRecoverTick: 2
+  zeroRecoverChance: 0.15
   frames:
   - {fileID: 21300000, guid: 44f2777454a6448ea84f8b4e39c11f27, type: 3}
   - {fileID: 21300000, guid: 17ec9ac561aa45318de0fc2c22fe1b7d, type: 3}
   - {fileID: 21300000, guid: f32ad54f3ee84775af6bbc5711ee77a4, type: 3}
   - {fileID: 21300000, guid: 1df7f82083884571a0fe2c2c6b8bf747, type: 3}
+  framesUp: []
+  framesDown: []
+  framesDiagUp: []
+  framesDiagDown: []
   framesPerSecond: 8

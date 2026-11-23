@@ -15,6 +15,7 @@ public class Boss : MonoBehaviour
     Enemy enemy;
     int phase = -1;
     float summonTimer;
+    int nextMinion;
     readonly List<float> shield = new List<float>();   // pilha: o fim da lista e o topo
     readonly List<Tower> zeroed = new List<Tower>();
     float zeroTimer, recoverTimer;
@@ -31,6 +32,7 @@ public class Boss : MonoBehaviour
         shield.Clear();
         ReleaseAll();
         zeroTimer = recoverTimer = 0f;
+        nextMinion = 0;
         EnterPhase(0);
     }
 
@@ -77,8 +79,22 @@ public class Boss : MonoBehaviour
                 if (Random.Range(0, ++seen) == 0) pick = t;   // sorteio uniforme sem lista extra
             }
             if (pick == null) return;
-            pick.SetZeroed(true);
+            pick.SetZeroed(true, transform.position + new Vector3(0f, enemy.data.centerOffset.y, 0f));   // a caneta sai do professor
             zeroed.Add(pick);
+        }
+    }
+
+    // capangas por trecho do caminho (EnemyData.minionAtPath): o professor solta o Chomsky no comeco e na metade
+    void UpdateMinions()
+    {
+        EnemyData d = enemy.data;
+        if (d.minionAtPath == null || d.minionEnemy == null || d.minionPrefab == null) return;
+        float len = enemy.PathLength;
+        float fraction = len > 0f ? enemy.Distance / len : 0f;
+        while (nextMinion < d.minionAtPath.Length && fraction >= d.minionAtPath[nextMinion])
+        {
+            enemy.Spawn(d.minionPrefab, d.minionEnemy, Mathf.Max(0f, enemy.Distance - 0.5f));
+            nextMinion++;
         }
     }
 
@@ -87,6 +103,7 @@ public class Boss : MonoBehaviour
         if (!enemy.IsAlive || enemy.data.phases == null || enemy.data.phases.Length == 0) return;
         BossPhase[] phases = enemy.data.phases;
         UpdateZeros();
+        UpdateMinions();
 
         float fraction = enemy.Health / enemy.data.health;
         int target = phase;

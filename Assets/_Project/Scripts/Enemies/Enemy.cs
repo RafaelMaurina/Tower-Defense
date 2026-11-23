@@ -149,6 +149,8 @@ public class Enemy : MonoBehaviour, IDamageable
     // em relacao a horizontal: ate 15 graus lado, de 15 a 60 diagonal, acima de 60 cima/baixo.
     // Conjunto vazio cai em frames. Os sprites de lado e diagonais olham para a direita;
     // se vai para a esquerda, espelha (flipX).
+    int lastFrame = -1;
+
     void Animate()
     {
         if (sr == null || data.frames == null || data.frames.Length == 0) return;
@@ -191,6 +193,12 @@ public class Enemy : MonoBehaviour, IDamageable
         int i = (int)(animTime * data.framesPerSecond) % frameSet.Length;
         sr.sprite = frameSet[i];
         sr.flipX = flip;
+        if (i != lastFrame)
+        {
+            lastFrame = i;
+            if (!string.IsNullOrEmpty(data.stepSound) && data.stepFrames != null && System.Array.IndexOf(data.stepFrames, i) >= 0)
+                SoundBank.Play(data.stepSound, 1f);   // o passo cai junto com o pe no chao
+        }
     }
 
     /// Centro do corpo. O pivo do sprite fica no pe; projetil mira e acerta aqui.

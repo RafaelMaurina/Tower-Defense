@@ -1,0 +1,88 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4dd8e9a77973a43aa9ab44018426a540, type: 3}
+  m_Name: Enemy_Professor
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  displayName: Prof Rieder
+  health: 1500
+  speed: 0.6
+  reward: 100
+  baseDamage: 999
+  flying: 0
+  centerOffset: {x: 0, y: 0.9}
+  jumpInterval: 0
+  jumpDistance: 0
+  jumpDuration: 0.3
+  zigzagAmplitude: 0
+  zigzagPeriod: 1.6
+  splitOnFirstDamage: 0
+  splitOffset: 0
+  phases:
+  - name: Regular (Tipo 3)
+    startsBelowHealth: 1
+    speed: 0.6
+    jumpInterval: 0
+    jumpDistance: 0
+    jumpDuration: 0.3
+    summonInterval: 0
+    summonEnemy: {fileID: 0}
+    summonPrefab: {fileID: 0}
+    shieldLayers: 0
+    shieldPerLayer: 0
+    healPerSecond: 0
+  - name: Livre de contexto (Tipo 2)
+    startsBelowHealth: 0.66
+    speed: 0.5
+    jumpInterval: 0
+    jumpDistance: 0
+    jumpDuration: 0.3
+    summonInterval: 0
+    summonEnemy: {fileID: 0}
+    summonPrefab: {fileID: 0}
+    shieldLayers: 3
+    shieldPerLayer: 40
+    healPerSecond: 0
+  - name: Irrestrita (Tipo 0)
+    startsBelowHealth: 0.33
+    speed: 0.5
+    jumpInterval: 0
+    jumpDistance: 0
+    jumpDuration: 0.3
+    summonInterval: 0
+    summonEnemy: {fileID: 0}
+    summonPrefab: {fileID: 0}
+    shieldLayers: 0
+    shieldPerLayer: 0
+    healPerSecond: 5
+  minionEnemy: {fileID: 11400000, guid: 195c439ac0cf4730b6275e234dc56476, type: 2}
+  minionPrefab: {fileID: 175490127688983361, guid: 9952d9342cfc49d4bacf4765d41e05b8, type: 3}
+  stepSound: passo_professor
+  stepFrames:
+  - 1
+  - 3
+  minionAtPath:
+  - 0
+  - 0.5
+  zeroInterval: 10
+  zeroCount: 1
+  zeroRecoverTick: 2
+  zeroRecoverChance: 0.15
+  frames:
+  - {fileID: 21300000, guid: 0d0003a334c4480b8bf9dac1864af095, type: 3}
+  - {fileID: 21300000, guid: 805804f9394d4b5d848756b8b982179c, type: 3}
+  - {fileID: 21300000, guid: 0d0003a334c4480b8bf9dac1864af095, type: 3}
+  - {fileID: 21300000, guid: 35f4464eab3a451a846569a246053dd4, type: 3}
+  framesUp: []
+  framesDown: []
+  framesDiagUp: []
+  framesDiagDown: []
+  framesPerSecond: 5

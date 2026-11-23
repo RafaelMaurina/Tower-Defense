@@ -60,7 +60,7 @@ public static class SoundBank
     }
 
     // sons que tocam inteiros, sem o limite de 1 segundo com fadeout: o cocorico, a moedinha, a vitoria e a melhoria de torre
-    static readonly HashSet<string> TocaInteiro = new HashSet<string> { "galo", "inimigo_morre", "vitoria", "torre_melhora", "derrota", "conquista" };
+    static readonly HashSet<string> TocaInteiro = new HashSet<string> { "galo", "inimigo_morre", "vitoria", "torre_melhora", "derrota", "conquista", "risada_professor" };
 
     public static void Play(string id, float volume = 1f)
     {
@@ -154,7 +154,8 @@ public static class CombatSounds
     static void HandleSpawned(Enemy e)
     {
         if (e == null || e.data == null) return;
-        string id = "nasce_" + e.data.name.Replace("Enemy_", "").ToLowerInvariant();
+        string tipo = e.data.name.Replace("Enemy_", "").ToLowerInvariant();
+        string id = "nasce_" + (tipo == "professor" ? "chomsky" : tipo);   // o professor entra com o som do Chomsky
         if (!introduced.Add(id)) return;
         SoundBank.Play(id, .7f);
     }
