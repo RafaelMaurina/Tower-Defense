@@ -1026,13 +1026,25 @@ public class GameHUD : MonoBehaviour
             horizontalActions ? .20f : .19f);
         rows.anchorMax = new Vector2(horizontalActions ? .91f : isTower ? .84f : .76f,
             horizontalActions ? .47f : isTower ? .53f : .60f);
+        var pauseSizeReference = paused ? Art("menu_normal") : null;
         int n = Mathf.Max(1,actions.Length);
         for (int i=0;i<actions.Length;i++)
-            MakeButton(rows,actions[i],horizontalActions
+        {
+            var button = MakeButton(rows,actions[i],horizontalActions
                 ? new Vector2(i/(float)n+.008f,.02f)
                 : new Vector2(0,1f-(i+1f)/n+.015f),horizontalActions
                 ? new Vector2((i+1f)/n-.008f,.98f)
                 : new Vector2(1,1f-i/(float)n-.015f));
+
+            if (pauseSizeReference != null && button.targetGraphic is Image image)
+            {
+                // Todos os sprites da pausa ocupam a mesma área do botão Menu Principal.
+                image.preserveAspect = false;
+                var fitter = image.gameObject.AddComponent<AspectRatioFitter>();
+                fitter.aspectRatio = pauseSizeReference.rect.width / pauseSizeReference.rect.height;
+                fitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+            }
+        }
         if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
     }
     void Close()

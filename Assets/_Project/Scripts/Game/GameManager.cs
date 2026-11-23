@@ -28,7 +28,6 @@ public struct GameResult
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
-    static string pendingRunStartScene;
     public static int Money => Instance != null ? Instance.money : 0;
     public static int BaseLife => Instance != null ? Instance.baseLife : 0;
     public static int StartingLife => Instance != null ? Instance.startingLife : 0;
@@ -62,9 +61,6 @@ public class GameManager : MonoBehaviour
     float gameSpeed = 1f;
     bool decisionPaused;
     bool buildPaused;
-    bool campaignRunEligible;
-    int campaignLevelsCompleted;
-    string expectedCampaignScene;
 
     void Awake()
     {
@@ -77,8 +73,6 @@ public class GameManager : MonoBehaviour
         startingLife = baseLife;
         moneyReceived = startingMoney;
         activeLevelScene = SceneManager.GetActiveScene().name;
-        BeginCampaignRun(string.IsNullOrEmpty(pendingRunStartScene) ? activeLevelScene : pendingRunStartScene);
-        pendingRunStartScene = null;
         Achievements.BeginLevel();
         Enemy.OnDied += HandleEnemyDied;
         Enemy.OnReachedBase += HandleEnemyReachedBase;
@@ -108,19 +102,6 @@ public class GameManager : MonoBehaviour
     }
 
     public static void SetDifficulty(GameDifficulty value) => Difficulty = value;
-
-    public static void PrepareRun(string startScene)
-    {
-        pendingRunStartScene = startScene;
-        if (Instance != null) Instance.BeginCampaignRun(startScene);
-    }
-
-    void BeginCampaignRun(string startScene)
-    {
-        campaignRunEligible = startScene == "Nivel_1_Primavera";
-        campaignLevelsCompleted = 0;
-        expectedCampaignScene = campaignRunEligible ? "Nivel_1_Primavera" : null;
-    }
 
     public void ResetGame()
     {
@@ -163,21 +144,9 @@ public class GameManager : MonoBehaviour
     {
         if (state != GameState.Playing) return;
         string current = SceneManager.GetActiveScene().name;
-        CampaignProgress.Complete(current);
+        bool fullCampaign = CampaignProgress.Complete(current, Difficulty);
         Achievements.LevelWon(current, startingMoney);
-        if (campaignRunEligible)
-        {
-            if (current != expectedCampaignScene) campaignRunEligible = false;
-            else
-            {
-                campaignLevelsCompleted++;
-                expectedCampaignScene = current == "Nivel_1_Primavera" ? "Nivel_2_Verao"
-                    : current == "Nivel_2_Verao" ? "Nivel_3_Outono" : null;
-            }
-        }
-        string next = current == "Nivel_1_Primavera" ? "Nivel_2_Verao" : current == "Nivel_2_Verao" ? "Nivel_3_Outono" : null;
-        if (next == null) CompleteGame();
-        else SceneManager.LoadScene(next);
+        EndGame(true, fullCampaign);
     }
 
     public void SetState(GameState value)
@@ -277,7 +246,7 @@ public class GameManager : MonoBehaviour
         if (state == GameState.Playing) EndGame(true);
     }
 
-    void EndGame(bool won)
+    void EndGame(bool won, bool fullCampaign = false)
     {
         int score = CalculateScore(enemiesDefeated, enemiesPlanned, baseLife, startingLife, money, moneyReceived);
         var result = new GameResult
@@ -294,7 +263,7 @@ public class GameManager : MonoBehaviour
             topDamageSprite = topDamageSprite,
             difficulty = Difficulty,
             bonus = activeLevelScene == CampaignProgress.BonusScene,
-            fullCampaign = won && campaignRunEligible && campaignLevelsCompleted == 3
+            fullCampaign = fullCampaign
         };
         LocalRanking.Record(result);
         Achievements.GameWon(result);
@@ -330,20 +299,9 @@ public class GameManager : MonoBehaviour
 
     void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (scene.name == "Menu")
-        {
-            campaignRunEligible = false;
-            campaignLevelsCompleted = 0;
-            expectedCampaignScene = null;
-            return;
-        }
+        if (scene.name == "Menu") return;
 
         activeLevelScene = scene.name;
         Achievements.BeginLevel();
-        if (!string.IsNullOrEmpty(pendingRunStartScene))
-        {
-            BeginCampaignRun(pendingRunStartScene);
-            pendingRunStartScene = null;
-        }
     }
 }
