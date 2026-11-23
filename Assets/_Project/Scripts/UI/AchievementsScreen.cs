@@ -17,7 +17,7 @@ public sealed class AchievementsScreen : MonoBehaviour
     readonly TextMeshProUGUI[] groupLabels = new TextMeshProUGUI[GroupArt.Length];
     readonly int[] groupTotals = new int[GroupArt.Length];
     readonly int[] groupUnlocked = new int[GroupArt.Length];
-    TextMeshProUGUI countText, percentageText;
+    TextMeshProUGUI percentageText;
     Image progressFill;
     Sprite lockSprite, checkSprite;
     int lastCount = -1;
@@ -57,7 +57,6 @@ public sealed class AchievementsScreen : MonoBehaviour
         {
             lastCount = unlocked;
             float fraction = Achievements.Total > 0 ? (float)unlocked / Achievements.Total : 0f;
-            countText.text = $"PROGRESSO GERAL — {unlocked} / {Achievements.Total}";
             percentageText.text = $"{Mathf.RoundToInt(fraction * 100f)}%";
             progressFill.fillAmount = fraction;
         }
@@ -99,8 +98,7 @@ public sealed class AchievementsScreen : MonoBehaviour
         var panel = new GameObject("Progresso geral", typeof(RectTransform), typeof(LayoutElement));
         panel.transform.SetParent(parent, false);
         panel.GetComponent<LayoutElement>().preferredHeight = 76f;
-        countText = AddText(panel.transform, "Contador", "", new Vector2(.10f, .52f), new Vector2(.90f, 1f), 27, TextAlignmentOptions.Center);
-        var track = AddImage(panel.transform, "Moldura do progresso", Art("progresso_fundo"), new Vector2(.10f, 0f), new Vector2(.90f, .52f), Image.Type.Sliced);
+        var track = AddImage(panel.transform, "Moldura do progresso", Art("progresso_fundo"), new Vector2(.10f, .10f), new Vector2(.90f, .90f), Image.Type.Sliced);
         progressFill = AddImage(track.transform, "Preenchimento", Art("progresso_verde"), Vector2.zero, Vector2.one, Image.Type.Filled);
         progressFill.rectTransform.offsetMin = new Vector2(5f, 5f);
         progressFill.rectTransform.offsetMax = new Vector2(-5f, -5f);

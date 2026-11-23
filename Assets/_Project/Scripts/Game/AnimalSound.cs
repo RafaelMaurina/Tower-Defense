@@ -170,6 +170,11 @@ public class AnimalSound : MonoBehaviour
         { 'M', new[] { "X...X", "XX.XX", "X.X.X", "X...X", "X...X" } },
         { 'W', new[] { "X...X", "X...X", "X.X.X", "XX.XX", "X...X" } },
         { 'H', new[] { "X.X", "X.X", "XXX", "X.X", "X.X" } },
+        { 'P', new[] { "XX.", "X.X", "XX.", "X..", "X.." } },
+        { 'V', new[] { "X.X", "X.X", "X.X", "X.X", ".X." } },
+        { 'A', new[] { ".X.", "X.X", "XXX", "X.X", "X.X" } },
+        { 'D', new[] { "XX.", "X.X", "X.X", "X.X", "XX." } },
+        { '!', new[] { "X", "X", "X", ".", "X" } },
         { 'U', new[] { "X.X", "X.X", "X.X", "X.X", "XXX" } },
         { 'I', new[] { "XXX", ".X.", ".X.", ".X.", "XXX" } },
         { 'N', new[] { "X..X", "XX.X", "X.XX", "X..X", "X..X" } },
@@ -180,9 +185,13 @@ public class AnimalSound : MonoBehaviour
         { 'Z', new[] { "XXX", "..X", ".X.", "X..", "XXX" } },
     };
 
-    static Sprite Word(string text)
+    static Sprite Word(string text) => Palavra(text, new Color32(255, 255, 255, 255));
+
+    /// Palavra na fonte de pixel com o contorno escuro, na cor pedida (usada tambem pela nota 0: REPROVADO!).
+    public static Sprite Palavra(string text, Color32 cor)
     {
-        if (cache.TryGetValue(text, out Sprite cached) && cached != null) return cached;
+        string chave = text + "|" + cor.r + "," + cor.g + "," + cor.b;
+        if (cache.TryGetValue(chave, out Sprite cached) && cached != null) return cached;
 
         int width = 0;
         foreach (char c in text) width += Font[c][0].Length + 1;
@@ -198,8 +207,8 @@ public class AnimalSound : MonoBehaviour
                     if (g[y][x] == 'X') fill[x0 + x, 1 + (4 - y)] = true;
             x0 += g[0].Length + 1;
         }
-        Sprite s = Outlined(fill, w, h, new Color32(255, 255, 255, 255), "palavra_" + text);
-        cache[text] = s;
+        Sprite s = Outlined(fill, w, h, cor, "palavra_" + text);
+        cache[chave] = s;
         return s;
     }
 

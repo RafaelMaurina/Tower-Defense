@@ -25,8 +25,8 @@ MonoBehaviour:
     count: 4
     spawnInterval: 1.5
     pathIndex: -1
-  - enemy: {fileID: 11400000, guid: 195c439ac0cf4730b6275e234dc56476, type: 2}
-    enemyPrefab: {fileID: 175490127688983361, guid: 9952d9342cfc49d4bacf4765d41e05b8, type: 3}
+  - enemy: {fileID: 11400000, guid: 5de9f3682f278a24fba21d4c66884a74, type: 2}
+    enemyPrefab: {fileID: 175490127688983361, guid: 59c5edee4a4683040b89b7e8868a33ba, type: 3}
     count: 1
     spawnInterval: 0
     pathIndex: -1

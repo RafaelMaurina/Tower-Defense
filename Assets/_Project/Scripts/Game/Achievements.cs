@@ -56,7 +56,7 @@ public static class Achievements
     static readonly string[] EnemyIds =
     {
         "Enemy_Rato", "Enemy_Gafanhoto", "Enemy_Javali", "Enemy_Raposa", "Enemy_Guaxinim",
-        "Enemy_Corvo", "Enemy_Morcego", "Enemy_AFD", "Enemy_AFN", "Enemy_Chomsky"   // Chomsky = Prof Rieder
+        "Enemy_Corvo", "Enemy_Morcego", "Enemy_AFD", "Enemy_AFN", "Enemy_Chomsky", "Enemy_Professor"   // Professor = o boss Rieder
     };
     const string RatId = "Enemy_Rato", BoarId = "Enemy_Javali";   // o rato anda em ziguezague
     const string BeehiveId = "Tower_Colmeia", ScarecrowId = "Tower_Espantalho";

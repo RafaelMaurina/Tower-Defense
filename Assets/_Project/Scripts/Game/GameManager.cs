@@ -234,8 +234,7 @@ public class GameManager : MonoBehaviour
         if (accumulated > topDamage)
         {
             topDamage = accumulated;
-            Vector3 position = tower.transform.position;
-            topDamageTower = $"{towerName} ({position.x:0.0}, {position.y:0.0})";
+            topDamageTower = towerName;
             // Guarda a arte mesmo se a torre for vendida antes do fim da partida.
             topDamageSprite = tower.GetComponent<SpriteRenderer>()?.sprite;
         }

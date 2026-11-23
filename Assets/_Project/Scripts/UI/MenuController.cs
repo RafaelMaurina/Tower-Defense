@@ -311,16 +311,6 @@ public class MenuController : MonoBehaviour
             cardObject.AddComponent<MenuButtonHoverSound>().Initialize(audio, hoverSound);
         }
 
-        if (provisional)
-        {
-            var provisionalText = MakeText(cardObject.transform, "PRÉVIA PROVISÓRIA",
-                new Vector2(.18f, .72f), new Vector2(.82f, .80f), 17, new Color32(255, 244, 220, 255));
-            provisionalText.raycastTarget = false;
-            var provisionalOutline = provisionalText.gameObject.AddComponent<Outline>();
-            provisionalOutline.effectColor = new Color32(43, 31, 22, 255);
-            provisionalOutline.effectDistance = new Vector2(1.5f, -1.5f);
-        }
-
         var frameImage = AddImage(cardObject.transform, "Moldura " + label, frame,
             Vector2.zero, Vector2.one, Color.white, false);
         frameImage.raycastTarget = false;
@@ -537,23 +527,36 @@ public class MenuController : MonoBehaviour
         difficultyMenu.transform.SetParent(menuRoot, false);
         SetFullRect(difficultyMenu.GetComponent<RectTransform>());
 
-        var frame = AddImage(difficultyMenu.transform, "Moldura principal da dificuldade",
-            difficultyMainFrameSprite != null ? difficultyMainFrameSprite : submenuPanelSprite,
-            new Vector2(.045f, .14f), new Vector2(.955f, .98f), Color.white, true);
+        // A moldura mantem a proporcao do desenho; o conteudo vai num filho do tamanho dela, para o alinhamento
+        // nao mudar com a proporcao da janela. As posicoes abaixo seguem as da tela cheia (painel .045-.955 x .14-.98).
+        var mainFrame = difficultyMainFrameSprite != null ? difficultyMainFrameSprite : submenuPanelSprite;
+        var holder = new GameObject("Painel da dificuldade", typeof(RectTransform));
+        holder.transform.SetParent(difficultyMenu.transform, false);
+        var holderRect = holder.GetComponent<RectTransform>();
+        holderRect.anchorMin = new Vector2(.045f, .14f); holderRect.anchorMax = new Vector2(.955f, .98f);
+        holderRect.offsetMin = Vector2.zero; holderRect.offsetMax = Vector2.zero;
+        var artObject = new GameObject("Area da moldura", typeof(RectTransform), typeof(AspectRatioFitter));
+        artObject.transform.SetParent(holder.transform, false);
+        var artFit = artObject.GetComponent<AspectRatioFitter>();
+        artFit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+        artFit.aspectRatio = mainFrame != null ? mainFrame.rect.width / mainFrame.rect.height : 2f;
+        var art = artObject.transform;
+        Vector2 Local(Vector2 v) => new Vector2((v.x - .045f) / .91f, (v.y - .14f) / .84f);
+
+        var frame = AddImage(art, "Moldura principal da dificuldade", mainFrame, Vector2.zero, Vector2.one, Color.white, false);
         frame.raycastTarget = false;
 
-        AddDifficultyPhaseCard(difficultyMenu.transform, selectedPhaseCard,
-            new Vector2(.13f, .30f), new Vector2(.49f, .73f));
+        AddDifficultyPhaseCard(art, selectedPhaseCard, Local(new Vector2(.13f, .30f)), Local(new Vector2(.49f, .73f)));
 
         Image easy = null;
-        easy = CreateSpriteButton(difficultyMenu.transform, "Fácil — manhã", difficultyEasyBadge, difficultyEasyBadgeSelected,
-            new Vector2(.50f, .61f), new Vector2(.93f, .73f), () => SelectDifficulty(GameDifficulty.Easy, easy));
+        easy = CreateSpriteButton(art, "Fácil — manhã", difficultyEasyBadge, difficultyEasyBadgeSelected,
+            Local(new Vector2(.50f, .61f)), Local(new Vector2(.93f, .73f)), () => SelectDifficulty(GameDifficulty.Easy, easy));
         Image normal = null;
-        normal = CreateSpriteButton(difficultyMenu.transform, "Normal — pôr do sol", difficultyNormalBadge, difficultyNormalBadgeSelected,
-            new Vector2(.50f, .455f), new Vector2(.93f, .575f), () => SelectDifficulty(GameDifficulty.Normal, normal));
+        normal = CreateSpriteButton(art, "Normal — pôr do sol", difficultyNormalBadge, difficultyNormalBadgeSelected,
+            Local(new Vector2(.50f, .455f)), Local(new Vector2(.93f, .575f)), () => SelectDifficulty(GameDifficulty.Normal, normal));
         Image hard = null;
-        hard = CreateSpriteButton(difficultyMenu.transform, "Difícil — noite", difficultyHardBadge, difficultyHardBadgeSelected,
-            new Vector2(.50f, .30f), new Vector2(.93f, .42f), () => SelectDifficulty(GameDifficulty.Hard, hard));
+        hard = CreateSpriteButton(art, "Difícil — noite", difficultyHardBadge, difficultyHardBadgeSelected,
+            Local(new Vector2(.50f, .30f)), Local(new Vector2(.93f, .42f)), () => SelectDifficulty(GameDifficulty.Hard, hard));
         var back = CreateSpriteButton(difficultyMenu.transform, "Voltar", backButtonSprite, backButtonSelectedSprite,
             new Vector2(.40f, .025f), new Vector2(.60f, .12f), CloseDifficultyMenu).GetComponent<Button>();
 
@@ -586,18 +589,20 @@ public class MenuController : MonoBehaviour
             previewArea = fittedArea.transform;
         }
         AddPhasePreview(previewArea, phase.label, phase.preview, phase.frame);
-        if (phase.provisional)
-        {
-            var provisionalText = MakeText(card.transform, "PRÉVIA PROVISÓRIA",
-                new Vector2(.18f, .72f), new Vector2(.82f, .80f), 17, new Color32(255, 244, 220, 255));
-            provisionalText.raycastTarget = false;
-            var outline = provisionalText.gameObject.AddComponent<Outline>();
-            outline.effectColor = new Color32(43, 31, 22, 255);
-            outline.effectDistance = new Vector2(1.5f, -1.5f);
-        }
         var frame = AddImage(card.transform, "Moldura da fase " + phase.label,
             phase.frame, Vector2.zero, Vector2.one, Color.white, true);
         frame.raycastTarget = false;
+    }
+
+    static string DifficultyName(string saved)
+    {
+        switch (saved)
+        {
+            case "Easy": return "Fácil";
+            case "Normal": return "Normal";
+            case "Hard": return "Difícil";
+            default: return saved;
+        }
     }
 
     static void ConfigureDifficultyNavigation(Image easy, Image normal, Image hard, Button back)
@@ -675,9 +680,9 @@ public class MenuController : MonoBehaviour
         "Projeto desenvolvido para a disciplina de Computação Gráfica da Universidade de Passo Fundo - UPF.",
         new[]
         {
-            "Rafael (@RafaelMaurina) — Arte e áudio",
-            "Fabio (@fabioov) — Sistema de combate",
-            "João (@Joao-Althaus) — Jogabilidade e Interface"
+            "Rafael (@RafaelMaurina): Arte, áudio e fases",
+            "Fabio (@fabioov): Sistema de combate",
+            "João (@Joao-Althaus): Jogabilidade e Interface"
         },
         "https://github.com/RafaelMaurina/Tower-Defense");
 
@@ -745,7 +750,7 @@ public class MenuController : MonoBehaviour
                 i >= 3 && i % 2 == 1 ? new Color32(216, 202, 174, 255) : Color.white, false);
             RankingEntry entry = entries[i];
             string position = i < 3 ? (i + 1).ToString() : (i + 1) + ".";
-            string[] values = { position, entry.score.ToString(), entry.difficulty, FormatRankingDate(entry.date) };
+            string[] values = { position, entry.score.ToString(), DifficultyName(entry.difficulty), FormatRankingDate(entry.date) };
             for (int col = 0; col < values.Length; col++)
             {
                 if (col == 0 && i < 3)
@@ -1048,16 +1053,31 @@ public class InfoPanel : MonoBehaviour
         screenRect.anchorMin = Vector2.zero; screenRect.anchorMax = Vector2.one;
         screenRect.offsetMin = Vector2.zero; screenRect.offsetMax = Vector2.zero;
 
-        if (informationFrameSprite != null)
-            AddImage(screen.transform, "Moldura Informações", informationFrameSprite,
-                new Vector2(.12f, .12f), new Vector2(.88f, .99f), Color.white, true);
+        // A moldura mantem a proporcao do desenho; o conteudo vai num filho do tamanho dela, entao o alinhamento
+        // nao muda com a proporcao da janela. Posicoes abaixo seguem a tela cheia (moldura .12-.88 x .12-.99).
+        var holder = new GameObject("Painel Informações", typeof(RectTransform));
+        holder.transform.SetParent(screen.transform, false);
+        var holderRect = holder.GetComponent<RectTransform>();
+        holderRect.anchorMin = new Vector2(.12f, .12f); holderRect.anchorMax = new Vector2(.88f, .99f);
+        holderRect.offsetMin = Vector2.zero; holderRect.offsetMax = Vector2.zero;
+        var artObject = new GameObject("Area da moldura", typeof(RectTransform), typeof(AspectRatioFitter));
+        artObject.transform.SetParent(holder.transform, false);
+        var artFit = artObject.GetComponent<AspectRatioFitter>();
+        artFit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+        artFit.aspectRatio = informationFrameSprite != null
+            ? informationFrameSprite.rect.width / informationFrameSprite.rect.height : 1.2f;
+        var art = artObject.transform;
+        Vector2 V(float x, float y) => new Vector2((x - .12f) / .76f, (y - .12f) / .87f);
 
-        MakeInfoTmpText(screen.transform, "Apresentação acadêmica", presentation,
-            new Vector2(.24f, .73f), new Vector2(.76f, .80f), 28);
+        if (informationFrameSprite != null)
+            AddImage(art, "Moldura Informações", informationFrameSprite, Vector2.zero, Vector2.one, Color.white, false);
+
+        MakeInfoTmpText(art, "Apresentação acadêmica", presentation,
+            V(.24f, .73f), V(.76f, .80f), 28);
 
         if (teamPlaqueSprite != null)
-            AddImage(screen.transform, "Placa da equipe", teamPlaqueSprite,
-                new Vector2(.28f, .615f), new Vector2(.72f, .705f), Color.white, true);
+            AddImage(art, "Placa da equipe", teamPlaqueSprite,
+                V(.28f, .615f), V(.72f, .705f), Color.white, true);
 
         Sprite[] icons = { artistIconSprite, combatIconSprite, gameplayIconSprite };
         float[] rowBottoms = { .52f, .43f, .34f };
@@ -1065,17 +1085,17 @@ public class InfoPanel : MonoBehaviour
         {
             float bottom = rowBottoms[i];
             if (icons[i] != null)
-                AddImage(screen.transform, "Ícone crédito " + (i + 1), icons[i],
-                    new Vector2(.305f, bottom + .003f), new Vector2(.355f, bottom + .067f), Color.white, true);
-            MakeInfoTmpText(screen.transform, "Crédito " + (i + 1), creditLines[i],
-                new Vector2(.365f, bottom), new Vector2(.70f, bottom + .07f), 28);
+                AddImage(art, "Ícone crédito " + (i + 1), icons[i],
+                    V(.305f, bottom + .003f), V(.355f, bottom + .067f), Color.white, true);
+            MakeInfoTmpText(art, "Crédito " + (i + 1), creditLines[i],
+                V(.365f, bottom), V(.70f, bottom + .07f), 28);
         }
 
         Button repositoryButton = null;
         if (repositorySprite != null)
         {
-            repositoryButton = AddVisualStateButton(screen.transform, "GitHub do projeto", repositorySprite,
-                repositorySelectedSprite, new Vector2(.40f, .22f), new Vector2(.60f, .33f),
+            repositoryButton = AddVisualStateButton(art, "GitHub do projeto", repositorySprite,
+                repositorySelectedSprite, V(.40f, .22f), V(.60f, .33f),
                 () => Application.OpenURL(repositoryUrl));
             bool pointerOpensOverRepository = false;
             var mouse = UnityEngine.InputSystem.Mouse.current;
@@ -1086,7 +1106,7 @@ public class InfoPanel : MonoBehaviour
                 ignoreSelection: true, ignorePointerEnter: pointerOpensOverRepository);
         }
 
-        var backButton = AddInformationBackButton(screen.transform, () =>
+        var backButton = AddInformationBackButton(art, () =>
         {
             Object.Destroy(screen);
             if (mainMenuContent != null) mainMenuContent.SetActive(true);
@@ -1184,10 +1204,10 @@ public class InfoPanel : MonoBehaviour
         {
             return AddVisualStateButton(parent, "Voltar", backSprite,
                 backSelectedSprite != null ? backSelectedSprite : backSprite,
-                new Vector2(.40f, .015f), new Vector2(.60f, .115f), action);
+                new Vector2(.368f, -.120f), new Vector2(.632f, -.006f), action);
         }
         var label = MakeInfoTmpText(parent, "Voltar", "VOLTAR",
-            new Vector2(.40f, .015f), new Vector2(.60f, .115f), 30);
+            new Vector2(.368f, -.120f), new Vector2(.632f, -.006f), 30);
         var button = label.gameObject.AddComponent<Button>();
         button.targetGraphic = label;
         button.navigation = new Navigation { mode = Navigation.Mode.Automatic };
