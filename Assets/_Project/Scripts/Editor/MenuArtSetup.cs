@@ -50,6 +50,8 @@ public static class MenuArtSetup
         Assign(serialized, "infoSelectedSprite", "menu_informacoes_selecionado.png");
         Assign(serialized, "exitNormalSprite", "menu_sair_normal.png");
         Assign(serialized, "exitSelectedSprite", "menu_sair_selecionado.png");
+        Assign(serialized, "achievementsNormalSprite", "botao_conquistas_normal.png");
+        Assign(serialized, "achievementsSelectedSprite", "botao_conquistas_selecionado.png");
         AssignIfPresent(serialized, "phaseMainFrameSprite", "selecao_moldura_principal.png");
         AssignIfPresent(serialized, "summerCardFrameSprite", "fase_verao_moldura.png");
         AssignIfPresent(serialized, "springCardFrameSprite", "fase_primavera_moldura.png");

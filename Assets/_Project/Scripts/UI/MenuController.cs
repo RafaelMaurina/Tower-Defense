@@ -51,6 +51,9 @@ public class MenuController : MonoBehaviour
     [SerializeField] Sprite infoSelectedSprite;
     [SerializeField] Sprite exitNormalSprite;
     [SerializeField] Sprite exitSelectedSprite;
+    [Header("Botão de conquistas")]
+    [SerializeField] Sprite achievementsNormalSprite;
+    [SerializeField] Sprite achievementsSelectedSprite;
     [Header("Arte do ranking")]
     [SerializeField] Sprite rankingFrameSprite;
     [SerializeField] Sprite rankingHeaderSprite;
@@ -135,21 +138,19 @@ public class MenuController : MonoBehaviour
         buttonsRect.offsetMin = buttonsRect.offsetMax = Vector2.zero;
 
         CreateSpriteButton(mainButtons.transform, "Jogar", playNormalSprite, playSelectedSprite,
-            new Vector2(.30f, .53f), new Vector2(.70f, .65f), StartGame);
+            new Vector2(.30f, .557f), new Vector2(.70f, .677f), StartGame);
         CreateSpriteButton(mainButtons.transform, "Ranking", rankingNormalSprite, rankingSelectedSprite,
-            new Vector2(.30f, .36f), new Vector2(.70f, .48f), ShowRanking);
-        // canto de baixo a esquerda, onde ficava o botao de configuracoes
-        var achievementsButton = CreateSpriteButton(mainMenuContent.transform, "Conquistas",
-            Resources.Load<Sprite>("hud/botao_normal"), Resources.Load<Sprite>("hud/botao_selecionado"),
-            new Vector2(.03f, .03f), new Vector2(.27f, .15f), ShowAchievements);
-        if (achievementsButton.sprite == null) achievementsButton.color = new Color32(111, 68, 41, 245);
+            new Vector2(.30f, .424f), new Vector2(.70f, .544f), ShowRanking);
+        var achievementsButton = CreateSpriteButton(mainButtons.transform, "Conquistas",
+            achievementsNormalSprite, achievementsSelectedSprite,
+            new Vector2(.30f, .291f), new Vector2(.70f, .411f), ShowAchievements);
+        // Compensa a margem lateral transparente dos dois sprites.
+        achievementsButton.rectTransform.localScale = new Vector3(1.14f, 1f, 1f);
         achievementsMenuButton = achievementsButton.GetComponent<Button>();
-        MakeText(achievementsButton.transform, "Conquistas", new Vector2(.04f, .08f), new Vector2(.96f, .92f),
-            26, new Color32(255, 246, 213, 255)).raycastTarget = false;
         CreateSpriteButton(mainButtons.transform, "Informações", infoNormalSprite, infoSelectedSprite,
-            new Vector2(.30f, .19f), new Vector2(.70f, .31f), ShowInfo);
+            new Vector2(.30f, .158f), new Vector2(.70f, .278f), ShowInfo);
         CreateSpriteButton(mainButtons.transform, "Sair", exitNormalSprite, exitSelectedSprite,
-            new Vector2(.30f, .02f), new Vector2(.70f, .14f), ExitGame);
+            new Vector2(.30f, .025f), new Vector2(.70f, .145f), ExitGame);
         // O acesso à fase bônus fica integrado à tela de seleção de fases.
         var settings = CreateSpriteButton(mainMenuContent.transform, "Configurações",
             Resources.Load<Sprite>("hud/hud_superior/botao_configuracoes_normal"),
@@ -472,17 +473,18 @@ public class MenuController : MonoBehaviour
         return text;
     }
 
-    GameObject CreateSubmenuPanel(string title, UnityEngine.Events.UnityAction backAction, out Transform artArea, out Button back)
+    GameObject CreateSubmenuPanel(string title, UnityEngine.Events.UnityAction backAction, out Transform artArea, out Button back, Sprite frameWithTitle = null)
     {
         if (mainMenuContent != null) mainMenuContent.SetActive(false);
         var panelObject = new GameObject("Submenu " + title, typeof(RectTransform), typeof(Image));
         panelObject.transform.SetParent(menuRoot, false);
         var panelRect = panelObject.GetComponent<RectTransform>();
-        panelRect.anchorMin = new Vector2(.11f, .035f); panelRect.anchorMax = new Vector2(.89f, .965f);
+        panelRect.anchorMin = new Vector2(.11f, .14f); panelRect.anchorMax = new Vector2(.89f, .965f);
         panelRect.offsetMin = Vector2.zero; panelRect.offsetMax = Vector2.zero;
         var panelImage = panelObject.GetComponent<Image>();
-        panelImage.sprite = submenuPanelSprite;
-        panelImage.color = submenuPanelSprite != null ? Color.white : new Color32(111, 68, 41, 248);
+        var frame = frameWithTitle != null ? frameWithTitle : submenuPanelSprite;
+        panelImage.sprite = frame;
+        panelImage.color = frame != null ? Color.white : new Color32(111, 68, 41, 248);
         panelImage.preserveAspect = true;
         panelImage.raycastTarget = true;
 
@@ -492,21 +494,26 @@ public class MenuController : MonoBehaviour
         art.transform.SetParent(panelObject.transform, false);
         var fitter = art.GetComponent<AspectRatioFitter>();
         fitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
-        fitter.aspectRatio = submenuPanelSprite != null ? submenuPanelSprite.rect.width / submenuPanelSprite.rect.height : 4f / 3f;
+        fitter.aspectRatio = frame != null ? frame.rect.width / frame.rect.height : 4f / 3f;
         artArea = art.transform;
 
-        var heading = MakeText(art.transform, title.ToUpperInvariant(), new Vector2(.30f, .79f), new Vector2(.70f, .875f), 48,
-            new Color32(255, 248, 215, 255));
-        InfoPanel.StyleSubmenuHeading(heading);
+        if (frameWithTitle == null)
+        {
+            var heading = MakeText(art.transform, title.ToUpperInvariant(), new Vector2(.30f, .79f), new Vector2(.70f, .875f), 48,
+                new Color32(255, 248, 215, 255));
+            InfoPanel.StyleSubmenuHeading(heading);
+        }
 
+        var backMin = new Vector2(.395f, -.132f);
+        var backMax = new Vector2(.605f, -.02f);
         if (backButtonSprite != null)
         {
             back = CreateSpriteButton(art.transform, "Voltar", backButtonSprite, backButtonSelectedSprite,
-                new Vector2(.67f, .055f), new Vector2(.88f, .15f), backAction).GetComponent<Button>();
+                backMin, backMax, backAction).GetComponent<Button>();
         }
         else
         {
-            var backText = MakeText(art.transform, "VOLTAR", new Vector2(.67f, .055f), new Vector2(.88f, .15f), 24,
+            var backText = MakeText(art.transform, "VOLTAR", backMin, backMax, 24,
                 new Color32(255, 237, 190, 255));
             backText.raycastTarget = true;
             back = backText.gameObject.AddComponent<Button>();
@@ -671,9 +678,10 @@ public class MenuController : MonoBehaviour
         {
             Destroy(panel);
             if (mainMenuContent != null) mainMenuContent.SetActive(true);
-            if (EventSystem.current != null && achievementsMenuButton != null)
-                EventSystem.current.SetSelectedGameObject(achievementsMenuButton.gameObject);
-        }, out Transform artArea, out Button back);
+            achievementsMenuButton?.GetComponent<MenuButtonVisualState>()?.SuppressInitialFeedback(true, false);
+            if (EventSystem.current != null)
+                EventSystem.current.SetSelectedGameObject(null);
+        }, out Transform artArea, out Button back, Resources.Load<Sprite>("conquistas_moldura_principal"));
         Scrollbar scrollbar = AchievementsScreen.Build(artArea);
 
         // Voltar sobe para a barra; na barra cima e baixo rolam a lista e os lados voltam ao Voltar
