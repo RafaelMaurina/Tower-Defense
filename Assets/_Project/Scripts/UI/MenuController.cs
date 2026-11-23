@@ -287,11 +287,7 @@ public class MenuController : MonoBehaviour
         button.navigation = new Navigation { mode = Navigation.Mode.Automatic };
         cardObject.AddComponent<PhaseCardHoverScale>();
 
-        var previewImage = AddImage(cardObject.transform,
-            preview != null ? "Imagem " + label : "Área de prévia " + label,
-            preview, new Vector2(.08f, .20f), new Vector2(.92f, .86f),
-            preview != null ? Color.white : PhaseColor(label), true);
-        previewImage.raycastTarget = false;
+        var previewImage = AddPhasePreview(cardObject.transform, label, preview, frame);
 
         var card = new PhaseCard { label = label, scene = scene, preview = preview, frame = frame, provisional = provisional, button = button };
         if (locked)
@@ -326,6 +322,15 @@ public class MenuController : MonoBehaviour
         outline.gameObject.SetActive(false);
         card.outline = outline;
         phaseCards.Add(card);
+    }
+
+    static Image AddPhasePreview(Transform parent, string label, Sprite preview, Sprite frame)
+    {
+        // A prévia avança alguns pixels sob a borda para cobrir toda a abertura.
+        var min = frame != null ? new Vector2(.07f, .15f) : new Vector2(.08f, .20f);
+        var max = frame != null ? new Vector2(.93f, .89f) : new Vector2(.92f, .86f);
+        return AddImage(parent, "Imagem " + label, preview, min, max,
+            preview != null ? Color.white : PhaseColor(label), frame == null);
     }
 
     static Color PhaseColor(string label)
@@ -573,10 +578,17 @@ public class MenuController : MonoBehaviour
         var rect = card.GetComponent<RectTransform>();
         rect.anchorMin = min; rect.anchorMax = max; rect.offsetMin = Vector2.zero; rect.offsetMax = Vector2.zero;
 
-        var preview = AddImage(card.transform, "Imagem da fase " + phase.label,
-            phase.preview, new Vector2(.08f, .20f), new Vector2(.92f, .86f),
-            phase.preview != null ? Color.white : PhaseColor(phase.label), true);
-        preview.raycastTarget = false;
+        Transform previewArea = card.transform;
+        if (phase.frame != null)
+        {
+            var fittedArea = new GameObject("Área interna da moldura", typeof(RectTransform), typeof(AspectRatioFitter));
+            fittedArea.transform.SetParent(card.transform, false);
+            var fitter = fittedArea.GetComponent<AspectRatioFitter>();
+            fitter.aspectRatio = phase.frame.rect.width / phase.frame.rect.height;
+            fitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+            previewArea = fittedArea.transform;
+        }
+        AddPhasePreview(previewArea, phase.label, phase.preview, phase.frame);
         var frame = AddImage(card.transform, "Moldura da fase " + phase.label,
             phase.frame, Vector2.zero, Vector2.one, Color.white, true);
         frame.raycastTarget = false;
@@ -639,7 +651,6 @@ public class MenuController : MonoBehaviour
         GameManager.SetDifficulty(difficulty);
         CloseDifficultyMenu();
         if (GameManager.Instance != null) GameManager.Instance.ResetGame();
-        GameManager.PrepareRun(selectedLevel);
         StartCoroutine(LoadGameAfterClick());
     }
 
