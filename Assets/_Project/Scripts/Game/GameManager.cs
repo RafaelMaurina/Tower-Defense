@@ -20,6 +20,7 @@ public struct GameResult
     public float topDamage;
     [NonSerialized] public Sprite topDamageSprite;
     public GameDifficulty difficulty;
+    public string phaseScene;
     public bool bonus;
     public bool fullCampaign;
 }
@@ -261,6 +262,7 @@ public class GameManager : MonoBehaviour
             topDamage = topDamage,
             topDamageSprite = topDamageSprite,
             difficulty = Difficulty,
+            phaseScene = activeLevelScene,
             bonus = activeLevelScene == CampaignProgress.BonusScene,
             fullCampaign = fullCampaign
         };

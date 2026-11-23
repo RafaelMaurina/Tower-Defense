@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -1325,43 +1326,62 @@ public class GameHUD : MonoBehaviour
         var board = Rect(resultView.transform,"Painel",Vector2.zero,Vector2.one);
         var fit = board.gameObject.AddComponent<AspectRatioFitter>();
         fit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
-        fit.aspectRatio = 1.65f;
         string theme = result.won ? "vitoria" : "derrota";
-        Picture(board,"Moldura","final_moldura_" + theme,Vector2.zero,Vector2.one);
-        ResultStat(board,"icone_pontuacao","Pontuação",result.score.ToString(),.51f);
-        ResultStat(board,"icone_rodadas_final","Rodadas",result.round.ToString(),.39f);
-        ResultStat(board,"icone_derrotados","Inimigos derrotados",$"{result.enemiesDefeated}/{result.enemiesTotal}",.27f);
-        var card = Rect(board,"Torre com mais dano",new Vector2(.65f,.25f),new Vector2(.85f,.63f));
-        Picture(card,"Moldura da torre","final_torre_" + theme,Vector2.zero,Vector2.one);
-        ResultLabel(card,"TORRE COM MAIS DANO",new Vector2(.10f,.81f),new Vector2(.90f,.94f),24);
+        var frame = Picture(board,"Moldura","final_moldura_" + theme,Vector2.zero,Vector2.one);
+        fit.aspectRatio = frame.sprite != null ? frame.sprite.rect.width / frame.sprite.rect.height : 1.65f;
+
+        ResultStat(board,"icone_pontuacao","Pontuação",result.score.ToString(),.535f);
+        ResultStat(board,"icone_rodadas_final","Rodadas",result.round.ToString(),.37f);
+        ResultStat(board,"icone_derrotados","Inimigos derrotados",$"{result.enemiesDefeated}/{result.enemiesTotal}",.204f);
+
+        var towerArea = Rect(board,"Área da torre",new Vector2(.505f,.127f),new Vector2(.958f,.695f));
+        var card = Rect(towerArea,"Torre com mais dano",Vector2.zero,Vector2.one);
+        var towerFrame = Picture(card,"Moldura da torre","final_torre_" + theme,Vector2.zero,Vector2.one);
+        if (towerFrame.sprite != null)
+        {
+            var cardFit = card.gameObject.AddComponent<AspectRatioFitter>();
+            cardFit.aspectRatio = towerFrame.sprite.rect.width / towerFrame.sprite.rect.height;
+            cardFit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+        }
+
         if (result.topDamageSprite != null)
         {
-            var portrait = Rect(card,"Torre",new Vector2(.25f,.35f),new Vector2(.75f,.79f)).gameObject.AddComponent<Image>();
+            var portrait = Rect(card,"Torre",new Vector2(.25f,.35f),new Vector2(.75f,.71f)).gameObject.AddComponent<Image>();
             portrait.sprite = result.topDamageSprite;
             portrait.preserveAspect = true;
             portrait.raycastTarget = false;
         }
         else ResultLabel(card,"Nenhuma torre",new Vector2(.12f,.42f),new Vector2(.88f,.67f),23);
         ResultLabel(card,result.topDamage > 0 ? result.topDamageTower : "Sem dano registrado",
-            new Vector2(.10f,.20f),new Vector2(.90f,.36f),23);
+            new Vector2(.10f,.20f),new Vector2(.90f,.35f),23);
         ResultLabel(card,$"Dano: {result.topDamage:0}",new Vector2(.12f,.08f),new Vector2(.88f,.20f),28);
-        UpgradeButton(board,"recomecar",new Vector2(.25f,.12f),new Vector2(.48f,.22f),()=>GameManager.Instance?.RestartCurrentLevel());
-        UpgradeButton(board,"menu",new Vector2(.52f,.12f),new Vector2(.75f,.22f),ToMenu);
+
+        UpgradeButton(board,"recomecar",new Vector2(.25f,.043f),new Vector2(.48f,.124f),()=>GameManager.Instance?.RestartCurrentLevel());
+        UpgradeButton(board,"menu",new Vector2(.52f,.043f),new Vector2(.75f,.124f),ToMenu);
         if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
     }
-    Text ResultLabel(Transform parent,string text,Vector2 min,Vector2 max,int size)
+    TextMeshProUGUI ResultLabel(Transform parent,string text,Vector2 min,Vector2 max,int size)
     {
-        var label = Label(parent,text,min,max,size);
-        label.resizeTextForBestFit = true;
-        label.resizeTextMinSize = 14;
-        label.resizeTextMaxSize = size;
+        var label = Rect(parent,text,min,max).gameObject.AddComponent<TextMeshProUGUI>();
+        label.font = TMP_Settings.defaultFontAsset;
+        label.text = text;
+        label.fontStyle = FontStyles.Bold;
+        label.fontSize = size;
+        label.enableAutoSizing = true;
+        label.fontSizeMin = 14;
+        label.fontSizeMax = size;
+        label.alignment = TextAlignmentOptions.Center;
+        label.overflowMode = TextOverflowModes.Ellipsis;
+        label.color = new Color32(255, 240, 205, 255);
+        label.raycastTarget = false;
         return label;
     }
-    void ResultStat(Transform parent,string icon,string title,string value,float bottom)
+    void ResultStat(Transform parent,string icon,string title,string value,float center)
     {
-        Picture(parent,title,"final_" + icon,new Vector2(.13f,bottom),new Vector2(.19f,bottom+.085f),true);
-        var label = ResultLabel(parent,title + ": " + value,new Vector2(.21f,bottom),new Vector2(.59f,bottom+.085f),32);
-        label.alignment = TextAnchor.MiddleLeft;
+        Picture(parent,title,"final_" + icon,new Vector2(.072f,center-.042f),new Vector2(.136f,center+.042f),true);
+        var label = ResultLabel(parent,title + ": " + value,
+            new Vector2(.150f,center-.044f),new Vector2(.465f,center+.044f),32);
+        label.alignment = TextAlignmentOptions.MidlineLeft;
     }
     void UpdateMoney(int value)
     {

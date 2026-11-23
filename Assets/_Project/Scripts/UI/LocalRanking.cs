@@ -6,6 +6,7 @@ using UnityEngine;
 public class RankingEntry
 {
     public string difficulty;
+    public string phaseScene;
     public int score;
     public string date;
     public int round;
@@ -21,15 +22,15 @@ public static class LocalRanking
 {
     const string Key = "DefesaDaColheita.Ranking.CampanhaCompleta.v1";
     const string BonusKey = "DefesaDaColheita.Ranking.Bonus.v1";
-    const int Limit = 10;
     public static void Record(GameResult result)
     {
-        if (!result.bonus && !result.fullCampaign) return;
+        if (!result.won) return;
         string key = result.bonus ? BonusKey : Key;
         var data = LoadData(key);
         data.entries.Add(new RankingEntry
         {
             difficulty = result.difficulty.ToString(),
+            phaseScene = result.phaseScene,
             score = result.score,
             date = DateTime.Now.ToString("yyyy-MM-dd"),
             round = result.round,
@@ -38,11 +39,19 @@ public static class LocalRanking
             won = result.won
         });
         data.entries.Sort((a, b) => b.score.CompareTo(a.score));
-        if (data.entries.Count > Limit) data.entries.RemoveRange(Limit, data.entries.Count - Limit);
         PlayerPrefs.SetString(key, JsonUtility.ToJson(data));
         PlayerPrefs.Save();
     }
-    public static IReadOnlyList<RankingEntry> GetEntries(bool bonus = false) => LoadData(bonus ? BonusKey : Key).entries;
+    public static IReadOnlyList<RankingEntry> GetEntries(bool bonus = false)
+    {
+        var bonusEntries = LoadData(BonusKey).entries;
+        if (bonus) return bonusEntries;
+
+        var entries = LoadData(Key).entries;
+        entries.AddRange(bonusEntries.FindAll(entry => entry.won));
+        entries.Sort((a, b) => b.score.CompareTo(a.score));
+        return entries;
+    }
     static RankingSaveData LoadData(string key)
     {
         string json = PlayerPrefs.GetString(key, "");
