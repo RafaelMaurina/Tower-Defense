@@ -679,8 +679,9 @@ public class MenuController : MonoBehaviour
             Destroy(panel);
             if (mainMenuContent != null) mainMenuContent.SetActive(true);
             achievementsMenuButton?.GetComponent<MenuButtonVisualState>()?.SuppressInitialFeedback(true, false);
+            // devolve o foco ao botao Conquistas, para teclado e controle continuarem no menu
             if (EventSystem.current != null)
-                EventSystem.current.SetSelectedGameObject(null);
+                EventSystem.current.SetSelectedGameObject(achievementsMenuButton != null ? achievementsMenuButton.gameObject : null);
         }, out Transform artArea, out Button back, Resources.Load<Sprite>("conquistas_moldura_principal"));
         Scrollbar scrollbar = AchievementsScreen.Build(artArea);
 

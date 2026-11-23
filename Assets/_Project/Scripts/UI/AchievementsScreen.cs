@@ -29,6 +29,7 @@ public sealed class AchievementsScreen : MonoBehaviour
         public int group;
         public Image frame, shade, star, status;
         public TextMeshProUGUI title, description;
+        public string baseDescription, progressText = "";
         public bool? earned;
     }
 
@@ -66,6 +67,18 @@ public sealed class AchievementsScreen : MonoBehaviour
         {
             bool earned = Achievements.IsUnlocked(row.id);
             if (earned) groupUnlocked[row.group]++;
+            // conquistas de colecao mostram quanto falta no fim da descricao: "(3/6)"
+            string progressText = "";
+            if (!earned)
+            {
+                Achievements.Progress(row.id, out int have, out int total);
+                if (total > 0) progressText = $"  <color=#FFD678>({have}/{total})</color>";
+            }
+            if (row.progressText != progressText)
+            {
+                row.progressText = progressText;
+                row.description.text = row.baseDescription + progressText;
+            }
             if (row.earned == earned) continue;
             row.earned = earned;
             row.frame.color = earned ? Color.white : LockedWood;
@@ -211,6 +224,7 @@ public sealed class AchievementsScreen : MonoBehaviour
             rows.Add(new Row
             {
                 id = info.id,
+                baseDescription = info.description,
                 group = group,
                 frame = rowObject.GetComponent<Image>(),
                 shade = shade,
