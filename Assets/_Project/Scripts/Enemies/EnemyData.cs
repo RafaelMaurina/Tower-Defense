@@ -47,6 +47,10 @@ public class EnemyData : ScriptableObject
     public float splitOffset;           // quanto a copia nasce atras do original, em unidades (0 = no mesmo ponto)
     [Header("Boss (Prof Rieder). Sem fases = inimigo comum")]
     public BossPhase[] phases;
+    [Header("Capangas do boss (Prof Rieder): nascem do boss ao passar de cada ponto do caminho (fracao 0 a 1)")]
+    public EnemyData minionEnemy;
+    public GameObject minionPrefab;
+    public float[] minionAtPath;            // por exemplo 0 e 0,5: um no comeco e um na metade do caminho
     [Header("Nota 0 (Prof Rieder). zeroInterval = 0 desliga")]
     public float zeroInterval;              // segundos entre uma nota 0 e outra
     public int zeroCount = 1;               // quantas torres ele zera por vez

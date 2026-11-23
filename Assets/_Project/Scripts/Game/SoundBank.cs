@@ -154,7 +154,8 @@ public static class CombatSounds
     static void HandleSpawned(Enemy e)
     {
         if (e == null || e.data == null) return;
-        string id = "nasce_" + e.data.name.Replace("Enemy_", "").ToLowerInvariant();
+        string tipo = e.data.name.Replace("Enemy_", "").ToLowerInvariant();
+        string id = "nasce_" + (tipo == "professor" ? "chomsky" : tipo);   // o professor entra com o som do Chomsky
         if (!introduced.Add(id)) return;
         SoundBank.Play(id, .7f);
     }

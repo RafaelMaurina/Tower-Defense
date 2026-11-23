@@ -37,7 +37,8 @@ public class Tower : MonoBehaviour
     void OnDisable() => All.Remove(this);
 
     /// Liga ou desliga a nota 0: some/aparece o "0" vermelho em cima da torre.
-    public void SetZeroed(bool value)
+    /// "de" e o ponto de onde o professor risca a nota (a caneta vermelha); null = sem caneta.
+    public void SetZeroed(bool value, Vector3? de = null)
     {
         if (Zeroed == value) return;
         Zeroed = value;
@@ -46,8 +47,9 @@ public class Tower : MonoBehaviour
             if (zeroMark == null) zeroMark = ZeroMark.Create(transform);
             else ZeroMark.Place(zeroMark, transform);
             zeroMark.SetActive(true);
+            zeroMark.GetComponent<NotaZeroFx>().Entrar(de);
         }
-        else if (zeroMark != null) zeroMark.SetActive(false);
+        else if (zeroMark != null && zeroMark.activeSelf) zeroMark.GetComponent<NotaZeroFx>().Sair();   // some em fade, a volta tem faiscas
     }
 
     /// O Joao chama ao construir no canteiro.
