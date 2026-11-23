@@ -50,6 +50,8 @@ public class EnemyData : ScriptableObject
     [Header("Capangas do boss (Prof Rieder): nascem do boss ao passar de cada ponto do caminho (fracao 0 a 1)")]
     public EnemyData minionEnemy;
     public GameObject minionPrefab;
+    public string stepSound;                // som do passo ("" = sem som); toca quando o quadro de animacao entra em stepFrames
+    public int[] stepFrames;                // indices dos quadros em que o pe encosta no chao
     public float[] minionAtPath;            // por exemplo 0 e 0,5: um no comeco e um na metade do caminho
     [Header("Nota 0 (Prof Rieder). zeroInterval = 0 desliga")]
     public float zeroInterval;              // segundos entre uma nota 0 e outra

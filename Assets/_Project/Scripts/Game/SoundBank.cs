@@ -60,7 +60,7 @@ public static class SoundBank
     }
 
     // sons que tocam inteiros, sem o limite de 1 segundo com fadeout: o cocorico, a moedinha, a vitoria e a melhoria de torre
-    static readonly HashSet<string> TocaInteiro = new HashSet<string> { "galo", "inimigo_morre", "vitoria", "torre_melhora", "derrota", "conquista" };
+    static readonly HashSet<string> TocaInteiro = new HashSet<string> { "galo", "inimigo_morre", "vitoria", "torre_melhora", "derrota", "conquista", "risada_professor" };
 
     public static void Play(string id, float volume = 1f)
     {

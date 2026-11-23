@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 938347038340699804}
   - component: {fileID: 541980070097760358}
   - component: {fileID: 459089696943897734}
+  - component: {fileID: 360381146652781557}
   m_Layer: 0
   m_Name: Inimigo_Chomsky
   m_TagString: Untagged
@@ -106,3 +107,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
   data: {fileID: 11400000, guid: 195c439ac0cf4730b6275e234dc56476, type: 2}
+--- !u!114 &360381146652781557
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 175490127688983361}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b9d3a7e1c6f4a82b0e4d8c27f13a96e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Boss

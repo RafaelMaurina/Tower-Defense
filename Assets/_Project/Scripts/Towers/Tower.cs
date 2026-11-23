@@ -48,6 +48,7 @@ public class Tower : MonoBehaviour
             else ZeroMark.Place(zeroMark, transform);
             zeroMark.SetActive(true);
             zeroMark.GetComponent<NotaZeroFx>().Entrar(de);
+            SoundBank.Play("risada_professor", .15f);   // o professor ri a cada nota 0
         }
         else if (zeroMark != null && zeroMark.activeSelf) zeroMark.GetComponent<NotaZeroFx>().Sair();   // some em fade, a volta tem faiscas
     }

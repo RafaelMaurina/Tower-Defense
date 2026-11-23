@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
   displayName: Prof Rieder
   health: 1500
-  speed: 0.7
+  speed: 0.6
   reward: 100
   baseDamage: 999
   flying: 0
@@ -29,7 +29,7 @@ MonoBehaviour:
   phases:
   - name: Regular (Tipo 3)
     startsBelowHealth: 1
-    speed: 0.7
+    speed: 0.6
     jumpInterval: 0
     jumpDistance: 0
     jumpDuration: 0.3
@@ -41,7 +41,7 @@ MonoBehaviour:
     healPerSecond: 0
   - name: Livre de contexto (Tipo 2)
     startsBelowHealth: 0.66
-    speed: 0.6
+    speed: 0.5
     jumpInterval: 0
     jumpDistance: 0
     jumpDuration: 0.3
@@ -53,10 +53,10 @@ MonoBehaviour:
     healPerSecond: 0
   - name: Irrestrita (Tipo 0)
     startsBelowHealth: 0.33
-    speed: 0.6
-    jumpInterval: 2.5
-    jumpDistance: 2.5
-    jumpDuration: 0.4
+    speed: 0.5
+    jumpInterval: 0
+    jumpDistance: 0
+    jumpDuration: 0.3
     summonInterval: 0
     summonEnemy: {fileID: 0}
     summonPrefab: {fileID: 0}
@@ -65,6 +65,10 @@ MonoBehaviour:
     healPerSecond: 5
   minionEnemy: {fileID: 11400000, guid: 195c439ac0cf4730b6275e234dc56476, type: 2}
   minionPrefab: {fileID: 175490127688983361, guid: 9952d9342cfc49d4bacf4765d41e05b8, type: 3}
+  stepSound: passo_professor
+  stepFrames:
+  - 1
+  - 3
   minionAtPath:
   - 0
   - 0.5
@@ -81,4 +85,4 @@ MonoBehaviour:
   framesDown: []
   framesDiagUp: []
   framesDiagDown: []
-  framesPerSecond: 6
+  framesPerSecond: 5
