@@ -50,6 +50,7 @@ public static class MontarNiveis
         public Vector2[] baldes;           // baldes soltos (pe)
         public Vector2[] cochos;           // cochos de agua soltos (pe)
         public Vector2[] macieirasSoltas;  // macieiras em posicao exata (pe), para o pomar nao ficar na regua
+        public Vector2[] laranjeirasSoltas; // laranjeiras em posicao exata (pe)
         public Vector2[] postesCurtos;     // meia peca de frente (poste liso de 1,5 casa): (x, y do pe)
         public Vector2[] fazendeiroParado; // fazendeiro sem enxada, parado (pe)
         public Vector4[] cercasAtras;      // cercas horizontais desenhadas atras das plantacoes (o trigo passa na frente)
@@ -76,6 +77,8 @@ public static class MontarNiveis
         public Vector2Int milharal; // de x a y (casas): milharal em 2 fileiras desencontradas na frente da cerca de cima; 0,0 = sem
         public bool campus;       // fase bonus: asfalto com meio-fio, postes com luz, sem plantacao, galinheiro nem milho
         public Vector2Int[] postes;   // so no campus: casa de grama de cada poste; o pe fica a 1/4 de casa da base dela
+        public Vector3[] onibus;      // so no campus: onibus estacionados (x, y do pe, 1 = virado para a direita), colados no asfalto
+        public Vector4[] carros;      // so no campus: carros estacionados (x, y do pe, cor 0 a 5, 1 = virado para a direita), colados no asfalto
     }
 
     static Vector2Int[] P(params int[] xy)
@@ -179,13 +182,31 @@ public static class MontarNiveis
         // Campus (bonus, #50): noite no campus. Asfalto com meio-fio, postes com luz, sem plantacao, galinheiro nem milho.
         // Canteiros a 2 casas da estrada (1 casa de grama no meio); o caminho dos inimigos e o do Joao, sem mudanca.
         new Nivel { id = 4, nome = "Campus", estacao = 3, cultura = "tile_abobora", campus = true,
-            caminhos = new[] { P(-1,11, 6,11, 6,5, 14,5, 14,11, 22,11, 22,6, 25,6) },
-            celeiro = new RectInt(26,5,4,4),
-            canteiros = P(4,13, 4,9, 8,7, 10,3, 12,8, 16,8, 18,13, 20,8, 20,4, 23,4),
-            postes = P(2,10, 7,10, 7,4, 12,4, 15,10, 18,10, 23,10, 23,7),
-            plantacao = P(), poco = new Vector2Int(17,6),
-            cogumelos = P(1,1, 20,1), milho = P(),
-            macieiras = P(0,5), laranjeiras = P(16,1, 25,0),
+            // estrada puxada para a esquerda para a faculdade (um pouco maior que o celeiro) ter espaco no fim da pista
+            // cruzamento em (15,9): metade dos inimigos segue pelo alto (A) e metade desce e entra pela porta da faculdade (B)
+            caminhos = new[] { P(-1,11, 4,11, 4,5, 11,5, 11,13, 15,13, 15,9, 19,9, 19,13, 21,13, 21,6, 23,6),
+                               P(-1,11, 4,11, 4,5, 11,5, 11,13, 15,13, 15,9, 15,3, 26,3, 26,5) },
+            celeiro = new RectInt(24,5,4,4),
+            canteiros = P(3,9, 5,10, 6,6, 8,4, 10,8, 12,7, 14,11, 17,8, 22,10, 20,8, 14,5, 19,2, 23,2),
+            postes = P(2,10, 5,7, 6,4, 10,4, 13,10, 16,11, 20,11, 14,8, 18,2),
+            plantacao = P(), poco = new Vector2Int(17,5),
+            cogumelos = P(9,2, 27,2), milho = P(),
+            macieiras = P(0,5, 7,8), laranjeiras = P(2,1, 12,1),
+            // florestinha em cima da faculdade em duas fileiras (pes em y 9 a 9,4 e em y 10,9 a 12,3), espacadas ao acaso e com as copas se
+            // tocando; longe do canteiro (22,10), para nao cobrir a torre
+            macieirasSoltas = new[] { new Vector2(24.6f, 9.05f), new Vector2(27.3f, 9.0f), new Vector2(29.5f, 9.15f),
+                                      new Vector2(25.4f, 11.1f), new Vector2(28.8f, 10.9f), new Vector2(29.7f, 12.0f),
+                                      new Vector2(23.9f, 12.2f), new Vector2(27.4f, 10.6f), new Vector2(25.8f, 13.0f), new Vector2(29.4f, 13.1f),
+                                      new Vector2(6.8f, 12.4f) },   // a ultima, sozinha, no vazio ao lado do carro vermelho
+            laranjeirasSoltas = new[] { new Vector2(26.0f, 9.4f), new Vector2(28.6f, 9.35f), new Vector2(27.1f, 11.7f), new Vector2(26.3f, 12.3f),
+                                        new Vector2(28.2f, 12.8f), new Vector2(27.7f, 13.3f) },
+            // estacionados na grama colada ao asfalto (so nos trechos retos de lado, o desenho e de perfil); o onibus fica onde
+            // estava e o outro esta "indo" para a faculdade, virado para ela no fim da pista
+            onibus = new[] { new Vector3(1.7f, 12.1f, 0), new Vector3(20.4f, 4.1f, 1) },
+            carros = new[] { new Vector4(4.0f, 12.07f, 0, 1), new Vector4(0.9f, 10.1f, 4, 0), new Vector4(5.4f, 4.1f, 5, 1),
+                             new Vector4(8.0f, 6.07f, 2, 0), new Vector4(9.8f, 6.07f, 3, 1), new Vector4(17f, 10.07f, 1, 1),
+                             new Vector4(12.9f, 12.1f, 5, 0), new Vector4(16.8f, 4.07f, 0, 0), new Vector4(22.8f, 4.07f, 3, 1),
+                             new Vector4(17f, 2.1f, 5, 1), new Vector4(21.2f, 2.1f, 2, 0) },
             pasto = new Vector2(3.2f, 2.3f) },
     };
 
@@ -670,6 +691,8 @@ public static class MontarNiveis
         // a marrom passeando e pastando, a creme dormindo, o cocho a direita, porco e ovelha atras.
         // Ocupa umas 4 casas de largura por 2,5 de altura em volta de nv.pasto.
         Vector3 pasto = nv.pasto;
+        if (!nv.campus)   // o campus nao tem bichos de fazenda (so o gato)
+        {
         foreach (var f in new[] { new Vector2(-1.4f, .4f), new Vector2(-1.1f, -.15f) })
             Sprite_(grupo, "Props/prop_feno", pasto + (Vector3)f, -1);
         VacaMarrom_(grupo, pasto + new Vector3(-.25f, .25f, 0f), nv);
@@ -688,9 +711,11 @@ public static class MontarNiveis
             ovelha.radius = .22f;
             Som_(ovelha.gameObject, "ovelha", "MEE");
         }
+        }
 
         // gato brincando com o novelo na frente da porta do celeiro; o novelo nasce a esquerda dele
-        Vector3 gatoPos = new Vector3(nv.celeiro.x + 1.3f, nv.celeiro.y - .5f, 0f);
+        // (no campus a porta tem uma pista chegando por baixo: o gato brinca ao lado dela)
+        Vector3 gatoPos = new Vector3(nv.celeiro.x + (nv.campus ? 4.3f : 1.3f), nv.celeiro.y - .5f, 0f);
         var gato = Sprite_(grupo, "Props/prop_gato_bicando", gatoPos, -1).AddComponent<CatYarnPlay>();
         var novelo = Sprite_(grupo, "Props/prop_novelo_1", gatoPos + new Vector3(-14f / 21.333f, 0f, 0f), -1);   // 14 pixels do gato
         Som_(gato.gameObject, "gato", "MEOW");
@@ -760,6 +785,9 @@ public static class MontarNiveis
             foreach (var c in nv.cercasFinas)
                 CercaDescendo(finas, nv, c.x, c.w);
         }
+        if (nv.laranjeirasSoltas != null)
+            foreach (var m in nv.laranjeirasSoltas)
+                Sprite_(grupo, Est_(nv, "Props/prop_arvore_laranja"), new Vector3(m.x, m.y, 0f), -1).AddComponent<FallingLeaves>();
         if (nv.macieirasSoltas != null)
             foreach (var m in nv.macieirasSoltas)
                 Sprite_(grupo, Est_(nv, "Props/prop_arvore_maca"), new Vector3(m.x, m.y, 0f), -1).AddComponent<FallingLeaves>();
@@ -849,6 +877,18 @@ public static class MontarNiveis
             }
 
         if (nv.campus) CriarPostes(nv, grupo);
+        if (nv.campus && nv.onibus != null)
+            foreach (var o in nv.onibus)
+            {
+                var onibus = Sprite_(grupo, "Campus/campus_onibus", new Vector3(o.x, o.y, 0f), -1);
+                if (o.z >= 1f) onibus.GetComponent<SpriteRenderer>().flipX = true;   // o desenho olha para a esquerda
+            }
+        if (nv.campus && nv.carros != null)
+            foreach (var c in nv.carros)
+            {
+                var carro = Sprite_(grupo, "Campus/campus_carro_" + CoresCarro[(int)c.z], new Vector3(c.x, c.y, 0f), -1);
+                if (c.w < 1f) carro.GetComponent<SpriteRenderer>().flipX = true;   // o desenho olha para a direita
+            }
 
         // cerca em cima e embaixo; pecas _3x de 96px = uma casa e meia cada
         var cerca = new GameObject("Cerca").transform;
@@ -886,12 +926,16 @@ public static class MontarNiveis
         // Desenhado em 64x64 com PPU 10,67 (6x): uns 5,4 casas de largura, encostado na borda direita e no fim do
         // caminho para os inimigos "entrarem" no celeiro.
         // O nome "Celeiro" e usado pelas luzes da noite (NightLights).
-        var celeiro = Sprite_(pai, Est_(nv, "Props/prop_celeiro"),
-            new Vector3(nv.celeiro.x + 1.28f, nv.celeiro.y, 0f), -1);
+        // no campus o fim da pista e a faculdade (mesmo tamanho e pe do celeiro); os estragos de celeiro nao valem para ela
+        // a faculdade (PPU 8, 7,25 casas de largura) encosta na borda direita da tela, com a porta no centro da pista que chega
+        // por baixo (x = 26,5): o corpo fica a 1 pixel do desenho da borda e so a sombra passa dela
+        float xCeleiro = nv.campus ? 26.625f : nv.celeiro.x + 1.28f;
+        var celeiro = Sprite_(pai, nv.campus ? "Campus/campus_faculdade" : Est_(nv, "Props/prop_celeiro"),
+            new Vector3(xCeleiro, nv.celeiro.y, 0f), -1);
         celeiro.name = "Celeiro";
         celeiro.AddComponent<BarnHitFx>();   // treme e solta lascas quando a base perde vida
         // telhado torto, tabua solta e janela quebrada conforme a vida cai (desenhos por cima, nao mexem no celeiro)
-        celeiro.AddComponent<BarnDamage>().stages = new[]
+        if (!nv.campus) celeiro.AddComponent<BarnDamage>().stages = new[]
         {
             AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Props/celeiro_dano_1.png"),
             AssetDatabase.LoadAssetAtPath<Sprite>(SPR + "Props/celeiro_dano_2.png"),
@@ -935,6 +979,8 @@ public static class MontarNiveis
     }
 
     /// Clicar no bicho mostra a palavra e toca Resources/sons/<id>, se existir (ver AnimalSound).
+    static readonly string[] CoresCarro = { "vermelho", "azul", "branco", "verde", "preto", "preto_2" };
+
     static readonly string[] FalasFazendeiro = { "HMM", "HM", "UHUM" };
 
     static AnimalSound Som_(GameObject bicho, string id, string palavra)
