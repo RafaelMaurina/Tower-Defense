@@ -43,7 +43,7 @@ Ele cria um objeto `DEMO Sprites`; apagar o objeto desfaz.
 ## Entrega
 
 - Executável: [Defesa da Colheita v1.1 (Windows)](https://github.com/RafaelMaurina/Tower-Defense/releases/tag/v1.1). Baixe o zip, extraia e abra `DefesaDaColheita.exe`.
-- Vídeo demonstrativo: _a definir_
+- Vídeo demonstrativo: [Defesa da Colheita (Drive)](https://drive.google.com/file/d/1C_2r3_R-PgQDK03WQWtlJELMWPzmYzfl/view?usp=sharing).
 
 ## Equipe
 
