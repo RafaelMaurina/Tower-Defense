@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: Prof Rieder
   health: 1500
   speed: 0.6
-  reward: 100
+  reward: 200
   baseDamage: 999
   flying: 0
   centerOffset: {x: 0, y: 0.9}
