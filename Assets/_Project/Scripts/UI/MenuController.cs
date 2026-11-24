@@ -305,9 +305,14 @@ public class MenuController : MonoBehaviour
         }
         else
         {
-            button.onClick.AddListener(() => SelectPhase(card));
             var audio = cardObject.AddComponent<AudioSource>(); audio.playOnAwake = false; audio.spatialBlend = 0;
-            if (clickSound != null) button.onClick.AddListener(() => audio.PlayOneShot(clickSound));
+            button.onClick.AddListener(() =>
+            {
+                bool selecting = selectedPhaseCard != card;
+                SelectPhase(card);
+                if (clickSound != null && audio.isActiveAndEnabled)
+                    audio.PlayOneShot(clickSound, GameSettings.Sfx * (selecting ? .45f : 1f));
+            });
             cardObject.AddComponent<MenuButtonHoverSound>().Initialize(audio, hoverSound);
         }
 
@@ -728,42 +733,77 @@ public class MenuController : MonoBehaviour
         AddImage(screen.transform, "Moldura do ranking", rankingFrameSprite,
             new Vector2(.12f, .19f), new Vector2(.88f, .97f), Color.white, true);
 
+        const float tableLeft = .275f, tableRight = .725f;
+        const float headerBottom = .710f, headerTop = .804f;
+        const int visibleRows = 10;
         AddImage(screen.transform, "Cabeçalho da tabela", rankingHeaderSprite,
-            new Vector2(.275f, .715f), new Vector2(.725f, .799f), Color.white, true);
-        string[] headers = { "POS.", "PONTUAÇÃO", "DIFICULDADE", "DATA" };
-        // Align data columns with the separators and label centers baked into the header sprite.
-        float[] left = { .280f, .378f, .486f, .612f };
-        float[] right = { .368f, .477f, .603f, .720f };
+            new Vector2(tableLeft, headerBottom), new Vector2(tableRight, headerTop), Color.white, false);
+
+        string[] headers = { "POS.", "PONTUAÇÃO", "FASE", "DIFICULDADE", "DATA" };
+        float[] edges = { 0f, .14f, .34f, .56f, .79f, 1f };
+        for (int col = 0; col < headers.Length; col++)
+        {
+            var title = CreateTmpText(screen.transform, "Coluna " + headers[col], headers[col],
+                new Vector2(Mathf.Lerp(tableLeft, tableRight, edges[col] + .012f), headerBottom),
+                new Vector2(Mathf.Lerp(tableLeft, tableRight, edges[col + 1] - .012f), headerTop), 24);
+            title.fontStyle = FontStyles.Bold;
+        }
 
         var entries = LocalRanking.GetEntries(bonus);
-        const int maxRows = 10;
-        const float rowHeight = .040f;
-        float startY = .695f;
-        for (int i = 0; i < Mathf.Min(maxRows, entries.Count); i++)
+        if (entries.Count > 0)
         {
-            float yMax = startY - i * rowHeight;
-            float yMin = yMax - rowHeight;
-            Sprite row = i == 0 ? rankingFirstSprite : i == 1 ? rankingSecondSprite
-                : i == 2 ? rankingThirdSprite : rankingRowSprite;
-            AddImage(screen.transform, "Fundo posição " + (i + 1), row,
-                new Vector2(.275f, yMin), new Vector2(.725f, yMax),
-                i >= 3 && i % 2 == 1 ? new Color32(216, 202, 174, 255) : Color.white, false);
-            RankingEntry entry = entries[i];
-            string position = i < 3 ? (i + 1).ToString() : (i + 1) + ".";
-            string[] values = { position, entry.score.ToString(), DifficultyName(entry.difficulty), FormatRankingDate(entry.date) };
-            for (int col = 0; col < values.Length; col++)
+            var viewport = new GameObject("Área da tabela", typeof(RectTransform), typeof(Image), typeof(RectMask2D), typeof(ScrollRect));
+            viewport.transform.SetParent(screen.transform, false);
+            var viewportRect = viewport.GetComponent<RectTransform>();
+            viewportRect.anchorMin = new Vector2(tableLeft, .291f);
+            viewportRect.anchorMax = new Vector2(tableRight, .699f);
+            viewportRect.offsetMin = viewportRect.offsetMax = Vector2.zero;
+            viewport.GetComponent<Image>().color = Color.clear;
+
+            var rows = new GameObject("Registros", typeof(RectTransform));
+            rows.transform.SetParent(viewport.transform, false);
+            var rowsRect = rows.GetComponent<RectTransform>();
+            float rowCount = Mathf.Max(visibleRows, entries.Count) + .2f;
+            rowsRect.anchorMin = new Vector2(0f, 1f - rowCount / (visibleRows + .2f));
+            rowsRect.anchorMax = Vector2.one;
+            rowsRect.pivot = new Vector2(.5f, 1f);
+            rowsRect.offsetMin = rowsRect.offsetMax = Vector2.zero;
+            var scroll = viewport.GetComponent<ScrollRect>();
+            scroll.viewport = viewportRect;
+            scroll.content = rowsRect;
+            scroll.horizontal = false;
+            scroll.vertical = entries.Count > visibleRows;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            scroll.scrollSensitivity = 45f;
+
+            for (int i = 0; i < entries.Count; i++)
             {
-                if (col == 0 && i < 3)
+                float yMax = 1f - (i + .1f) / rowCount;
+                float yMin = yMax - 1f / rowCount;
+                Sprite row = i == 0 ? rankingFirstSprite : i == 1 ? rankingSecondSprite
+                    : i == 2 ? rankingThirdSprite : rankingRowSprite;
+                AddImage(rows.transform, "Fundo posição " + (i + 1), row,
+                    new Vector2(0f, yMin), new Vector2(1f, yMax),
+                    i >= 3 && i % 2 == 1 ? new Color32(216, 202, 174, 255) : Color.white, false);
+                RankingEntry entry = entries[i];
+                string[] values = { (i + 1) + ".", entry.score.ToString(), RankingPhaseName(entry.phaseScene),
+                    DifficultyName(entry.difficulty), FormatRankingDate(entry.date) };
+                for (int col = 0; col < values.Length; col++)
                 {
-                    Sprite medal = i == 0 ? rankingGoldMedalSprite : i == 1 ? rankingSilverMedalSprite : rankingBronzeMedalSprite;
-                    AddImage(screen.transform, "Medalha posição " + (i + 1), medal,
-                        new Vector2(.300f, yMin - .004f), new Vector2(.347f, yMax + .004f), Color.white, true);
-                    continue;
+                    if (col == 0 && i < 3)
+                    {
+                        Sprite medal = i == 0 ? rankingGoldMedalSprite : i == 1 ? rankingSilverMedalSprite : rankingBronzeMedalSprite;
+                        AddImage(rows.transform, "Medalha posição " + (i + 1), medal,
+                            new Vector2(.04f, yMin - .1f / rowCount), new Vector2(.10f, yMax + .1f / rowCount), Color.white, true);
+                        continue;
+                    }
+                    CreateTmpText(rows.transform, "Dado " + (i + 1) + " " + headers[col], values[col],
+                        new Vector2(edges[col] + .012f, yMin + .05f / rowCount),
+                        new Vector2(edges[col + 1] - .012f, yMax - .05f / rowCount), 25);
                 }
-                CreateTmpText(screen.transform, "Dado " + (i + 1) + " " + headers[col], values[col],
-                    new Vector2(left[col], yMin + .002f), new Vector2(right[col], yMax - .002f), 25);
             }
         }
+
         if (entries.Count == 0)
             CreateTmpText(screen.transform, "Ranking vazio", "AINDA NÃO HÁ PARTIDAS CONCLUÍDAS",
                 new Vector2(.25f, .43f), new Vector2(.75f, .53f), 30);
@@ -774,6 +814,18 @@ public class MenuController : MonoBehaviour
                 Destroy(screen);
                 if (mainMenuContent != null) mainMenuContent.SetActive(true);
             });
+    }
+
+    static string RankingPhaseName(string scene)
+    {
+        switch (scene)
+        {
+            case "Nivel_1_Primavera": return "Primavera";
+            case "Nivel_2_Verao": return "Verão";
+            case "Nivel_3_Outono": return "Outono";
+            case CampaignProgress.BonusScene: return "Prova Final";
+            default: return "—";
+        }
     }
 
     static string FormatRankingDate(string value)

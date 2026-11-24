@@ -6,6 +6,7 @@ using UnityEngine;
 public class RankingEntry
 {
     public string difficulty;
+    public string phaseScene;
     public int score;
     public string date;
     public int round;
@@ -19,17 +20,17 @@ class RankingSaveData { public List<RankingEntry> entries = new List<RankingEntr
 /// Ranking local simples, persistido entre execucoes com PlayerPrefs.
 public static class LocalRanking
 {
-    const string Key = "DefesaDaColheita.Ranking.CampanhaCompleta.v1";
-    const string BonusKey = "DefesaDaColheita.Ranking.Bonus.v1";
+    // Um ranking so, com todas as fases e o bonus. Chave nova: nao mistura com o antigo de campanha completa
+    const string Key = "DefesaDaColheita.Ranking.Fases.v1";
     const int Limit = 10;
     public static void Record(GameResult result)
     {
-        if (!result.bonus && !result.fullCampaign) return;
-        string key = result.bonus ? BonusKey : Key;
-        var data = LoadData(key);
+        if (!result.won) return;
+        var data = LoadData(Key);
         data.entries.Add(new RankingEntry
         {
             difficulty = result.difficulty.ToString(),
+            phaseScene = result.phaseScene,
             score = result.score,
             date = DateTime.Now.ToString("yyyy-MM-dd"),
             round = result.round,
@@ -39,10 +40,11 @@ public static class LocalRanking
         });
         data.entries.Sort((a, b) => b.score.CompareTo(a.score));
         if (data.entries.Count > Limit) data.entries.RemoveRange(Limit, data.entries.Count - Limit);
-        PlayerPrefs.SetString(key, JsonUtility.ToJson(data));
+        PlayerPrefs.SetString(Key, JsonUtility.ToJson(data));
         PlayerPrefs.Save();
     }
-    public static IReadOnlyList<RankingEntry> GetEntries(bool bonus = false) => LoadData(bonus ? BonusKey : Key).entries;
+    // o parametro fica so para a tela de ranking; a lista e uma so
+    public static IReadOnlyList<RankingEntry> GetEntries(bool bonus = false) => LoadData(Key).entries;
     static RankingSaveData LoadData(string key)
     {
         string json = PlayerPrefs.GetString(key, "");
