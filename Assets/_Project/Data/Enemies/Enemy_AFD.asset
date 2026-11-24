@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: AFD
   health: 30
   speed: 1.2
-  reward: 20
+  reward: 40
   baseDamage: 1
   flying: 0
   centerOffset: {x: 0, y: 1.45}
