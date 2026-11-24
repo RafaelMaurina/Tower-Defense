@@ -20,13 +20,13 @@ class RankingSaveData { public List<RankingEntry> entries = new List<RankingEntr
 /// Ranking local simples, persistido entre execucoes com PlayerPrefs.
 public static class LocalRanking
 {
-    const string Key = "DefesaDaColheita.Ranking.CampanhaCompleta.v1";
-    const string BonusKey = "DefesaDaColheita.Ranking.Bonus.v1";
+    // Um ranking so, com todas as fases e o bonus. Chave nova: nao mistura com o antigo de campanha completa
+    const string Key = "DefesaDaColheita.Ranking.Fases.v1";
+    const int Limit = 10;
     public static void Record(GameResult result)
     {
         if (!result.won) return;
-        string key = result.bonus ? BonusKey : Key;
-        var data = LoadData(key);
+        var data = LoadData(Key);
         data.entries.Add(new RankingEntry
         {
             difficulty = result.difficulty.ToString(),
@@ -39,19 +39,12 @@ public static class LocalRanking
             won = result.won
         });
         data.entries.Sort((a, b) => b.score.CompareTo(a.score));
-        PlayerPrefs.SetString(key, JsonUtility.ToJson(data));
+        if (data.entries.Count > Limit) data.entries.RemoveRange(Limit, data.entries.Count - Limit);
+        PlayerPrefs.SetString(Key, JsonUtility.ToJson(data));
         PlayerPrefs.Save();
     }
-    public static IReadOnlyList<RankingEntry> GetEntries(bool bonus = false)
-    {
-        var bonusEntries = LoadData(BonusKey).entries;
-        if (bonus) return bonusEntries;
-
-        var entries = LoadData(Key).entries;
-        entries.AddRange(bonusEntries.FindAll(entry => entry.won));
-        entries.Sort((a, b) => b.score.CompareTo(a.score));
-        return entries;
-    }
+    // o parametro fica so para a tela de ranking; a lista e uma so
+    public static IReadOnlyList<RankingEntry> GetEntries(bool bonus = false) => LoadData(Key).entries;
     static RankingSaveData LoadData(string key)
     {
         string json = PlayerPrefs.GetString(key, "");
