@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: Chomsky
   health: 150
   speed: 1.1
-  reward: 20
+  reward: 40
   baseDamage: 5
   flying: 0
   centerOffset: {x: 0, y: 1.45}
